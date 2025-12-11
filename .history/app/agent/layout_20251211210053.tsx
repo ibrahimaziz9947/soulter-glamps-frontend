@@ -1,0 +1,96 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
+export default function AgentLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const pathname = usePathname()
+
+  const navigation = [
+    { name: 'Dashboard', href: '/agent/dashboard', icon: '📊' },
+    { name: 'Bookings', href: '/agent/bookings', icon: '📅' },
+    { name: 'Add Booking', href: '/agent/add-booking', icon: '➕' },
+    { name: 'Commissions', href: '/agent/commissions', icon: '💰' },
+    { name: 'Profile', href: '/agent/profile', icon: '👤' },
+    { name: 'Logout', href: '/', icon: '🚪' },
+  ]
+
+  return (
+    <div className="min-h-screen bg-cream">
+      {/* Mobile menu button */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-green z-40 px-4 py-3 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-cream">Agent Portal</h1>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="text-cream p-2"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed top-0 left-0 h-full bg-green text-cream w-64 z-50 transform transition-transform duration-300
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
+        `}
+      >
+        <div className="p-6 border-b border-green/20">
+          <h1 className="text-2xl font-bold text-yellow">Agent Portal</h1>
+          <p className="text-sm text-cream/80 mt-1">Sales Agent Dashboard</p>
+        </div>
+
+        <nav className="p-4 space-y-2">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                  ${isActive 
+                    ? 'bg-yellow text-green font-semibold' 
+                    : 'text-cream hover:bg-green-dark hover:text-yellow'
+                  }
+                `}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <span className="text-xl">{item.icon}</span>
+                <span>{item.name}</span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-green/20">
+          <div className="bg-green-dark rounded-lg p-4">
+            <p className="text-sm text-cream/80">Logged in as:</p>
+            <p className="font-semibold text-yellow">Agent User</p>
+            <p className="text-xs text-cream/60 mt-1">agent@soulterglamps.com</p>
+          </div>
+        </div>
+      </aside>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
+        <div className="p-6 lg:p-8">
+          {children}
+        </div>
+      </main>
+    </div>
+  )
+}
