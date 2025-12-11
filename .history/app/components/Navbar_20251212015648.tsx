@@ -27,7 +27,7 @@ export default function Navbar() {
               PACKAGES
             </Link>
             <Link href="/about" className="hover:text-yellow transition-smooth">
-              ABOUT
+              Ab
             </Link>
             <Link href="/facilities" className="hover:text-yellow transition-smooth">
               FACILITIES
@@ -109,7 +109,7 @@ export default function Navbar() {
                 className="hover:text-yellow transition-smooth"
                 onClick={() => setIsOpen(false)}
               >
-                About
+                ABOUT
               </Link>
               <Link 
                 href="/facilities" 

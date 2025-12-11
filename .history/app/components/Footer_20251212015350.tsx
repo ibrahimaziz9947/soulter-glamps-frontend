@@ -47,7 +47,7 @@ export default function Footer() {
             <h4 className="font-semibold text-lg mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-cream/80">
               <li>Email: info@soulterglamps.com</li>
-              <li>Phone: +92 XXXX XXX</li>
+              <li>Phone: +1 (555) 123-4567</li>
               <li>Location: Nathia Gali, near Kalabagh Base, KPK</li>
             </ul>
           </div>

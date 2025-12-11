@@ -36,10 +36,11 @@ export default function ContactPage() {
       {/* Page Header - Now using centralized component */}
       <PageHeader 
         title="Get In Touch"
-        subtitle="Have questions about our hill-top glamps? We're here to help plan your peaceful escape."
-        height="medium"
-        overlayOpacity="medium"
-      />
+        subtitle="
+            Have questions about our hill-top glamps? We're here to help plan your peaceful escape.
+          </p>
+        </div>
+      </section>
 
       {/* Contact Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
