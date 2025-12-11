@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getBookingById } from '../../../../utils/mockBooking'
+import { getBookingById } from '../../../../(customer)/booking/utils/mockBooking'
 
 interface Booking {
   id: string

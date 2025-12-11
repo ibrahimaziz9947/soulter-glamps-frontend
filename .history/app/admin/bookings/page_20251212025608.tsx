@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getAllBookings } from '../../utils/mockBooking'
+import { getAllBookings } from '../../(customer)/booking/utils/mockBooking'
 
 interface Booking {
   id: string
