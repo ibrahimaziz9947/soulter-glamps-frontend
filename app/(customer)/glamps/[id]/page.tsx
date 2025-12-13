@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { glamps } from '../../data/glamps'
-import Button from '../../components/Button'
-import BookingWidget from '../../components/BookingWidget'
-import ImageGallery from '../../components/ImageGallery'
+import { glamps } from '../../../data/glamps'
+import Button from '../../../components/Button'
+import BookingWidget from '../../../components/BookingWidget'
+import ImageGallery from '../../../components/ImageGallery'
 
 export async function generateStaticParams() {
   return glamps.map((glamp) => ({

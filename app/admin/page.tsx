@@ -1,25 +1,44 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { LOGIN_ENDPOINT } from '../config/api'
 
 export default function AdminLoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
 
-    // Simple demo authentication
-    if (formData.email === 'admin@soulterglamps.com' && formData.password === 'admin123') {
-      router.push('/admin/dashboard')
-    } else {
-      setError('Invalid email or password')
+    try {
+      const response = await fetch(LOGIN_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      })
+
+      if (response.ok) {
+        // Check for redirect param, otherwise go to dashboard
+        const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
+        router.push(redirectTo)
+      } else {
+        const data = await response.json()
+        setError(data.message || 'Invalid email or password')
+      }
+    } catch (err) {
+      setError('An error occurred during login')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -97,9 +116,10 @@ export default function AdminLoginPage() {
 
             <button
               type="submit"
-              className="w-full bg-yellow text-green px-6 py-3 rounded-lg font-semibold hover:bg-yellow-light transition-smooth"
+              disabled={isLoading}
+              className="w-full bg-yellow text-green px-6 py-3 rounded-lg font-semibold hover:bg-yellow-light transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 

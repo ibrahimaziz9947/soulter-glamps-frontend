@@ -1,0 +1,9 @@
+# Exclude from VS Code processing
+.history/**
+.next/**
+node_modules/**
+.git/**
+dist/**
+build/**
+coverage/**
+*.log

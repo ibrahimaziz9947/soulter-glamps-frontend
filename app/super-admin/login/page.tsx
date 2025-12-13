@@ -1,21 +1,45 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { LOGIN_ENDPOINT } from '../../config/api'
 
 export default function SuperAdminLogin() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Placeholder - no authentication logic
-    alert('Login functionality not implemented (UI only)')
-    // Redirect to super admin dashboard for demo purposes
-    router.push('/super-admin/dashboard')
+    setError('')
+    setIsLoading(true)
+
+    try {
+      const response = await fetch(LOGIN_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      })
+
+      if (response.ok) {
+        // Check for redirect param, otherwise go to dashboard
+        const redirectTo = searchParams.get('redirect') || '/super-admin/dashboard'
+        router.push(redirectTo)
+      } else {
+        const data = await response.json()
+        setError(data.message || 'Invalid email or password')
+      }
+    } catch (err) {
+      setError('An error occurred during login')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -48,6 +72,11 @@ export default function SuperAdminLogin() {
 
         {/* Login Form */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border-t-4 border-yellow animate-slide-up">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-semibold">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
@@ -112,13 +141,14 @@ export default function SuperAdminLogin() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-green via-green-dark to-green text-white py-4 px-4 rounded-lg font-bold text-lg hover:shadow-2xl transition-all shadow-lg transform hover:-translate-y-0.5 uppercase tracking-wide border-2 border-green-dark"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-green via-green-dark to-green text-white py-4 px-4 rounded-lg font-bold text-lg hover:shadow-2xl transition-all shadow-lg transform hover:-translate-y-0.5 uppercase tracking-wide border-2 border-green-dark disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="flex items-center justify-center gap-3">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
-                Secure Login
+                {isLoading ? 'Logging in...' : 'Secure Login'}
               </span>
             </button>
 

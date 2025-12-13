@@ -1,12 +1,71 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
-export default function AgentLayout({ children }) {
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001'
+
+export default function AgentLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+
+  const isLoginPage = pathname === '/agent/login'
+
+  // Verify authorization with backend for protected pages
+  useEffect(() => {
+    if (isLoginPage) {
+      setIsChecking(false)
+      return
+    }
+
+    const verifyAuth = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/agent/test`, {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (response.ok) {
+          setIsAuthorized(true)
+        } else {
+          // Not authorized - redirect to login
+          router.push('/agent/login?redirect=' + pathname)
+        }
+      } catch (error) {
+        console.error('Auth verification failed:', error)
+        router.push('/agent/login?redirect=' + pathname)
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    verifyAuth()
+  }, [pathname, isLoginPage, router])
+
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // Show loading while checking authorization
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green mx-auto mb-4"></div>
+          <p className="text-text-light">Verifying access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if not authorized
+  if (!isAuthorized) {
+    return null
+  }
 
   const navigation = [
     { name: 'Dashboard', href: '/agent/dashboard', icon: '📊' },
@@ -14,10 +73,9 @@ export default function AgentLayout({ children }) {
     { name: 'Add Booking', href: '/agent/add-booking', icon: '➕' },
     { name: 'Commissions', href: '/agent/commissions', icon: '💰' },
     { name: 'Profile', href: '/agent/profile', icon: '👤' },
-    { name: 'Logout', href: '/', icon: '🚪' },
   ]
 
-  return (
+  const layoutContent = (
     <div className="min-h-screen bg-cream">
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-green z-40 px-4 py-3 flex items-center justify-between">
@@ -93,4 +151,6 @@ export default function AgentLayout({ children }) {
       </main>
     </div>
   )
+
+  return layoutContent
 }

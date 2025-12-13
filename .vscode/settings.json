@@ -1,0 +1,92 @@
+{
+  // Performance optimizations to prevent OOM errors
+  
+  // Exclude heavy folders from file watching
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/.history/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.cache/**": true,
+    "**/coverage/**": true
+  },
+
+  // Exclude folders from VS Code search
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.history": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.cache": true,
+    "**/coverage": true,
+    "**/.git": true,
+    "**/package-lock.json": true
+  },
+
+  // Exclude folders from file explorer
+  "files.exclude": {
+    "**/.git": true,
+    "**/.next": true,
+    "**/.history": true,
+    "**/node_modules": false // Keep visible but not watched
+  },
+
+  // TypeScript memory optimizations (LOW RAM SYSTEM)
+  "typescript.tsserver.maxTsServerMemory": 512,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.surveys.enabled": false,
+  "typescript.tsserver.useSeparateSyntaxServer": false,
+  
+  // Disable automatic type acquisition for performance
+  "javascript.suggestionActions.enabled": false,
+  "javascript.updateImportsOnFileMove.enabled": "never",
+  
+  // Git optimizations
+  "git.enabled": false,
+  "git.autorefresh": false,
+  "git.untrackedChanges": "hidden",
+  "git.ignoreLimitWarning": true,
+  
+  // Editor performance
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggest.showWords": false,
+  false,
+  "editor.minimap.enabled": false,
+  "editor.formatOnSave": false,
+  "editor.semanticHighlighting.enabled": false,
+  "editor.bracketPairColorization.enabled": false,
+  
+  // File save optimizations
+  "files.autoSave": "off",
+  "files.autoSaveDelay": 1000,
+  
+  // Disable telemetry and updates checking
+  "telemetry.telemetryLevel": "off",
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  "update.mode": "none"
+  // File save optimizations
+  "files.autoSave": "onFocusChange",
+  "files.autoSaveDelay": 1000,
+  
+  // Extension-specific optimizations
+  "emmet.showExpandedAbbreviation": "inMarkupAndStylesheetFilesOnly",
+  
+  // Local History extension (if installed) - limit its size
+  "local-history.maxDisplay": 10,
+  "local-history.daysLimit": 7,
+  "local-history.exclude": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/dist/**",
+    "**/build/**"
+  ]
+}

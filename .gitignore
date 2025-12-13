@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# VS Code local history (causes memory issues during build)
+.history/
+.vscode-server/
+.vscode-test/
+
+# logs
+*.log
+dev-output.log
+
+# Memory-intensive files
+*.tsbuildinfo
+.eslintcache

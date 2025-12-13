@@ -1,18 +1,71 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+
   // Don't show sidebar on login page
   const isLoginPage = pathname === '/admin'
-  
+
+  // Verify authorization with backend for protected pages
+  useEffect(() => {
+    if (isLoginPage) {
+      setIsChecking(false)
+      return
+    }
+
+    const verifyAuth = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/test`, {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (response.ok) {
+          setIsAuthorized(true)
+        } else {
+          // Not authorized - redirect to login
+          router.push('/admin?redirect=' + pathname)
+        }
+      } catch (error) {
+        console.error('Auth verification failed:', error)
+        router.push('/admin?redirect=' + pathname)
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    verifyAuth()
+  }, [pathname, isLoginPage, router])
+
   if (isLoginPage) {
     return <>{children}</>
+  }
+
+  // Show loading while checking authorization
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green mx-auto mb-4"></div>
+          <p className="text-text-light">Verifying access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if not authorized
+  if (!isAuthorized) {
+    return null
   }
 
   const navigation = [
@@ -90,7 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     },
   ]
 
-  return (
+  const layoutContent = (
     <div className="min-h-screen bg-cream">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
@@ -193,4 +246,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     </div>
   )
+
+  return layoutContent
 }

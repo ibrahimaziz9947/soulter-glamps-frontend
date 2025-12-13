@@ -1,21 +1,45 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { LOGIN_ENDPOINT } from '../../config/api'
 
 export default function AgentLogin() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Placeholder - no authentication logic
-    alert('Login functionality not implemented (UI only)')
-    // Redirect to agent dashboard for demo purposes
-    router.push('/agent/dashboard')
+    setError('')
+    setIsLoading(true)
+
+    try {
+      const response = await fetch(LOGIN_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      })
+
+      if (response.ok) {
+        // Check for redirect param, otherwise go to dashboard
+        const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
+        router.push(redirectTo)
+      } else {
+        const data = await response.json()
+        setError(data.message || 'Invalid email or password')
+      }
+    } catch (err) {
+      setError('An error occurred during login')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -34,6 +58,11 @@ export default function AgentLogin() {
 
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 animate-slide-up">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
@@ -98,9 +127,10 @@ export default function AgentLogin() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full bg-green text-white py-3 px-4 rounded-lg font-bold text-lg hover:bg-green-dark transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              disabled={isLoading}
+              className="w-full bg-green text-white py-3 px-4 rounded-lg font-bold text-lg hover:bg-green-dark transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Login to Dashboard
+              {isLoading ? 'Logging in...' : 'Login to Dashboard'}
             </button>
 
             {/* Divider */}
