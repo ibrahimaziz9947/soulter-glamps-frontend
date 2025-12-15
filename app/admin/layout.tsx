@@ -37,7 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           router.push('/admin?redirect=' + pathname)
         }
       } catch (error) {
-        console.error('Auth verification failed:', error)
+        console.error('[Admin] Auth verification failed:', error)
         router.push('/admin?redirect=' + pathname)
       } finally {
         setIsChecking(false)

@@ -20,6 +20,8 @@ export default function SuperAdminLogin() {
     setIsLoading(true)
 
     try {
+      console.log('[Super-Admin Login] Submitting to:', LOGIN_ENDPOINT)
+      
       const response = await fetch(LOGIN_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -27,15 +29,25 @@ export default function SuperAdminLogin() {
         body: JSON.stringify(formData)
       })
 
+      console.log('[Super-Admin Login] Response status:', response.status)
+      console.log('[Super-Admin Login] Response headers:', Object.fromEntries(response.headers.entries()))
+
       if (response.ok) {
+        const data = await response.json().catch(() => ({}))
+        console.log('[Super-Admin Login] Login successful, data:', data)
+        console.log('[Super-Admin Login] Cookies after login:', document.cookie)
+        
         // Check for redirect param, otherwise go to dashboard
         const redirectTo = searchParams.get('redirect') || '/super-admin/dashboard'
+        console.log('[Super-Admin Login] Redirecting to:', redirectTo)
         router.push(redirectTo)
       } else {
         const data = await response.json()
+        console.log('[Super-Admin Login] Login failed:', data)
         setError(data.message || 'Invalid email or password')
       }
     } catch (err) {
+      console.error('[Super-Admin Login] Error:', err)
       setError('An error occurred during login')
     } finally {
       setIsLoading(false)

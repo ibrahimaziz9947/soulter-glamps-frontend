@@ -36,7 +36,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           router.push('/agent/login?redirect=' + pathname)
         }
       } catch (error) {
-        console.error('Auth verification failed:', error)
+        console.error('[Agent] Auth verification failed:', error)
         router.push('/agent/login?redirect=' + pathname)
       } finally {
         setIsChecking(false)

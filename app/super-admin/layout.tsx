@@ -24,21 +24,37 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
     const verifyAuth = async () => {
       try {
+        console.log('[Super-Admin] Starting auth check')
+        console.log('[Super-Admin] Pathname:', pathname)
+        console.log('[Super-Admin] All cookies:', document.cookie)
+        console.log('[Super-Admin] Calling:', `${API_BASE_URL}/api/super-admin/test`)
+        
         const response = await fetch(`${API_BASE_URL}/api/super-admin/test`, {
           method: 'GET',
           credentials: 'include',
         })
 
+        console.log('[Super-Admin] Response status:', response.status)
+        console.log('[Super-Admin] Response ok:', response.ok)
+        console.log('[Super-Admin] Response headers:', Object.fromEntries(response.headers.entries()))
+
+        // Get response body for debugging
+        const responseText = await response.text()
+        console.log('[Super-Admin] Response body:', responseText)
+
         if (response.ok) {
+          console.log('[Super-Admin] ✅ Auth verified - setting isAuthorized=true')
           setIsAuthorized(true)
         } else {
-          // Not authorized - redirect to login
+          console.log('[Super-Admin] ❌ Auth failed - redirecting to login')
+          console.log('[Super-Admin] Redirect URL:', '/super-admin/login?redirect=' + pathname)
           router.push('/super-admin/login?redirect=' + pathname)
         }
       } catch (error) {
-        console.error('Auth verification failed:', error)
+        console.error('[Super-Admin] ❌ Network error during auth check:', error)
         router.push('/super-admin/login?redirect=' + pathname)
       } finally {
+        console.log('[Super-Admin] Setting isChecking=false')
         setIsChecking(false)
       }
     }
