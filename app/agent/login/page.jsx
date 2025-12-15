@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { LOGIN_ENDPOINT } from '../../config/api'
+import { API_BASE_URL } from '../../config/api'
 
 export default function AgentLogin() {
   const router = useRouter()
@@ -20,7 +20,7 @@ export default function AgentLogin() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(LOGIN_ENDPOINT, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/agent/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

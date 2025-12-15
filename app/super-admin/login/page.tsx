@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { LOGIN_ENDPOINT } from '../../config/api'
+import { API_BASE_URL } from '../../config/api'
 
 export default function SuperAdminLogin() {
   const router = useRouter()
@@ -20,9 +20,10 @@ export default function SuperAdminLogin() {
     setIsLoading(true)
 
     try {
-      console.log('[Super-Admin Login] Submitting to:', LOGIN_ENDPOINT)
+      const loginEndpoint = `${API_BASE_URL}/api/auth/super-admin/login`
+      console.log('[Super-Admin Login] Submitting to:', loginEndpoint)
       
-      const response = await fetch(LOGIN_ENDPOINT, {
+      const response = await fetch(loginEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
