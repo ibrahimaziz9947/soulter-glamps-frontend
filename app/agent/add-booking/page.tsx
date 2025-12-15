@@ -30,7 +30,7 @@ export default function AddBooking() {
     { id: 'guide', name: 'Nature Guide', price: 4000 },
   ]
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     alert('Booking created successfully! (UI placeholder - no backend)')
     console.log('Booking Data:', formData)

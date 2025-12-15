@@ -52,3 +52,6 @@ dev-output.log
 # Memory-intensive files
 *.tsbuildinfo
 .eslintcache
+
+.vercel
+.env*.local

@@ -57,7 +57,7 @@ export default function AddBookingPage() {
     
     const checkIn = new Date(formData.checkIn)
     const checkOut = new Date(formData.checkOut)
-    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))
+    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
     
     const selectedGlamp = glampTypes.find(g => g.name === formData.glampType)
     const basePrice = selectedGlamp ? selectedGlamp.price * nights : 0
@@ -247,7 +247,7 @@ export default function AddBookingPage() {
                   name="specialRequests"
                   value={formData.specialRequests}
                   onChange={handleChange}
-                  rows="4"
+                  rows={4}
                   placeholder="Any special requirements or requests..."
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent resize-none"
                 />

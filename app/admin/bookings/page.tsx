@@ -140,7 +140,7 @@ export default function BookingsPage() {
             <tbody>
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-text-light">
+                  <td colSpan={9} className="py-12 text-center text-text-light">
                     No bookings found
                   </td>
                 </tr>
@@ -180,7 +180,7 @@ export default function BookingsPage() {
                     <td className="py-4 px-6">
                       <div>
                         <p className="font-semibold text-green">PKR {booking.amountPaid?.toLocaleString() || 0}</p>
-                        {booking.remainingAmount > 0 && (
+                        {(booking.remainingAmount ?? 0) > 0 && (
                           <p className="text-xs text-text-light">PKR {booking.remainingAmount?.toLocaleString()} due</p>
                         )}
                       </div>

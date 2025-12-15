@@ -137,7 +137,7 @@ export default function AddStaffPage() {
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
-                  rows="3"
+                  rows={3}
                   placeholder="Street address, city, state, zip code"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent resize-none"
                 />
