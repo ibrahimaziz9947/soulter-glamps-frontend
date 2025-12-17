@@ -1,8 +1,17 @@
 'use client'
 
 import Link from 'next/link'
+import AuthGuard from '@/app/components/AuthGuard'
 
 export default function DashboardPage() {
+  return (
+    <AuthGuard requiredRole="ADMIN" loginPath="/admin/login">
+      <DashboardContent />
+    </AuthGuard>
+  )
+}
+
+function DashboardContent() {
   const stats = [
     {
       name: 'Total Bookings',

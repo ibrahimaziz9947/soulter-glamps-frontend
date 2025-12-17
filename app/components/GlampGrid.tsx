@@ -1,3 +1,5 @@
+'use client'
+
 import GlampCard from './GlampCard'
 
 interface Glamp {
@@ -15,9 +17,49 @@ interface GlampGridProps {
 }
 
 export default function GlampGrid({ glamps }: GlampGridProps) {
+  console.log('[GlampGrid] Received', glamps.length, 'glamps')
+  console.log('[GlampGrid] First glamp ID:', glamps[0]?.id)
+  
+  // ❌ REJECT DUMMY DATA: Strict UUID validation
+  const validGlamps = glamps.filter(glamp => {
+    const hasValidId = glamp.id && glamp.id !== 'undefined' && glamp.id !== 'null'
+    const isUUID = glamp.id && glamp.id.includes('-') && glamp.id.length > 10
+    const isNumericId = /^[0-9]+$/.test(glamp.id || '')
+    
+    if (!hasValidId) {
+      console.error('[GlampGrid] ❌ Invalid glamp detected:', {
+        id: glamp.id,
+        name: glamp.name,
+        hasId: !!glamp.id
+      })
+      return false
+    }
+    
+    if (isNumericId) {
+      console.error('[GlampGrid] ❌ DUMMY GLAMP DETECTED:', {
+        id: glamp.id,
+        name: glamp.name
+      })
+      return false
+    }
+    
+    if (!isUUID) {
+      console.error('[GlampGrid] ❌ Not a valid UUID:', {
+        id: glamp.id,
+        name: glamp.name,
+        hasHyphen: glamp.id?.includes('-')
+      })
+      return false
+    }
+    
+    return true
+  })
+  
+  console.log('[GlampGrid] ✅ Rendering', validGlamps.length, 'valid UUID glamps')
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {glamps.map((glamp) => (
+      {validGlamps.map((glamp) => (
         <GlampCard key={glamp.id} {...glamp} />
       ))}
     </div>

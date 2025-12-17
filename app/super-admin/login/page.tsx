@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { API_BASE_URL } from '../../config/api'
+import { loginSuperAdmin } from '@/src/services/auth.api'
 
 export default function SuperAdminLogin() {
   const router = useRouter()
@@ -20,36 +20,18 @@ export default function SuperAdminLogin() {
     setIsLoading(true)
 
     try {
-      const loginEndpoint = `${API_BASE_URL}/api/auth/super-admin/login`
-      console.log('[Super-Admin Login] Submitting to:', loginEndpoint)
+      const response = await loginSuperAdmin(formData)
       
-      const response = await fetch(loginEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-      })
-
-      console.log('[Super-Admin Login] Response status:', response.status)
-      console.log('[Super-Admin Login] Response headers:', Object.fromEntries(response.headers.entries()))
-
-      if (response.ok) {
-        const data = await response.json().catch(() => ({}))
-        console.log('[Super-Admin Login] Login successful, data:', data)
-        console.log('[Super-Admin Login] Cookies after login:', document.cookie)
-        
-        // Check for redirect param, otherwise go to dashboard
-        const redirectTo = searchParams.get('redirect') || '/super-admin/dashboard'
-        console.log('[Super-Admin Login] Redirecting to:', redirectTo)
-        router.push(redirectTo)
-      } else {
-        const data = await response.json()
-        console.log('[Super-Admin Login] Login failed:', data)
-        setError(data.message || 'Invalid email or password')
+      if (!response.success) {
+        setError(response.message || 'Invalid email or password')
+        return
       }
-    } catch (err) {
-      console.error('[Super-Admin Login] Error:', err)
-      setError('An error occurred during login')
+      
+      const redirectTo = searchParams.get('redirect') || '/super-admin/dashboard'
+      router.push(redirectTo)
+      
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password')
     } finally {
       setIsLoading(false)
     }

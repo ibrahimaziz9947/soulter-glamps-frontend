@@ -24,7 +24,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
     const verifyAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/agent/test`, {
+        const response = await fetch(`${API_BASE_URL}/agent/test`, {
           method: 'GET',
           credentials: 'include',
         })

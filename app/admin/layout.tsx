@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const verifyAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/test`, {
+        const response = await fetch(`${API_BASE_URL}/admin/test`, {
           method: 'GET',
           credentials: 'include',
         })

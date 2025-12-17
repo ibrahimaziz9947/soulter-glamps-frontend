@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { API_BASE_URL } from '../../config/api'
+import { loginAgent } from '@/src/services/auth.api'
 
 export default function AgentLogin() {
   const router = useRouter()
@@ -20,23 +20,18 @@ export default function AgentLogin() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/agent/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-      })
-
-      if (response.ok) {
-        // Check for redirect param, otherwise go to dashboard
-        const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
-        router.push(redirectTo)
-      } else {
-        const data = await response.json()
-        setError(data.message || 'Invalid email or password')
+      const response = await loginAgent(formData)
+      
+      if (!response.success) {
+        setError(response.message || 'Invalid email or password')
+        return
       }
+      
+      const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
+      router.push(redirectTo)
+      
     } catch (err) {
-      setError('An error occurred during login')
+      setError(err.message || 'Invalid email or password')
     } finally {
       setIsLoading(false)
     }

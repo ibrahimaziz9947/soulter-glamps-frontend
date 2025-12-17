@@ -1,6 +1,16 @@
 'use client'
 
+import AuthGuard from '@/app/components/AuthGuard'
+
 export default function SuperAdminDashboard() {
+  return (
+    <AuthGuard requiredRole="SUPER_ADMIN" loginPath="/super-admin/login">
+      <DashboardContent />
+    </AuthGuard>
+  )
+}
+
+function DashboardContent() {
   const stats = [
     { label: 'Total Admins', value: '5', change: '+1 this month', icon: '👤', color: 'bg-blue-500' },
     { label: 'Total Agents', value: '24', change: '+3 this month', icon: '👥', color: 'bg-purple-500' },

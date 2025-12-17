@@ -1,6 +1,16 @@
 'use client'
 
+import AuthGuard from '@/app/components/AuthGuard'
+
 export default function AgentDashboard() {
+  return (
+    <AuthGuard requiredRole="AGENT" loginPath="/agent/login">
+      <DashboardContent />
+    </AuthGuard>
+  )
+}
+
+function DashboardContent() {
   const summaryCards = [
     { 
       label: 'Total Customers Brought', 

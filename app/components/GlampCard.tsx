@@ -1,3 +1,5 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import Button from './Button'
@@ -21,6 +23,27 @@ export default function GlampCard({
   price,
   amenities,
 }: GlampCardProps) {
+  // ❌ REJECT DUMMY DATA: Strict UUID validation
+  const isNumericId = /^[0-9]+$/.test(id || '')
+  const isUUID = id && id.includes('-') && id.length > 10
+  
+  if (!id || id === 'undefined' || id === 'null') {
+    console.error('[GlampCard] ❌ Invalid ID:', { id, name, price })
+    return null
+  }
+  
+  if (isNumericId) {
+    console.error('[GlampCard] ❌ DUMMY GLAMP DETECTED:', { id, name })
+    return null
+  }
+  
+  if (!isUUID) {
+    console.error('[GlampCard] ❌ Not a valid UUID:', { id, name, hasHyphen: id.includes('-') })
+    return null
+  }
+  
+  console.log('[GlampCard] ✅ Rendering UUID glamp:', { id: id.substring(0, 8) + '...', name })
+  
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-smooth animate-fade-in">
       <div className="relative h-64 overflow-hidden">

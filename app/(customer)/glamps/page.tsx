@@ -1,14 +1,155 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import SectionHeading from '../../components/SectionHeading'
 import GlampGrid from '../../components/GlampGrid'
 import PageHeader from '../../components/PageHeader'
-import { glamps } from '../../data/glamps'
-
-export const metadata = {
-  title: 'Our Glamps - Soulter Glamps',
-  description: 'Explore our collection of luxury glamping accommodations',
-}
+import { getGlamps, type Glamp } from '@/src/services'
 
 export default function GlampsPage() {
+  const [glamps, setGlamps] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchGlamps = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        console.log('[Glamps Page] Fetching glamps...')
+        const response = await getGlamps()
+        
+        console.log('[Glamps Page] Raw response:', {
+          success: response.success,
+          count: response.count,
+          dataLength: response.data?.length,
+          firstGlamp: response.data?.[0],
+          firstGlampKeys: response.data?.[0] ? Object.keys(response.data[0]) : []
+        })
+        
+        // Validate response
+        if (!response.success || !response.data || !Array.isArray(response.data)) {
+          throw new Error('Invalid response from server')
+        }
+        
+        if (response.data.length === 0) {
+          console.warn('[Glamps Page] No glamps found in database')
+          setGlamps([])
+          return
+        }
+        
+        // Transform backend data to match frontend component expectations
+        const transformedGlamps = response.data
+          .filter((glamp: any) => {
+            // CRITICAL: Backend might use 'id' or '_id' - check both
+            const glampId = glamp.id || glamp._id
+            
+            if (!glampId) {
+              console.error('[Glamps Page] ❌ Glamp has no id field:', {
+                glamp: glamp,
+                keys: Object.keys(glamp)
+              })
+              return false
+            }
+            
+            const hasValidId = glampId && typeof glampId === 'string' && glampId.length > 0
+            
+            if (!hasValidId) {
+              console.error('[Glamps Page] ❌ Glamp has invalid id:', {
+                id: glampId,
+                name: glamp.name,
+                type: typeof glampId
+              })
+              return false
+            }
+            
+            // ❌ REJECT DUMMY DATA: UUIDs must have hyphens and be > 10 chars
+            const isUUID = glampId.includes('-') && glampId.length > 10
+            const isNumericId = /^[0-9]+$/.test(glampId) // Reject '1', '2', '3'
+            
+            if (!hasValidId) {
+              console.error('[Glamps Page] ❌ Glamp has invalid _id:', {
+                _id: glamp._id,
+                name: glamp.name,
+                type: typeof glamp._id
+              })
+              return false
+            }
+            
+            if (isNumericId) {
+              console.error('[Glamps Page] ❌ DUMMY GLAMP DETECTED - Numeric ID:', {
+                id: glampId,
+                name: glamp.name
+              })
+              return false
+            }
+            
+            if (!isUUID) {
+              console.error('[Glamps Page] ❌ Invalid UUID format:', {
+                id: glampId,
+                name: glamp.name,
+                hasHyphen: glampId.includes('-'),
+                length: glampId.length
+              })
+              return false
+            }
+            
+            return true
+          })
+          .map((glamp: any) => {
+            // CRITICAL: Map id (could be 'id' or '_id') to frontend id
+            const glamId = glamp.id || glamp._id
+            
+            console.log('[Glamps Page] ✅ Mapping valid UUID glamp:', {
+              backendId: glamp.id || glamp._id,
+              frontendId: glamId,
+              name: glamp.name,
+              isUUID: glamId.includes('-')
+            })
+            
+            const transformed = {
+              id: glamId, // UUID from backend _id
+              name: glamp.name,
+              image: glamp.images?.[0] || '/images/glamps/glamp1.jpg',
+              description: glamp.description,
+              capacity: glamp.capacity,
+              price: glamp.pricePerNight,
+              amenities: glamp.amenities || [],
+            }
+            
+            // CRITICAL: Final validation
+            if (!transformed.id || transformed.id === 'undefined') {
+              throw new Error(`Failed to map glamp ID: ${glamp.name}`)
+            }
+            
+            return transformed
+          })
+        
+        console.log('[Glamps Page] ✅ Successfully transformed', transformedGlamps.length, 'UUID glamps')
+        console.log('[Glamps Page] ✅ Sample IDs:', transformedGlamps.slice(0, 3).map(g => g.id))
+        
+        // Final safety check
+        if (transformedGlamps.length === 0) {
+          console.warn('[Glamps Page] ⚠️ No valid UUID glamps after filtering - check backend data')
+        }
+        
+        setGlamps(transformedGlamps)
+        console.log('[Glamps Page] ✅ State updated with', transformedGlamps.length, 'glamps')
+      } catch (err: any) {
+        console.error('[Glamps Page] Failed to fetch glamps:', err)
+        const errorMessage = err.message || 'Failed to load accommodations'
+        const helpMessage = err.status === 0 
+          ? ' (Is the backend server running on http://localhost:5001?)' 
+          : ''
+        setError(errorMessage + helpMessage)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGlamps()
+  }, [])
   return (
     <div className="min-h-screen">
       {/* Page Header - Now using centralized component */}
@@ -26,6 +167,9 @@ export default function GlampsPage() {
             <div>
               <p className="text-text-light">
                 Showing <span className="font-semibold text-green">{glamps.length}</span> accommodations
+                {glamps.length === 0 && !loading && !error && (
+                  <span className="text-red-500 ml-2">(API returned no valid UUID glamps)</span>
+                )}
               </p>
             </div>
             <div className="flex gap-4">
@@ -52,7 +196,42 @@ export default function GlampsPage() {
       {/* Glamps Grid */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-cream">
         <div className="max-w-7xl mx-auto">
-          <GlampGrid glamps={glamps} />
+          {loading ? (
+            <div className="flex justify-center items-center min-h-[400px]">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green"></div>
+                <p className="mt-4 text-text-light">Loading accommodations...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex justify-center items-center min-h-[400px]">
+              <div className="text-center max-w-md">
+                <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h3 className="text-xl font-semibold text-green mb-2">Unable to Load Accommodations</h3>
+                <p className="text-text-light mb-4">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="px-6 py-2 bg-green text-white rounded-lg hover:bg-green-dark transition-smooth"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          ) : glamps.length === 0 ? (
+            <div className="flex justify-center items-center min-h-[400px]">
+              <div className="text-center">
+                <svg className="w-16 h-16 text-text-light mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <h3 className="text-xl font-semibold text-green mb-2">No Accommodations Available</h3>
+                <p className="text-text-light">Check back soon for new glamping options!</p>
+              </div>
+            </div>
+          ) : (
+            <GlampGrid glamps={glamps} />
+          )}
         </div>
       </section>
 
