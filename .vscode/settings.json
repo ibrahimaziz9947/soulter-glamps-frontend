@@ -1,92 +1,160 @@
 {
-  // Performance optimizations to prevent OOM errors
+  // ============================================
+  // MEMORY OPTIMIZATION FOR LOW-RAM SYSTEMS (3GB)
+  // ============================================
   
-  // Exclude heavy folders from file watching
+  // TypeScript Server Memory Limit (256MB - very aggressive for 3GB RAM)
+  "typescript.tsserver.maxTsServerMemory": 256,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.suggest.enabled": false,
+  "typescript.suggest.autoImports": false,
+  "typescript.inlayHints.parameterNames.enabled": "none",
+  "typescript.inlayHints.parameterTypes.enabled": false,
+  "typescript.inlayHints.variableTypes.enabled": false,
+  "typescript.inlayHints.propertyDeclarationTypes.enabled": false,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": false,
+  "typescript.inlayHints.enumMemberValues.enabled": false,
+  
+  // ============================================
+  // FILE WATCHER EXCLUSIONS (Prevents CPU/Memory Spikes)
+  // ============================================
+  
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
     "**/node_modules/**": true,
     "**/.next/**": true,
-    "**/.history/**": true,
+    "**/.vercel/**": true,
     "**/dist/**": true,
     "**/build/**": true,
     "**/.cache/**": true,
-    "**/coverage/**": true
+    "**/coverage/**": true,
+    "**/.history/**": true,
+    "**/out/**": true,
+    "**/tmp/**": true,
+    "**/temp/**": true
   },
-
-  // Exclude folders from VS Code search
+  
+  // ============================================
+  // SEARCH EXCLUSIONS (Faster Search, Less Memory)
+  // ============================================
+  
   "search.exclude": {
     "**/node_modules": true,
     "**/.next": true,
-    "**/.history": true,
+    "**/.vercel": true,
     "**/dist": true,
     "**/build": true,
     "**/.cache": true,
     "**/coverage": true,
+    "**/.history": true,
+    "**/out": true,
+    "**/tmp": true,
+    "**/temp": true,
     "**/.git": true,
-    "**/package-lock.json": true
+    "**/package-lock.json": true,
+    "**/yarn.lock": true,
+    "**/pnpm-lock.yaml": true
   },
-
-  // Exclude folders from file explorer
+  
+  // ============================================
+  // FILE EXPLORER EXCLUSIONS (Cleaner View, Less Memory)
+  // ============================================
+  
   "files.exclude": {
     "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
     "**/.next": true,
+    "**/.vercel": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.cache": true,
+    "**/coverage": true,
     "**/.history": true,
-    "**/node_modules": false // Keep visible but not watched
+    "**/out": true
   },
-
-  // TypeScript memory optimizations (LOW RAM SYSTEM)
-  "typescript.tsserver.maxTsServerMemory": 512,
-  "typescript.disableAutomaticTypeAcquisition": true,
-  "typescript.surveys.enabled": false,
-  "typescript.tsserver.useSeparateSyntaxServer": false,
   
-  // Disable automatic type acquisition for performance
+  // ============================================
+  // ESLINT COMPLETELY DISABLED
+  // ============================================
+  
+  "eslint.enable": false,
+  "eslint.run": "onSave",
+  "eslint.validate": [],
+  
+  // ============================================
+  // JAVASCRIPT/TYPESCRIPT SUGGESTIONS DISABLED
+  // ============================================
+  
+  "javascript.suggest.enabled": false,
+  "javascript.suggest.autoImports": false,
   "javascript.suggestionActions.enabled": false,
   "javascript.updateImportsOnFileMove.enabled": "never",
   
-  // Git optimizations
-  "git.enabled": false,
+  // ============================================
+  // GIT OPTIMIZATIONS (Reduce File System Operations)
+  // ============================================
+  
+  "git.enabled": true,
   "git.autorefresh": false,
+  "git.decorations.enabled": false,
   "git.untrackedChanges": "hidden",
   "git.ignoreLimitWarning": true,
   
-  // Editor performance
+  // ============================================
+  // EDITOR OPTIMIZATIONS (Disable Heavy Features)
+  // ============================================
+  
   "editor.quickSuggestions": {
-    "other": true,
+    "other": false,
     "comments": false,
     "strings": false
   },
-  "editor.suggest.showWords": false,
-  false,
+  "editor.parameterHints.enabled": false,
+  "editor.suggest.showSnippets": false,
+  "editor.snippetSuggestions": "none",
+  "editor.wordBasedSuggestions": "off",
   "editor.minimap.enabled": false,
+  "editor.renderLineHighlight": "none",
+  "editor.occurrencesHighlight": "off",
+  "editor.selectionHighlight": false,
   "editor.formatOnSave": false,
   "editor.semanticHighlighting.enabled": false,
   "editor.bracketPairColorization.enabled": false,
   
-  // File save optimizations
+  // ============================================
+  // FILE SAVE OPTIMIZATIONS
+  // ============================================
+  
   "files.autoSave": "off",
   "files.autoSaveDelay": 1000,
   
-  // Disable telemetry and updates checking
+  // ============================================
+  // WORKBENCH OPTIMIZATIONS
+  // ============================================
+  
+  "workbench.editor.historyBasedLanguageDetection": false,
+  "workbench.localHistory.enabled": false,
+  "workbench.editor.limit.enabled": true,
+  "workbench.editor.limit.value": 5,
+  "workbench.editor.limit.perEditorGroup": true,
+  "window.restoreWindows": "none",
+  "breadcrumbs.enabled": false,
+  
+  // ============================================
+  // TELEMETRY & UPDATES DISABLED
+  // ============================================
+  
   "telemetry.telemetryLevel": "off",
   "extensions.autoUpdate": false,
   "extensions.autoCheckUpdates": false,
-  "update.mode": "none"
-  // File save optimizations
-  "files.autoSave": "onFocusChange",
-  "files.autoSaveDelay": 1000,
+  "update.mode": "none",
   
-  // Extension-specific optimizations
-  "emmet.showExpandedAbbreviation": "inMarkupAndStylesheetFilesOnly",
+  // ============================================
+  // EMMET OPTIMIZATION
+  // ============================================
   
-  // Local History extension (if installed) - limit its size
-  "local-history.maxDisplay": 10,
-  "local-history.daysLimit": 7,
-  "local-history.exclude": [
-    "**/node_modules/**",
-    "**/.next/**",
-    "**/dist/**",
-    "**/build/**"
-  ]
+  "emmet.showExpandedAbbreviation": "inMarkupAndStylesheetFilesOnly"
 }

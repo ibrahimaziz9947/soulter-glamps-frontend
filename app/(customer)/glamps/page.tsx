@@ -140,7 +140,7 @@ export default function GlampsPage() {
         console.error('[Glamps Page] Failed to fetch glamps:', err)
         const errorMessage = err.message || 'Failed to load accommodations'
         const helpMessage = err.status === 0 
-          ? ' (Is the backend server running on http://localhost:5001?)' 
+          ? ' (Unable to connect to server. Please try again later.)' 
           : ''
         setError(errorMessage + helpMessage)
       } finally {

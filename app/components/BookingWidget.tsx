@@ -106,31 +106,15 @@ export default function BookingWidget({ glampId, glampName }: BookingWidgetProps
 
       const response = await createBooking(payload)
       
-      console.log('[BookingWidget] Booking created successfully:', response)
-      console.log('[BookingWidget] Response structure:', {
-        hasBooking: !!response.booking,
-        bookingId: response?.booking?.id,
-        fullResponse: response
-      })
-      
-      setSuccessMessage('Booking created successfully!')
-      
-      // Backend returns: { success: true, message: "...", booking: { id: "uuid", ... } }
       const bookingId = response?.booking?.id
-      if (bookingId) {
-        setBookingReference(bookingId)
-      }
       
-      // Reset form
-      setFormData({
-        checkInDate: '',
-        checkOutDate: '',
-        guests: 2,
-        customerName: '',
-        customerEmail: '',
-        customerPhone: '',
-      })
-      setErrors({})
+      if (bookingId) {
+        // Redirect to confirmation page
+        window.location.href = `/booking/confirmation/${bookingId}`
+      } else {
+        setSuccessMessage('Booking created successfully!')
+        setBookingReference(bookingId || 'N/A')
+      }
 
     } catch (err: any) {
       console.error('[BookingWidget] Booking failed:', err)

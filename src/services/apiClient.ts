@@ -3,11 +3,13 @@
  * Provides a fetch wrapper with consistent error handling and configuration
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001/api'
+import { API_BASE_URL } from '@/app/config/api'
+
+const API_URL_WITH_PREFIX = `${API_BASE_URL}/api`
 
 // Log the API base URL on initialization (client-side only)
 if (typeof window !== 'undefined') {
-  console.log('[API Client] Base URL:', API_BASE_URL)
+  console.log('[API Client] Base URL:', API_URL_WITH_PREFIX)
 }
 
 export class ApiError extends Error {
@@ -43,8 +45,11 @@ export async function apiClient<T = any>(
     credentials: 'include', // Include cookies for authenticated endpoints
   }
 
-  const fullUrl = `${API_BASE_URL}${endpoint}`
-  console.log(`[API Client] ${config.method || 'GET'} ${fullUrl}`)
+  const fullUrl = `${API_URL_WITH_PREFIX}${endpoint}`
+  
+  if (typeof window !== 'undefined') {
+    console.log(`[API Client] ${config.method || 'GET'} ${fullUrl}`)
+  }
 
   try {
     const response = await fetch(fullUrl, config)
@@ -94,9 +99,13 @@ export async function apiClient<T = any>(
     }
 
     // Network or other errors
+    const networkErrorMsg = error instanceof Error 
+      ? error.message 
+      : 'Unable to connect to server. Please check your connection.'
+    
     throw new ApiError(
       0,
-      error instanceof Error ? error.message : 'Network request failed',
+      networkErrorMsg,
       null
     )
   }

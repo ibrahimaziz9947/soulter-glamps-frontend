@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loginSuperAdmin } from '@/src/services/auth.api'
 
-export default function SuperAdminLogin() {
+function SuperAdminLoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
@@ -186,5 +186,13 @@ export default function SuperAdminLogin() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SuperAdminLogin() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SuperAdminLoginForm />
+    </Suspense>
   )
 }

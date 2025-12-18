@@ -1,10 +1,7 @@
+'use client'
+
 import Link from 'next/link'
 import Button from '../components/Button'
-
-export const metadata = {
-  title: 'Unauthorized - Soulter Glamps',
-  description: 'You do not have permission to access this page',
-}
 
 export default function UnauthorizedPage() {
   return (

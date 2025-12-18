@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { type UserRole } from '@/src/services/auth.api'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001/api'
+import { API_BASE_URL } from '../config/api'
 
 interface AuthGuardProps {
   children: React.ReactNode

@@ -25,11 +25,11 @@ export interface Booking {
   checkInDate: string
   checkOutDate: string
   guests: number
-  totalAmount: number
-  amountPaid: number
-  remainingAmount: number
+  totalAmount?: number
+  amountPaid?: number
+  remainingAmount?: number
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
-  paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID'
+  paymentStatus?: 'UNPAID' | 'PARTIAL' | 'PAID'
   specialRequests?: string
   addOns?: string[]
   createdAt: string
