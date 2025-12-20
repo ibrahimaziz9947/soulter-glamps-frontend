@@ -26,7 +26,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         console.log('[Super-Admin] Starting auth check')
         console.log('[Super-Admin] Pathname:', pathname)
         console.log('[Super-Admin] All cookies:', document.cookie)
-        const response = await fetch(`${API_BASE_URL}/super-admin/test`, {
+        const response = await fetch(`${API_BASE_URL}/api/super-admin/test`, {
           method: 'GET',
           credentials: 'include',
         })

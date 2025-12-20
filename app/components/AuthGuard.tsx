@@ -22,9 +22,9 @@ export default function AuthGuard({ children, requiredRole, loginPath }: AuthGua
       try {
         // Map role to test endpoint
         const roleEndpoints: Record<UserRole, string> = {
-          SUPER_ADMIN: '/super-admin/test',
-          ADMIN: '/admin/test',
-          AGENT: '/agent/test',
+          SUPER_ADMIN: '/api/super-admin/test',
+          ADMIN: '/api/admin/test',
+          AGENT: '/api/agent/test',
           CUSTOMER: '/'
         }
 
