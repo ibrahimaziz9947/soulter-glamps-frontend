@@ -20,28 +20,19 @@ export default function AuthGuard({ children, requiredRole, loginPath }: AuthGua
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Map role to test endpoint
-        const roleEndpoints: Record<UserRole, string> = {
-          SUPER_ADMIN: '/api/super-admin/test',
-          ADMIN: '/api/admin/test',
-          AGENT: '/api/agent/test',
-          CUSTOMER: '/'
-        }
-
-        const testEndpoint = roleEndpoints[requiredRole]
-        if (!testEndpoint || requiredRole === 'CUSTOMER') {
-          setIsAuthorized(true)
-          setIsLoading(false)
-          return
-        }
-
-        const response = await fetch(`${API_BASE_URL}${testEndpoint}`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           credentials: 'include',
         })
 
         if (response.ok) {
-          setIsAuthorized(true)
+          const data = await response.json()
+          // Check if user has the required role
+          if (data.success && data.user && data.user.role === requiredRole) {
+            setIsAuthorized(true)
+          } else {
+            router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`)
+          }
         } else {
           router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`)
         }

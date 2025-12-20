@@ -26,7 +26,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         console.log('[Super-Admin] Starting auth check')
         console.log('[Super-Admin] Pathname:', pathname)
         console.log('[Super-Admin] All cookies:', document.cookie)
-        const response = await fetch(`${API_BASE_URL}/api/super-admin/test`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           credentials: 'include',
         })
@@ -35,13 +35,17 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         console.log('[Super-Admin] Response ok:', response.ok)
         console.log('[Super-Admin] Response headers:', Object.fromEntries(response.headers.entries()))
 
-        // Get response body for debugging
-        const responseText = await response.text()
-        console.log('[Super-Admin] Response body:', responseText)
-
         if (response.ok) {
-          console.log('[Super-Admin] ✅ Auth verified - setting isAuthorized=true')
-          setIsAuthorized(true)
+          const data = await response.json()
+          console.log('[Super-Admin] Response data:', data)
+          
+          if (data.success && data.user && data.user.role === 'SUPER_ADMIN') {
+            console.log('[Super-Admin] ✅ Auth verified - setting isAuthorized=true')
+            setIsAuthorized(true)
+          } else {
+            console.log('[Super-Admin] ❌ Wrong role or invalid data - redirecting to login')
+            router.push('/super-admin/login?redirect=' + pathname)
+          }
         } else {
           console.log('[Super-Admin] ❌ Auth failed - redirecting to login')
           console.log('[Super-Admin] Redirect URL:', '/super-admin/login?redirect=' + pathname)

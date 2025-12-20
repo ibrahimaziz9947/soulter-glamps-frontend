@@ -24,13 +24,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const verifyAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/test`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           credentials: 'include',
         })
 
         if (response.ok) {
-          setIsAuthorized(true)
+          const data = await response.json()
+          if (data.success && data.user && data.user.role === 'ADMIN') {
+            setIsAuthorized(true)
+          } else {
+            router.push('/admin?redirect=' + pathname)
+          }
         } else {
           // Not authorized - redirect to login
           router.push('/admin?redirect=' + pathname)

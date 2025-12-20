@@ -23,13 +23,18 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
     const verifyAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/agent/test`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           credentials: 'include',
         })
 
         if (response.ok) {
-          setIsAuthorized(true)
+          const data = await response.json()
+          if (data.success && data.user && data.user.role === 'AGENT') {
+            setIsAuthorized(true)
+          } else {
+            router.push('/agent/login?redirect=' + pathname)
+          }
         } else {
           // Not authorized - redirect to login
           router.push('/agent/login?redirect=' + pathname)
