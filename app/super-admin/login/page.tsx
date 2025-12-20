@@ -20,18 +20,23 @@ function SuperAdminLoginForm() {
     setIsLoading(true)
 
     try {
+      console.log('[Super-Admin Login] Submitting login...')
       const response = await loginSuperAdmin(formData)
+      console.log('[Super-Admin Login] Response:', response)
       
       if (response.success) {
-        // Success - redirect to dashboard
+        console.log('[Super-Admin Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/super-admin/dashboard'
-        router.push(redirectTo)
+        console.log('[Super-Admin Login] Redirect URL:', redirectTo)
+        // Force full page reload to ensure cookies are set
+        window.location.href = redirectTo
       } else {
-        // Error - show message
+        console.log('[Super-Admin Login] Login failed:', response.message)
         setError(response.message || 'Invalid email or password')
       }
       
     } catch (err: any) {
+      console.error('[Super-Admin Login] Error:', err)
       setError(err.message || 'Invalid email or password')
     } finally {
       setIsLoading(false)

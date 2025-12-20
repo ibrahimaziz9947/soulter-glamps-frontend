@@ -20,6 +20,7 @@ function AdminLoginForm() {
     setIsLoading(true)
 
     try {
+      console.log('[Admin Page Login] Submitting login...')
       const response = await fetch(`${API_BASE_URL}/api/auth/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -28,15 +29,20 @@ function AdminLoginForm() {
       })
 
       const data = await response.json()
+      console.log('[Admin Page Login] Response:', data)
 
       if (response.ok && data.success) {
-        // Success - redirect to dashboard
+        console.log('[Admin Page Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
-        router.push(redirectTo)
+        console.log('[Admin Page Login] Redirect URL:', redirectTo)
+        // Force full page reload to ensure cookies are set
+        window.location.href = redirectTo
       } else {
+        console.log('[Admin Page Login] Login failed:', data.message)
         setError(data.message || data.error || 'Invalid email or password')
       }
     } catch (err) {
+      console.error('[Admin Page Login] Error:', err)
       setError('An error occurred during login')
     } finally {
       setIsLoading(false)

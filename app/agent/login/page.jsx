@@ -20,18 +20,23 @@ function AgentLoginForm() {
     setIsLoading(true)
 
     try {
+      console.log('[Agent Login] Submitting login...')
       const response = await loginAgent(formData)
+      console.log('[Agent Login] Response:', response)
       
       if (response.success) {
-        // Success - redirect to dashboard
+        console.log('[Agent Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
-        router.push(redirectTo)
+        console.log('[Agent Login] Redirect URL:', redirectTo)
+        // Force full page reload to ensure cookies are set
+        window.location.href = redirectTo
       } else {
-        // Error - show message
+        console.log('[Agent Login] Login failed:', response.message)
         setError(response.message || 'Invalid email or password')
       }
       
     } catch (err) {
+      console.error('[Agent Login] Error:', err)
       setError(err.message || 'Invalid email or password')
     } finally {
       setIsLoading(false)
