@@ -22,13 +22,14 @@ function AgentLoginForm() {
     try {
       const response = await loginAgent(formData)
       
-      if (!response.success) {
+      if (response.success) {
+        // Success - redirect to dashboard
+        const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
+        router.push(redirectTo)
+      } else {
+        // Error - show message
         setError(response.message || 'Invalid email or password')
-        return
       }
-      
-      const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
-      router.push(redirectTo)
       
     } catch (err) {
       setError(err.message || 'Invalid email or password')

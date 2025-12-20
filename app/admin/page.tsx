@@ -27,13 +27,14 @@ function AdminLoginForm() {
         body: JSON.stringify(formData)
       })
 
-      if (response.ok) {
-        // Check for redirect param, otherwise go to dashboard
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        // Success - redirect to dashboard
         const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
         router.push(redirectTo)
       } else {
-        const data = await response.json()
-        setError(data.message || 'Invalid email or password')
+        setError(data.message || data.error || 'Invalid email or password')
       }
     } catch (err) {
       setError('An error occurred during login')

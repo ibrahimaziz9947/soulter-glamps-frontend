@@ -22,13 +22,14 @@ export default function AdminLogin() {
     try {
       const response = await loginAdmin(formData)
       
-      if (!response.success) {
+      if (response.success) {
+        // Success - redirect to dashboard
+        const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
+        router.push(redirectTo)
+      } else {
+        // Error - show message
         setError(response.message || 'Invalid email or password')
-        return
       }
-      
-      const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
-      router.push(redirectTo)
       
     } catch (err: any) {
       setError(err.message || 'Invalid email or password')
