@@ -28,6 +28,10 @@ function AgentLoginForm() {
         console.log('[Agent Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
         console.log('[Agent Login] Redirect URL:', redirectTo)
+        // If backend returns a token, set it as a cookie for frontend guards
+        if (response.token) {
+          document.cookie = `auth_token=${response.token}; path=/; Secure; SameSite=None`;
+        }
         // Force full page reload to ensure cookies are set
         window.location.href = redirectTo
       } else {
