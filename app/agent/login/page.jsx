@@ -32,8 +32,8 @@ function AgentLoginForm() {
         if (response.token) {
           document.cookie = `auth_token=${response.token}; path=/; Secure; SameSite=None`;
         }
-        // Force full page reload to ensure cookies are set
-        window.location.href = redirectTo
+        // Use client-side navigation for better debugging
+        router.push(redirectTo)
       } else {
         console.log('[Agent Login] Login failed:', response.message)
         setError(response.message || 'Invalid email or password')
