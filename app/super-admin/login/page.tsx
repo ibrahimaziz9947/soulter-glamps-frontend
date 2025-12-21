@@ -28,8 +28,8 @@ function SuperAdminLoginForm() {
         console.log('[Super-Admin Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/super-admin/dashboard'
         console.log('[Super-Admin Login] Redirect URL:', redirectTo)
-        // Force full page reload to ensure cookies are set
-        window.location.href = redirectTo
+        // Use client-side navigation for better debugging
+        router.push(redirectTo)
       } else {
         console.log('[Super-Admin Login] Login failed:', response.message)
         setError(response.message || 'Invalid email or password')
