@@ -39,9 +39,13 @@ export async function apiClient<T = any>(
   // Get JWT from localStorage if present
   let authHeader = {}
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      authHeader = { Authorization: `Bearer ${token}` }
+    try {
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        authHeader = { Authorization: `Bearer ${token}` }
+      }
+    } catch (e) {
+      console.error('Failed to read token from localStorage:', e)
     }
   }
   const config: RequestInit = {
@@ -51,7 +55,7 @@ export async function apiClient<T = any>(
       ...fetchOptions.headers,
       ...authHeader,
     },
-    // No credentials: 'include' for token-based auth
+    // Never use credentials: 'include' for token-based auth
   }
 
   const fullUrl = `${API_URL_WITH_PREFIX}${endpoint}`

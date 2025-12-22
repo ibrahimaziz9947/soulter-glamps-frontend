@@ -28,9 +28,13 @@ function AgentLoginForm() {
         console.log('[Agent Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
         console.log('[Agent Login] Redirect URL:', redirectTo)
-        // Store JWT in localStorage for token-based auth
+        // Always store JWT in localStorage for token-based auth
         if (response.token) {
-          localStorage.setItem('auth_token', response.token);
+          try {
+            localStorage.setItem('auth_token', response.token);
+          } catch (e) {
+            console.error('Failed to store token in localStorage:', e);
+          }
         }
         router.push(redirectTo)
       } else {
