@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { api }from '@/src/services/apiClient'
-
+/*
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
@@ -70,9 +70,9 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   ]
 
   const layoutContent = (
-    <div className="min-h-screen bg-cream">
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-green z-40 px-4 py-3 flex items-center justify-between">
+  /*  <div className="min-h-screen bg-cream">
+      {/* Mobile menu button }*/
+  /*    <div className="lg:hidden fixed top-0 left-0 right-0 bg-green z-40 px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-bold text-cream">Agent Portal</h1>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -84,8 +84,8 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      {/* Sidebar */}
-      <aside
+      {/* Sidebar }*/
+  /*    <aside
         className={`
           fixed top-0 left-0 h-full bg-green text-cream w-64 z-50 transform transition-transform duration-300
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -129,16 +129,16 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
+      {/* Overlay for mobile }*/
+  /*    {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Main content */}
-      <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
+      {/* Main content */
+  /*    <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
         <div className="p-6 lg:p-8">
           {children}
         </div>
@@ -147,4 +147,82 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   )
 
   return layoutContent
+} */
+
+
+  export default function AgentLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isLoginPage = pathname === '/agent/login';
+
+  const [isChecking, setIsChecking] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    // Login page never requires auth
+    if (isLoginPage) {
+      setIsChecking(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const verifyAuth = async () => {
+      try {
+        const res = await api.get('/auth/me');
+
+        if (
+          !res?.data?.success ||
+          !res.data.user ||
+          res.data.user.role !== 'AGENT'
+        ) {
+          if (!cancelled) {
+            router.replace('/agent/login');
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setIsAuthorized(true);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          router.replace('/agent/login');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsChecking(false);
+        }
+      }
+    };
+
+    verifyAuth();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoginPage, router]);
+
+  // While auth is being verified, render nothing (or spinner)
+  if (isChecking) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <span className="text-gray-500 text-sm">Checking authentication…</span>
+      </div>
+    );
+  }
+
+  // If not authorized, layout already redirected
+  if (!isAuthorized && !isLoginPage) {
+    return null;
+  }
+
+  return <>{children}</>;
 }
+
+  
