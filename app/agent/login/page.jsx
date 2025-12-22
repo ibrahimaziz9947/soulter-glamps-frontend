@@ -36,7 +36,7 @@ function AgentLoginForm() {
             console.error('Failed to store token in localStorage:', e);
           }
         }
-        router.push(redirectTo)
+        router.replace('/agent/dashboard')
       } else {
         console.log('[Agent Login] Login failed:', response.message)
         setError(response.message || 'Invalid email or password')

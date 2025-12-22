@@ -36,7 +36,7 @@ function SuperAdminLoginForm() {
             console.error('Failed to store token in localStorage:', e);
           }
         }
-        router.push(redirectTo)
+        router.replace('/super-admin/dashboard')
       } else {
         console.log('[Super-Admin Login] Login failed:', response.message)
         setError(response.message || 'Invalid email or password')
