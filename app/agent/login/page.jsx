@@ -111,7 +111,9 @@ export default function AgentLoginPage() {
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { loginAgent } from '@/app/config/auth.api'
+//import { loginAgent } from '@/app/config/auth.api'
+import { loginAgent } from '@/src/services/auth.api'
+
 
 export default function AgentLoginPage() {
   const router = useRouter()
