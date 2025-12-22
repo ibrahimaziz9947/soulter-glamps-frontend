@@ -6,19 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("auth_token") : null;
-    if (!token) {
-      router.replace("/admin/login");
-    } else {
-      setLoading(false);
-    }
-  }, [router]);
-
-  if (loading) return null;
+  // ...existing code...
 
   return <DashboardContent />;
 }

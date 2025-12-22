@@ -5,19 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function SuperAdminDashboard() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("auth_token") : null;
-    if (!token) {
-      router.replace("/super-admin/login");
-    } else {
-      setLoading(false);
-    }
-  }, [router]);
-
-  if (loading) return null;
+  // ...existing code...
 
   return <DashboardContent />;
 }
