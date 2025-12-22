@@ -1,13 +1,25 @@
-'use client'
 
-import AuthGuard from '@/app/components/AuthGuard'
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SuperAdminDashboard() {
-  return (
-    <AuthGuard requiredRole="SUPER_ADMIN" loginPath="/super-admin/login">
-      <DashboardContent />
-    </AuthGuard>
-  )
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("auth_token") : null;
+    if (!token) {
+      router.replace("/super-admin/login");
+    } else {
+      setLoading(false);
+    }
+  }, [router]);
+
+  if (loading) return null;
+
+  return <DashboardContent />;
 }
 
 function DashboardContent() {

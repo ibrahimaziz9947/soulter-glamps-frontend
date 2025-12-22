@@ -1,14 +1,26 @@
-'use client'
 
-import Link from 'next/link'
-import AuthGuard from '@/app/components/AuthGuard'
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from 'next/link';
 
 export default function DashboardPage() {
-  return (
-    <AuthGuard requiredRole="ADMIN" loginPath="/admin/login">
-      <DashboardContent />
-    </AuthGuard>
-  )
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("auth_token") : null;
+    if (!token) {
+      router.replace("/admin/login");
+    } else {
+      setLoading(false);
+    }
+  }, [router]);
+
+  if (loading) return null;
+
+  return <DashboardContent />;
 }
 
 function DashboardContent() {
