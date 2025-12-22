@@ -36,13 +36,22 @@ export async function apiClient<T = any>(
 ): Promise<T> {
   const { skipAuth = false, ...fetchOptions } = options
 
+  // Get JWT from localStorage if present
+  let authHeader = {}
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      authHeader = { Authorization: `Bearer ${token}` }
+    }
+  }
   const config: RequestInit = {
     ...fetchOptions,
     headers: {
       'Content-Type': 'application/json',
       ...fetchOptions.headers,
+      ...authHeader,
     },
-    credentials: 'include', // Include cookies for authenticated endpoints
+    // No credentials: 'include' for token-based auth
   }
 
   const fullUrl = `${API_URL_WITH_PREFIX}${endpoint}`

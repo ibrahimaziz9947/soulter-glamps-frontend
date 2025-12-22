@@ -28,7 +28,10 @@ export default function AdminLogin() {
         console.log('[Admin Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
         console.log('[Admin Login] Redirect URL:', redirectTo)
-        // Use client-side navigation for better debugging
+        // Store JWT in localStorage for token-based auth
+        if (response.token) {
+          localStorage.setItem('auth_token', response.token);
+        }
         router.push(redirectTo)
       } else {
         console.log('[Admin Login] Login failed:', response.message)

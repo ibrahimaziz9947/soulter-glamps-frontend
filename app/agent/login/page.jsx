@@ -28,11 +28,10 @@ function AgentLoginForm() {
         console.log('[Agent Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/agent/dashboard'
         console.log('[Agent Login] Redirect URL:', redirectTo)
-        // If backend returns a token, set it as a cookie for frontend guards
+        // Store JWT in localStorage for token-based auth
         if (response.token) {
-          document.cookie = `auth_token=${response.token}; path=/; Secure; SameSite=None`;
+          localStorage.setItem('auth_token', response.token);
         }
-        // Use client-side navigation for better debugging
         router.push(redirectTo)
       } else {
         console.log('[Agent Login] Login failed:', response.message)

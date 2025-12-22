@@ -25,11 +25,8 @@ export default function RoleProtectionWrapper({
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Get token from cookie
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_token='))
-      ?.split('=')[1]
+    // Get token from localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
 
     // No token - redirect to login
     if (!token) {

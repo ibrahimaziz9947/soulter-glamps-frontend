@@ -21,6 +21,7 @@ export interface AuthResponse {
   success: boolean
   message: string
   user?: User
+  token?: string
 }
 
 export interface LoginCredentials {
@@ -56,17 +57,16 @@ export async function loginAgent(
 }
 
 /**
- * Get current authenticated user
+ * Get current authenticated user using JWT from localStorage
  * Returns null if not authenticated
  */
 export async function getCurrentUser(): Promise<User | null> {
   try {
+    // JWT is sent in Authorization header by apiClient
     const response = await api.get<AuthResponse>('/auth/me')
-    
     if (response.success && response.user) {
       return response.user
     }
-    
     return null
   } catch (error: any) {
     return null
@@ -74,11 +74,11 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 /**
- * Logout current user
+ * Logout current user (remove JWT from localStorage)
  */
 export async function logout(): Promise<void> {
   try {
-    await api.post('/auth/logout', {})
+    localStorage.removeItem('auth_token')
   } catch (error) {
     console.error('[Auth] Logout error:', error)
   }

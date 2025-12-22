@@ -22,12 +22,13 @@ export default function AuthGuard({ children, requiredRole, loginPath }: AuthGua
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
-          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            // Authorization header is set by apiClient globally
+          },
         })
-
         if (response.ok) {
           const data = await response.json()
-          // Check if user has the required role
           if (data.success && data.user && data.user.role === requiredRole) {
             setIsAuthorized(true)
           } else {
@@ -42,7 +43,6 @@ export default function AuthGuard({ children, requiredRole, loginPath }: AuthGua
         setIsLoading(false)
       }
     }
-
     checkAuth()
   }, [pathname, requiredRole, loginPath, router])
 

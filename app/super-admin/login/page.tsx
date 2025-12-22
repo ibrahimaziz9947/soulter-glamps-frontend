@@ -28,7 +28,10 @@ function SuperAdminLoginForm() {
         console.log('[Super-Admin Login] Login successful! Redirecting...')
         const redirectTo = searchParams.get('redirect') || '/super-admin/dashboard'
         console.log('[Super-Admin Login] Redirect URL:', redirectTo)
-        // Use client-side navigation for better debugging
+        // Store JWT in localStorage for token-based auth
+        if (response.token) {
+          localStorage.setItem('auth_token', response.token);
+        }
         router.push(redirectTo)
       } else {
         console.log('[Super-Admin Login] Login failed:', response.message)
