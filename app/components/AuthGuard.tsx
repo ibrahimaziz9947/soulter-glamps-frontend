@@ -20,31 +20,35 @@ export default function AuthGuard({ children, requiredRole, loginPath }: AuthGua
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Use the API client so Authorization header is always sent
         const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Authorization header is set by apiClient globally
+            'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('auth_token') : ''}`,
           },
         })
+        console.log('[AuthGuard] /auth/me response:', response);
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
+          console.log('[AuthGuard] /auth/me data:', data);
           if (data.success && data.user && data.user.role === requiredRole) {
-            setIsAuthorized(true)
+            setIsAuthorized(true);
           } else {
-            router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`)
+            router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`);
           }
         } else {
-          router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`)
+          router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`);
         }
       } catch (error) {
-        router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`)
+        console.error('[AuthGuard] Error during auth check:', error);
+        router.push(`${loginPath}?redirect=${encodeURIComponent(pathname)}`);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    checkAuth()
-  }, [pathname, requiredRole, loginPath, router])
+    };
+    checkAuth();
+  }, [pathname, requiredRole, loginPath, router]);
 
   if (isLoading) {
     return (
