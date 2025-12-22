@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { loginAgent } from '@/src/services/auth.api'
 
@@ -15,8 +15,16 @@ export default function AgentLoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  // 🔒 CRITICAL: prevents duplicate submissions
+  const hasSubmittedRef = useRef(false)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // 🛑 Prevent duplicate execution
+    if (hasSubmittedRef.current) return
+    hasSubmittedRef.current = true
+
     setError('')
     setIsLoading(true)
 
@@ -28,22 +36,24 @@ export default function AgentLoginPage() {
       console.log('[Agent Login] Response:', response)
 
       if (!response?.success || !response?.token) {
+        hasSubmittedRef.current = false
         setError(response?.message || 'Invalid email or password')
+        setIsLoading(false)
         return
       }
 
-      // ✅ Token-based auth ONLY
+      // ✅ TOKEN-BASED AUTH ONLY
       localStorage.setItem('auth_token', response.token)
 
       console.log('[Agent Login] Login successful → redirecting to dashboard')
 
-      // ✅ SINGLE redirect (do not duplicate elsewhere)
+      // ✅ SINGLE redirect
       router.replace('/agent/dashboard')
 
     } catch (err) {
       console.error('[Agent Login] Error:', err)
-      setError('Something went wrong. Please try again.')
-    } finally {
+      hasSubmittedRef.current = false
+      setError('Something went wrong')
       setIsLoading(false)
     }
   }
@@ -52,46 +62,42 @@ export default function AgentLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-cream">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white p-8 rounded-lg shadow"
+        className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"
       >
-        <h1 className="text-2xl font-semibold mb-6 text-center">
-          Agent Login
-        </h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Agent Login</h1>
 
         {error && (
-          <p className="mb-4 text-red-600 text-sm text-center">
-            {error}
-          </p>
+          <p className="mb-4 text-red-600 text-sm text-center">{error}</p>
         )}
 
         <input
           type="email"
           placeholder="Email"
+          required
           value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
           }
-          required
-          className="w-full mb-4 px-4 py-2 border rounded"
+          className="w-full mb-4 p-3 border rounded"
         />
 
         <input
           type="password"
           placeholder="Password"
+          required
           value={formData.password}
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
           }
-          required
-          className="w-full mb-6 px-4 py-2 border rounded"
+          className="w-full mb-6 p-3 border rounded"
         />
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-green text-white py-2 rounded hover:opacity-90"
+          className="w-full bg-green text-white py-3 rounded disabled:opacity-60"
         >
-          {isLoading ? 'Logging in…' : 'Login'}
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
     </div>
