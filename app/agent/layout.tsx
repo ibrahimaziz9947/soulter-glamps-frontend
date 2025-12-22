@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -79,6 +79,17 @@ import { api }from '@/src/services/apiClient'
   }
 
   return <>{children}</>;
-}
+} */
 
-  
+
+
+
+
+
+
+'use client'
+
+export default function AgentLayout({ children }: { children: React.ReactNode }) {
+  console.log('[AGENT LAYOUT] NO AUTH LOGIC — PASS THROUGH')
+  return <>{children}</>
+}
