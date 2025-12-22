@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -102,4 +102,103 @@ export default function AgentLoginPage() {
       </form>
     </div>
   )
+} */
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { loginAgent } from '@/app/services/auth.api'
+
+export default function AgentLoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  // ✅ ONLY redirect IF already authenticated → dashboard
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      router.replace('/agent/dashboard')
+    } else {
+      setCheckingSession(false)
+    }
+  }, [router])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await loginAgent({ email, password })
+
+      if (!response?.success || !response?.token) {
+        setError('Invalid email or password')
+        return
+      }
+
+      // ✅ Store token
+      localStorage.setItem('auth_token', response.token)
+
+      // ✅ Go to dashboard ONCE
+      router.replace('/agent/dashboard')
+    } catch (err) {
+      setError('Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ⛔ Prevent form flash during session check
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Verifying session…</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="w-96 space-y-4">
+        <h1 className="text-2xl font-bold">Agent Login</h1>
+
+        {error && <p className="text-red-500">{error}</p>}
+
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border p-2"
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border p-2"
+          required
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-green-700 text-white p-2"
+        >
+          {loading ? 'Signing in…' : 'Login'}
+        </button>
+      </form>
+    </div>
+  )
 }
+
