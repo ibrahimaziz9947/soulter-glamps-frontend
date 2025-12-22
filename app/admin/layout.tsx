@@ -18,18 +18,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Verify authorization with backend for protected pages
   useEffect(() => {
     if (isLoginPage) {
-      setIsChecking(false)
-      return
+      setIsChecking(false);
+      return;
     }
 
     const verifyAuth = async () => {
       try {
-        const { data } = await api.get('/auth/me');
-        if (data.success && data.user && data.user.role === 'ADMIN') {
-          setIsAuthorized(true);
-        } else {
+        const res = await api.get('/auth/me');
+        // Defensive: Only access res.data, never res.success
+        if (!res || !res.data || !res.data.success || !res.data.user || res.data.user.role !== 'ADMIN') {
           router.replace('/admin');
+          return;
         }
+        setIsAuthorized(true);
       } catch (error) {
         console.error('[Admin] Auth verification failed:', error);
         router.replace('/admin');
@@ -38,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
     };
     verifyAuth();
-  }, [pathname, isLoginPage, router])
+  }, [pathname, isLoginPage, router]);
 
   if (isLoginPage) {
     return <>{children}</>
