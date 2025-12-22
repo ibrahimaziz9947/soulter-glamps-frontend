@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { API_BASE_URL } from '../config/api'
+import api from '@/src/services/apiClient'
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -23,44 +23,20 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
     const verifyAuth = async () => {
       try {
-        console.log('[Super-Admin] Starting auth check')
-        console.log('[Super-Admin] Pathname:', pathname)
-        console.log('[Super-Admin] All cookies:', document.cookie)
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        console.log('[Super-Admin] Response status:', response.status)
-        console.log('[Super-Admin] Response ok:', response.ok)
-        console.log('[Super-Admin] Response headers:', Object.fromEntries(response.headers.entries()))
-
-        if (response.ok) {
-          const data = await response.json()
-          console.log('[Super-Admin] Response data:', data)
-          
-          if (data.success && data.user && data.user.role === 'SUPER_ADMIN') {
-            console.log('[Super-Admin] ✅ Auth verified - setting isAuthorized=true')
-            setIsAuthorized(true)
-          } else {
-            console.log('[Super-Admin] ❌ Wrong role or invalid data - redirecting to login')
-            router.push('/super-admin/login?redirect=' + pathname)
-          }
+        const { data } = await api.get('/auth/me');
+        if (data.success && data.user && data.user.role === 'SUPER_ADMIN') {
+          setIsAuthorized(true);
         } else {
-          console.log('[Super-Admin] ❌ Auth failed - redirecting to login')
-          console.log('[Super-Admin] Redirect URL:', '/super-admin/login?redirect=' + pathname)
-          router.push('/super-admin/login?redirect=' + pathname)
+          router.replace('/super-admin/login');
         }
       } catch (error) {
-        console.error('[Super-Admin] ❌ Network error during auth check:', error)
-        router.push('/super-admin/login?redirect=' + pathname)
+        console.error('[Super-Admin] Auth verification failed:', error);
+        router.replace('/super-admin/login');
       } finally {
-        console.log('[Super-Admin] Setting isChecking=false')
-        setIsChecking(false)
+        setIsChecking(false);
       }
-    }
-
-    verifyAuth()
+    };
+    verifyAuth();
   }, [pathname, isLoginPage, router])
 
   if (isLoginPage) {

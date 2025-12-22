@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { API_BASE_URL } from '../config/api'
+import api from '@/src/services/apiClient'
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -23,31 +23,20 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
     const verifyAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success && data.user && data.user.role === 'AGENT') {
-            setIsAuthorized(true)
-          } else {
-            router.push('/agent/login?redirect=' + pathname)
-          }
+        const { data } = await api.get('/auth/me');
+        if (data.success && data.user && data.user.role === 'AGENT') {
+          setIsAuthorized(true);
         } else {
-          // Not authorized - redirect to login
-          router.push('/agent/login?redirect=' + pathname)
+          router.replace('/agent/login');
         }
       } catch (error) {
-        console.error('[Agent] Auth verification failed:', error)
-        router.push('/agent/login?redirect=' + pathname)
+        console.error('[Agent] Auth verification failed:', error);
+        router.replace('/agent/login');
       } finally {
-        setIsChecking(false)
+        setIsChecking(false);
       }
-    }
-
-    verifyAuth()
+    };
+    verifyAuth();
   }, [pathname, isLoginPage, router])
 
   if (isLoginPage) {

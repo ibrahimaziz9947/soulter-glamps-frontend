@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { API_BASE_URL } from '../config/api'
+import api from '@/src/services/apiClient'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -24,31 +24,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const verifyAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success && data.user && data.user.role === 'ADMIN') {
-            setIsAuthorized(true)
-          } else {
-            router.push('/admin?redirect=' + pathname)
-          }
+        const { data } = await api.get('/auth/me');
+        if (data.success && data.user && data.user.role === 'ADMIN') {
+          setIsAuthorized(true);
         } else {
-          // Not authorized - redirect to login
-          router.push('/admin?redirect=' + pathname)
+          router.replace('/admin');
         }
       } catch (error) {
-        console.error('[Admin] Auth verification failed:', error)
-        router.push('/admin?redirect=' + pathname)
+        console.error('[Admin] Auth verification failed:', error);
+        router.replace('/admin');
       } finally {
-        setIsChecking(false)
+        setIsChecking(false);
       }
-    }
-
-    verifyAuth()
+    };
+    verifyAuth();
   }, [pathname, isLoginPage, router])
 
   if (isLoginPage) {
