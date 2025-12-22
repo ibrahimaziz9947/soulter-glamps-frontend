@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+/*import { NextRequest, NextResponse } from 'next/server'
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
@@ -31,7 +31,7 @@ const LOGIN_PAGES = {
 /**
  * Check if route requires authentication
  */
-function isProtectedRoute(pathname: string): boolean {
+/*function isProtectedRoute(pathname: string): boolean {
   // Check if it's a protected route
   for (const route of PROTECTED_ROUTES) {
     if (pathname.startsWith(route)) {
@@ -48,7 +48,7 @@ function isProtectedRoute(pathname: string): boolean {
 /**
  * Get login page for a protected route
  */
-function getLoginPageForPath(pathname: string): string {
+/*function getLoginPageForPath(pathname: string): string {
   if (pathname.startsWith('/super-admin')) {
     return LOGIN_PAGES['/super-admin']
   }
@@ -93,7 +93,7 @@ export function middleware(request: NextRequest) {
  * Configure which routes to apply middleware to
  * Exclude Next.js static assets and API routes that handle their own auth
  */
-export const config = {
+/*export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
@@ -103,6 +103,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.gif|.*\\.svg).*)',
+    /*'/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.gif|.*\\.svg).*)',
   ],
-}
+} */
