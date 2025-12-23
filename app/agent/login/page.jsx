@@ -106,9 +106,8 @@ export default function AgentLoginPage() {
 
 
 
-
+/*
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 //import { loginAgent } from '@/app/config/auth.api'
@@ -202,5 +201,80 @@ export default function AgentLoginPage() {
       </form>
     </div>
   )
-}
+} */
 
+
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { loginAgent } from '@/src/services/auth.api'
+
+export default function AgentLoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await loginAgent({ email, password })
+
+      if (!response?.success || !response?.token) {
+        setError('Invalid email or password')
+        return
+      }
+
+      // ✅ Store token
+      localStorage.setItem('auth_token', response.token)
+
+      // ✅ Redirect ONCE
+      router.replace('/agent/dashboard')
+    } catch (err) {
+      setError('Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="w-96 space-y-4">
+        <h1 className="text-2xl font-bold">Agent Login</h1>
+
+        {error && <p className="text-red-500">{error}</p>}
+
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border p-2"
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border p-2"
+          required
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-green-700 text-white p-2"
+        >
+          {loading ? 'Signing in…' : 'Login'}
+        </button>
+      </form>
+    </div>
+  )
+}

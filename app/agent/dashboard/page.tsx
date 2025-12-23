@@ -1,4 +1,4 @@
-
+/*
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +8,26 @@ export default function AgentDashboard() {
   // ...existing code...
 
   return <DashboardContent />;
+} */
+
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function AgentDashboard() {
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      router.replace('/agent/login')
+    }
+  }, [router])
+
+  return <DashboardContent />
 }
+
 
 function DashboardContent() {
   const summaryCards = [

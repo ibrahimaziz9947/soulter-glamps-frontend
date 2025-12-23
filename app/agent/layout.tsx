@@ -352,7 +352,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
 
 
-
+/*
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
@@ -386,6 +386,22 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   }
 
   return <>{children}</>
+} */
+
+
+
+
+
+export default function AgentLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div className="min-h-screen bg-cream">
+      {children}
+    </div>
+  )
 }
 
 
