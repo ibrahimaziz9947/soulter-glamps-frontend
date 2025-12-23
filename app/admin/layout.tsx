@@ -405,7 +405,7 @@ export default function AdminLayout({
 
 
 
-
+/*
 
 'use client'
 
@@ -489,5 +489,97 @@ export default function AdminLayout({
       </main>
     </div>
   )
-}
+} */
 
+
+
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const [checking, setChecking] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  const isLoginPage = pathname === '/admin'
+
+  useEffect(() => {
+    // If on login page, skip all checks
+    if (isLoginPage) {
+      setChecking(false)
+      setAuthorized(false)
+      return
+    }
+
+    const verify = async () => {
+      try {
+        // CRITICAL: Check if token exists FIRST
+        const token = localStorage.getItem('auth_token')
+        
+        if (!token) {
+          console.log('[Admin Layout] No token found in localStorage')
+          router.replace('/admin')
+          setChecking(false)
+          return
+        }
+
+        console.log('[Admin Layout] Token found, verifying with backend...')
+
+        // Now make the API call
+        const res = await api.get('/auth/me')
+
+        if (res?.success && res.user?.role === 'ADMIN') {
+          console.log('[Admin Layout] Authorization successful')
+          setAuthorized(true)
+        } else {
+          console.log('[Admin Layout] Invalid role:', res?.user?.role)
+          localStorage.removeItem('auth_token')
+          router.replace('/admin')
+        }
+      } catch (error) {
+        console.error('[Admin Layout] Auth verification failed:', error)
+        localStorage.removeItem('auth_token')
+        router.replace('/admin')
+      } finally {
+        setChecking(false)
+      }
+    }
+
+    verify()
+  }, [pathname, router, isLoginPage])
+
+  // Login page - render immediately
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // Checking auth - show loading
+  if (checking) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <p>Verifying access...</p>
+      </div>
+    )
+  }
+
+  // Not authorized - render nothing (redirect is happening)
+  if (!authorized) {
+    return null
+  }
+
+  // Authorized - render protected content
+  return (
+    <div className="flex">
+      <main className="flex-1">{children}</main>
+    </div>
+  )
+}
