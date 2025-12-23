@@ -1,6 +1,6 @@
 /**
  * Base API Client
- * Provides a fetch wrapper with consistent error handling and configuration */
+ * Provides a fetch wrapper with consistent error handling and configuration 
  
 
 import { API_BASE_URL } from '@/app/config/api'
@@ -28,7 +28,7 @@ interface ApiClientOptions extends RequestInit {
 }
 
 /**
- * Generic API client for making HTTP requests */
+ * Generic API client for making HTTP requests 
  
 export async function apiClient<T = any>(
   endpoint: string,
@@ -126,7 +126,7 @@ export async function apiClient<T = any>(
 
 /**
  * Convenience methods for common HTTP verbs
- */
+ 
 export const api = {
   get: <T = any>(endpoint: string, options?: ApiClientOptions) =>
     apiClient<T>(endpoint, { ...options, method: 'GET' }),
@@ -154,7 +154,129 @@ export const api = {
 
   delete: <T = any>(endpoint: string, options?: ApiClientOptions) =>
     apiClient<T>(endpoint, { ...options, method: 'DELETE' }),
-} 
+} */
+
+
+
+
+
+
+
+/**
+ * Base API Client
+ * JWT-based authentication using Authorization header
+ */
+
+import { API_BASE_URL } from '@/app/config/api'
+
+const API_URL_WITH_PREFIX = `${API_BASE_URL}/api`
+
+/* =========================
+   API ERROR CLASS
+========================= */
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public message: string,
+    public data?: any
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+/* =========================
+   TYPES
+========================= */
+interface ApiClientOptions extends RequestInit {
+  skipAuth?: boolean
+}
+
+/* =========================
+   CORE API CLIENT
+========================= */
+export async function apiClient<T = any>(
+  endpoint: string,
+  options: ApiClientOptions = {}
+): Promise<T> {
+  const { skipAuth = false, ...fetchOptions } = options
+
+  let authHeader: Record<string, string> = {}
+
+  // ✅ Read token ONLY on client
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('auth_token')
+
+    console.log(`[API Client] ${endpoint} - Token exists:`, !!token)
+
+    if (token && !skipAuth) {
+      authHeader = { Authorization: `Bearer ${token}` }
+      console.log(`[API Client] ${endpoint} - Authorization header set`)
+    }
+  }
+
+  const fullUrl = `${API_URL_WITH_PREFIX}${endpoint}`
+
+  console.log(`[API Client] ${fetchOptions.method || 'GET'} ${fullUrl}`)
+
+  const response = await fetch(fullUrl, {
+    ...fetchOptions,
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeader,
+      ...fetchOptions.headers,
+    },
+  })
+
+  const contentType = response.headers.get('content-type')
+  const isJson = contentType?.includes('application/json')
+
+  const data = isJson ? await response.json() : await response.text()
+
+  if (!response.ok) {
+    console.error(`[API Client] ${endpoint} → ${response.status}`, data)
+
+    throw new ApiError(
+      response.status,
+      data?.error || data?.message || 'API error',
+      data
+    )
+  }
+
+  return data as T
+}
+
+/* =========================
+   HTTP HELPERS
+========================= */
+export const api = {
+  get: <T = any>(endpoint: string, options?: ApiClientOptions) =>
+    apiClient<T>(endpoint, { ...options, method: 'GET' }),
+
+  post: <T = any>(endpoint: string, body?: any, options?: ApiClientOptions) =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+
+  put: <T = any>(endpoint: string, body?: any, options?: ApiClientOptions) =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+
+  patch: <T = any>(endpoint: string, body?: any, options?: ApiClientOptions) =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+
+  delete: <T = any>(endpoint: string, options?: ApiClientOptions) =>
+    apiClient<T>(endpoint, { ...options, method: 'DELETE' }),
+}
 
 
 
