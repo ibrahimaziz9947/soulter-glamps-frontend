@@ -220,7 +220,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
 
 
-
+/*
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -253,8 +253,54 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   }
 
   return <>{children}</>
-}
+} */
 
+
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function AgentLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+
+  const [mounted, setMounted] = useState(false)
+  const [authorized, setAuthorized] = useState(false)
+
+  // Step 1: ensure browser is ready
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Step 2: check auth ONLY after mount
+  useEffect(() => {
+    if (!mounted) return
+
+    const token = localStorage.getItem('auth_token')
+
+    if (!token) {
+      router.replace('/agent/login')
+      return
+    }
+
+    setAuthorized(true)
+  }, [mounted, router])
+
+  // ⛔ Block rendering until browser + auth check complete
+  if (!mounted || !authorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Verifying session...
+      </div>
+    )
+  }
+
+  return <>{children}</>
+}
 
 
 
