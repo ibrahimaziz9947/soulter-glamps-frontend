@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -139,7 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const layoutContent = (
     <div className="min-h-screen bg-cream">
-      {/* Mobile sidebar backdrop */}
+      
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-green-dark/50 z-40 lg:hidden"
@@ -147,19 +147,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         ></div>
       )}
 
-      {/* Sidebar */}
+  
       <aside className={`fixed top-0 left-0 z-50 w-64 h-screen bg-green transition-transform lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="h-full flex flex-col">
-          {/* Logo */}
+        
           <div className="p-6 border-b border-green-light">
             <Link href="/admin/dashboard" className="flex items-center space-x-2">
               <span className="font-serif text-2xl font-bold text-yellow">Soulter Admin</span>
             </Link>
           </div>
 
-          {/* Navigation */}
+      
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname.startsWith(item.href)
@@ -180,7 +180,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
 
-          {/* User section */}
+          
           <div className="p-4 border-t border-green-light">
             <div className="flex items-center gap-3 px-4 py-3 text-cream">
               <div className="w-10 h-10 bg-yellow rounded-full flex items-center justify-center">
@@ -204,9 +204,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main content */}
+      
       <div className="lg:ml-64">
-        {/* Top bar */}
+      
         <header className="bg-white shadow-sm sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <button
@@ -233,7 +233,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Page content */}
+        
         <main className="p-4 sm:p-6 lg:p-8">
           {children}
         </main>
@@ -242,4 +242,109 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   )
 
   return layoutContent
+} */
+
+
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+import Link from 'next/link'
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const [checking, setChecking] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  // Admin login is ROOT (/admin)
+  const isLoginPage = pathname === '/admin'
+
+  useEffect(() => {
+    if (isLoginPage) {
+      setChecking(false)
+      return
+    }
+
+    let cancelled = false
+
+    const verify = async () => {
+      try {
+        const res = await api.get('/auth/me')
+
+        // ✅ IMPORTANT: res IS the data
+        if (
+          !cancelled &&
+          res?.success &&
+          res.user?.role === 'ADMIN'
+        ) {
+          setAuthorized(true)
+        } else {
+          router.replace('/admin')
+        }
+      } catch {
+        router.replace('/admin')
+      } finally {
+        if (!cancelled) setChecking(false)
+      }
+    }
+
+    verify()
+    return () => {
+      cancelled = true
+    }
+  }, [isLoginPage, router])
+
+  // ✅ Allow login page freely
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // ⏳ Loader
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Verifying access…</p>
+      </div>
+    )
+  }
+
+  if (!authorized) return null
+
+  // ✅ Admin layout UI
+  return (
+    <div className="flex min-h-screen bg-cream">
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-green text-cream p-6">
+        <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
+
+        <nav className="space-y-3">
+          <Link href="/admin/dashboard">Dashboard</Link>
+          <Link href="/admin/bookings">Bookings</Link>
+          <Link href="/admin/agents">Agents</Link>
+          <Link href="/admin/finance">Finance</Link>
+          <Link href="/admin/reports">Reports</Link>
+        </nav>
+
+        <Link
+          href="/admin"
+          className="block mt-10 text-sm text-yellow"
+        >
+          Logout
+        </Link>
+      </aside>
+
+      {/* CONTENT */}
+      <main className="flex-1 p-6 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  )
 }
+
