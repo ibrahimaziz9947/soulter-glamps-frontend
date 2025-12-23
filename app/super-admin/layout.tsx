@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -130,7 +130,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   const layoutContent = (
     <div className="min-h-screen bg-cream">
-      {/* Mobile sidebar backdrop */}
+      {/* Mobile sidebar backdrop *
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-green-dark/50 z-40 lg:hidden"
@@ -138,19 +138,19 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         ></div>
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar *
       <aside className={`fixed top-0 left-0 z-50 w-64 h-screen bg-green transition-transform lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="h-full flex flex-col">
-          {/* Logo */}
+          {/* Logo *
           <div className="p-6 border-b border-green-light">
             <Link href="/super-admin/dashboard" className="flex items-center space-x-2">
               <span className="font-serif text-2xl font-bold text-yellow">Super Admin</span>
             </Link>
           </div>
 
-          {/* Navigation */}
+          {/* Navigation *
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname.startsWith(item.href)
@@ -171,7 +171,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             })}
           </nav>
 
-          {/* User section */}
+          {/* User section 
           <div className="p-4 border-t border-green-light">
             <div className="flex items-center gap-3 px-4 py-3 text-cream">
               <div className="w-10 h-10 bg-yellow rounded-full flex items-center justify-center">
@@ -195,9 +195,9 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main content *
       <div className="lg:ml-64">
-        {/* Top bar */}
+        {/* Top bar *
         <header className="bg-white shadow-sm sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <button
@@ -224,7 +224,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           </div>
         </header>
 
-        {/* Page content */}
+        {/* Page content 
         <main className="p-4 sm:p-6 lg:p-8">
           {children}
         </main>
@@ -233,4 +233,70 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   )
 
   return layoutContent
+} */
+
+
+
+
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+
+export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const isLoginPage = pathname === '/super-admin/login'
+
+  const [checking, setChecking] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  useEffect(() => {
+    if (isLoginPage) {
+      setChecking(false)
+      return
+    }
+
+    const verify = async () => {
+      try {
+        const res = await api.get('/auth/me')
+        if (res?.data?.success && res.data.user?.role === 'SUPER_ADMIN') {
+          setAuthorized(true)
+        } else {
+          router.replace('/super-admin/login')
+        }
+      } catch {
+        router.replace('/super-admin/login')
+      } finally {
+        setChecking(false)
+      }
+    }
+
+    verify()
+  }, [isLoginPage, router])
+
+  if (isLoginPage) return <>{children}</>
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Verifying access…</p>
+      </div>
+    )
+  }
+
+  if (!authorized) return null
+
+  return (
+    <div className="min-h-screen bg-cream">
+      {/* 🔥 Your existing sidebar + topbar layout remains unchanged */}
+      {children}
+    </div>
+  )
 }

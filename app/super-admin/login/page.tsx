@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -52,15 +52,15 @@ function SuperAdminLoginForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-dark to-black flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Decorative Elements *
+  /*    <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-green/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Logo/Brand Section */}
-        <div className="text-center mb-8 animate-fade-in">
+        {/* Logo/Brand Section *
+    /*    <div className="text-center mb-8 animate-fade-in">
           <div className="inline-block bg-gradient-to-br from-yellow to-yellow-light rounded-full p-5 mb-4 shadow-2xl border-4 border-yellow/30">
             <svg className="w-14 h-14 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -78,16 +78,16 @@ function SuperAdminLoginForm() {
           </div>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border-t-4 border-yellow animate-slide-up">
+        {/* Login Form *
+      /*  <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border-t-4 border-yellow animate-slide-up">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-semibold">
               {error}
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
-            <div>
+            {/* Email Field *
+        /*    <div>
               <label htmlFor="email" className="block text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
                 Email Address
               </label>
@@ -109,8 +109,8 @@ function SuperAdminLoginForm() {
               </div>
             </div>
 
-            {/* Password Field */}
-            <div>
+            {/* Password Field *
+          /*  <div>
               <label htmlFor="password" className="block text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
                 Password
               </label>
@@ -132,8 +132,8 @@ function SuperAdminLoginForm() {
               </div>
             </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center justify-between text-sm">
+            {/* Remember Me *
+            /*<div className="flex items-center justify-between text-sm">
               <label className="flex items-center cursor-pointer group">
                 <input
                   type="checkbox"
@@ -146,8 +146,8 @@ function SuperAdminLoginForm() {
               </a>
             </div>
 
-            {/* Login Button */}
-            <button
+            {/* Login Button *
+            /*<button
               type="submit"
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-green via-green-dark to-green text-white py-4 px-4 rounded-lg font-bold text-lg hover:shadow-2xl transition-all shadow-lg transform hover:-translate-y-0.5 uppercase tracking-wide border-2 border-green-dark disabled:opacity-50 disabled:cursor-not-allowed"
@@ -160,8 +160,8 @@ function SuperAdminLoginForm() {
               </span>
             </button>
 
-            {/* Divider */}
-            <div className="relative my-6">
+            {/* Divider */
+            /*<div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t-2 border-gray-300"></div>
               </div>
@@ -170,8 +170,8 @@ function SuperAdminLoginForm() {
               </div>
             </div>
 
-            {/* Security Warning */}
-            <div className="bg-gradient-to-r from-yellow/10 to-red-500/10 border-2 border-yellow/50 rounded-lg p-4">
+            {/* Security Warning *
+            /*<div className="bg-gradient-to-r from-yellow/10 to-red-500/10 border-2 border-yellow/50 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <svg className="w-6 h-6 text-yellow flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -188,8 +188,8 @@ function SuperAdminLoginForm() {
           </form>
         </div>
 
-        {/* Footer Links */}
-        <div className="text-center mt-6 space-y-2">
+        {/* Footer Links */
+        /*<div className="text-center mt-6 space-y-2">
           <a href="/" className="block text-white hover:text-yellow transition-colors text-sm font-bold">
             ← Return to Main Site
           </a>
@@ -207,5 +207,83 @@ export default function SuperAdminLogin() {
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
       <SuperAdminLoginForm />
     </Suspense>
+  )
+} */
+
+
+
+
+
+
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { loginSuperAdmin } from '@/src/services/auth.api'
+
+export default function SuperAdminLoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const res = await loginSuperAdmin({ email, password })
+
+      if (!res?.success || !res?.token) {
+        setError('Invalid email or password')
+        return
+      }
+
+      localStorage.setItem('auth_token', res.token)
+
+      // ✅ SINGLE redirect
+      router.replace('/super-admin/dashboard')
+    } catch {
+      setError('Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-green-dark to-black px-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl p-8 w-full max-w-md space-y-4">
+        <h1 className="text-3xl font-bold text-center text-green">Super Admin Login</h1>
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <input
+          type="email"
+          placeholder="superadmin@soulterglamps.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border p-3 rounded"
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border p-3 rounded"
+          required
+        />
+
+        <button
+          disabled={loading}
+          className="w-full bg-green text-white py-3 rounded font-semibold"
+        >
+          {loading ? 'Signing in…' : 'Login'}
+        </button>
+      </form>
+    </div>
   )
 }
