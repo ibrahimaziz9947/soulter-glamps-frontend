@@ -609,6 +609,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // CRITICAL: Check if we're on the login page
   // Use startsWith to handle both /admin and /admin/login if you add it
   const isLoginPage = pathname === '/admin' || pathname === '/admin/login'
+  console.log('[Admin Layout] Effect triggered', {
+  pathname,
+  isLoginPage,
+  timestamp: Date.now()
+})
+
+
 
   useEffect(() => {
     // Skip auth check on login page

@@ -256,7 +256,7 @@ export default function AdminLoginPage() {
 
       // Store token
       localStorage.setItem('auth_token', res.token)
-      
+      console.log('[Login] Stored token at', Date.now())
       // Verify it was stored
       const storedToken = localStorage.getItem('auth_token')
       if (storedToken !== res.token) {
