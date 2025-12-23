@@ -494,7 +494,7 @@ export default function AdminLayout({
 
 
 
-
+/*
 
 
 'use client'
@@ -580,6 +580,109 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex">
       <main className="flex-1">{children}</main>
+    </div>
+  )
+} */
+
+
+
+
+
+
+
+
+
+// app/admin/layout.tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const [checking, setChecking] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  // CRITICAL: Check if we're on the login page
+  // Use startsWith to handle both /admin and /admin/login if you add it
+  const isLoginPage = pathname === '/admin' || pathname === '/admin/login'
+
+  useEffect(() => {
+    // Skip auth check on login page
+    if (isLoginPage) {
+      setChecking(false)
+      setAuthorized(false)
+      return
+    }
+
+    // Add a small delay to ensure localStorage is ready after window.location.href
+    const timeoutId = setTimeout(() => {
+      const verify = async () => {
+        try {
+          // Check localStorage first
+          const token = localStorage.getItem('auth_token')
+          
+          if (!token) {
+            console.log('[Admin Layout] No token found')
+            router.replace('/admin')
+            setChecking(false)
+            return
+          }
+
+          console.log('[Admin Layout] Token found, verifying...')
+
+          // Verify with backend
+          const res = await api.get('/auth/me')
+
+          if (res?.success && res.user?.role === 'ADMIN') {
+            console.log('[Admin Layout] ✓ Authorized')
+            setAuthorized(true)
+          } else {
+            console.log('[Admin Layout] ✗ Invalid role')
+            localStorage.removeItem('auth_token')
+            router.replace('/admin')
+          }
+        } catch (err) {
+          console.error('[Admin Layout] Verification failed:', err)
+          localStorage.removeItem('auth_token')
+          router.replace('/admin')
+        } finally {
+          setChecking(false)
+        }
+      }
+
+      verify()
+    }, 50) // Small delay to ensure window.location.href has committed
+
+    return () => clearTimeout(timeoutId)
+  }, [pathname, router, isLoginPage])
+
+  // Render login page immediately without checks
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // Show loading state while checking
+  if (checking) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <p>Verifying access...</p>
+      </div>
+    )
+  }
+
+  // Redirect in progress, show nothing
+  if (!authorized) {
+    return null
+  }
+
+  // Authorized - render protected content
+  return (
+    <div className="admin-container">
+      {children}
     </div>
   )
 }
