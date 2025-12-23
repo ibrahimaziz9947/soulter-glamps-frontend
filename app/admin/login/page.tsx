@@ -98,7 +98,7 @@ export default function AdminLoginPage() {
 
 
 
-
+/*
 
 'use client'
 
@@ -139,5 +139,80 @@ export default function AdminLoginPage() {
       {loading ? 'Logging in…' : 'Login'}
     </button>
   )
-}
+} */
 
+
+
+
+
+
+// app/admin/login/page.tsx
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { loginAdmin } from '@/src/services/auth.api'
+
+export default function AdminLoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await loginAdmin({ email, password })
+
+      if (!res?.token) throw new Error('No token received')
+
+      // Store token
+      localStorage.setItem('auth_token', res.token)
+      
+      // Verify it was stored
+      const storedToken = localStorage.getItem('auth_token')
+      if (storedToken !== res.token) {
+        throw new Error('Failed to store token')
+      }
+
+      // Use window.location for clean state
+      window.location.href = '/admin/dashboard'
+      
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err instanceof Error ? err.message : 'Login failed')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input 
+          type="email"
+          value={email} 
+          onChange={e => setEmail(e.target.value)} 
+          placeholder="Email"
+          required
+          disabled={loading}
+        />
+        <input 
+          type="password"
+          value={password} 
+          onChange={e => setPassword(e.target.value)} 
+          placeholder="Password"
+          required
+          disabled={loading}
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+      </form>
+    </div>
+  )
+}
