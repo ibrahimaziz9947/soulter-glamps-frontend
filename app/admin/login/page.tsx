@@ -222,7 +222,7 @@ export default function AdminLoginPage() {
 
 
 
-// app/admin/login/page.tsx
+/* app/admin/login/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -300,4 +300,82 @@ export default function AdminLoginPage() {
       </form>
     </div>
   )
+} */
+
+
+
+
+
+
+// ============================================
+// FILE 1: app/admin/login/page.tsx
+// ============================================
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { loginAdmin } from '@/src/services/auth.api'
+
+export default function AdminLoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await loginAdmin({ email, password })
+      if (!res?.token) throw new Error('No token received')
+
+      // Store token FIRST
+      localStorage.setItem('auth_token', res.token)
+      
+      console.log('[Login] Token stored:', res.token.substring(0, 20) + '...')
+
+      // CRITICAL FIX: Use router.push() instead of window.location.href
+      // This maintains the React context and preserves localStorage
+      router.push('/admin/dashboard')
+      
+      // Alternative if router.push doesn't work:
+      // router.replace('/admin/dashboard')
+      
+    } catch (err) {
+      console.error('[Login] Error:', err)
+      setError(err instanceof Error ? err.message : 'Login failed')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input 
+          type="email"
+          value={email} 
+          onChange={e => setEmail(e.target.value)} 
+          placeholder="Email"
+          required
+          disabled={loading}
+        />
+        <input 
+          type="password" 
+          value={password} 
+          onChange={e => setPassword(e.target.value)} 
+          placeholder="Password"
+          required
+          disabled={loading}
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+      </form>
+    </div>
+  )
 }
+
