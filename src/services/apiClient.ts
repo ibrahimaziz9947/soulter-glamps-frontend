@@ -1,7 +1,7 @@
 /**
  * Base API Client
- * Provides a fetch wrapper with consistent error handling and configuration
- */
+ * Provides a fetch wrapper with consistent error handling and configuration */
+ 
 
 import { API_BASE_URL } from '@/app/config/api'
 
@@ -28,8 +28,8 @@ interface ApiClientOptions extends RequestInit {
 }
 
 /**
- * Generic API client for making HTTP requests
- */
+ * Generic API client for making HTTP requests */
+ 
 export async function apiClient<T = any>(
   endpoint: string,
   options: ApiClientOptions = {}
@@ -154,4 +154,11 @@ export const api = {
 
   delete: <T = any>(endpoint: string, options?: ApiClientOptions) =>
     apiClient<T>(endpoint, { ...options, method: 'DELETE' }),
-}
+} 
+
+
+
+
+
+
+

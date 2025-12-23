@@ -16,24 +16,25 @@ export default function SuperAdminLayout({
   const [checking, setChecking] = useState(true)
   const [authorized, setAuthorized] = useState(false)
 
-  const isLoginPage = pathname.startsWith('/super-admin/login')
+  const isLoginPage = pathname === '/super-admin/login'
 
   useEffect(() => {
+    // ✅ Allow login page freely
     if (isLoginPage) {
       setChecking(false)
       return
     }
 
-    let cancelled = false
+    let active = true
 
     const verify = async () => {
       try {
         const res = await api.get('/auth/me')
 
         if (
-          !cancelled &&
-          res?.data?.success &&
-          res.data.user?.role === 'SUPER_ADMIN'
+          active &&
+          res?.success &&
+          res.user?.role === 'SUPER_ADMIN'
         ) {
           setAuthorized(true)
         } else {
@@ -42,23 +43,24 @@ export default function SuperAdminLayout({
       } catch {
         router.replace('/super-admin/login')
       } finally {
-        if (!cancelled) setChecking(false)
+        if (active) setChecking(false)
       }
     }
 
     verify()
 
     return () => {
-      cancelled = true
+      active = false
     }
-  }, [router, isLoginPage])
+    // 🚫 DO NOT add router or pathname here
+  }, []) // ✅ RUN ONCE ONLY
 
-  // ✅ Login page renders freely
+  // ✅ Login page
   if (isLoginPage) {
     return <>{children}</>
   }
 
-  // ⏳ Auth check loader
+  // ⏳ Loading
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -69,7 +71,7 @@ export default function SuperAdminLayout({
 
   if (!authorized) return null
 
-  // ✅ FINAL LAYOUT (SIDEBAR + CONTENT)
+  // ✅ Final layout
   return (
     <div className="flex min-h-screen bg-[#f6f3ea]">
       <SuperAdminSidebar />
