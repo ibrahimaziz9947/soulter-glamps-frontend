@@ -391,7 +391,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
 
 
-
+/* Fixed Authentication At last
 export default function AgentLayout({
   children,
 }: {
@@ -400,6 +400,40 @@ export default function AgentLayout({
   return (
     <div className="min-h-screen bg-cream">
       {children}
+    </div>
+  )
+} */
+
+
+
+
+
+'use client'
+
+import { usePathname } from 'next/navigation'
+import AgentSidebar from '@/app/components/AgentSidebar'
+
+export default function AgentLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const pathname = usePathname()
+
+  // 🚫 Login page should NOT show sidebar
+  if (pathname === '/agent/login') {
+    return <>{children}</>
+  }
+
+  return (
+    <div className="flex min-h-screen bg-cream">
+      {/* LEFT SIDEBAR */}
+      <AgentSidebar />
+
+      {/* RIGHT CONTENT */}
+      <main className="flex-1 p-6 overflow-y-auto">
+        {children}
+      </main>
     </div>
   )
 }
