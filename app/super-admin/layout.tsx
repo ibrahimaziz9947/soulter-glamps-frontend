@@ -241,32 +241,42 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
 
 
-
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { api } from '@/src/services/apiClient'
 
-export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+export default function SuperAdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const router = useRouter()
-
-  const isLoginPage = pathname === '/super-admin/login'
 
   const [checking, setChecking] = useState(true)
   const [authorized, setAuthorized] = useState(false)
 
   useEffect(() => {
-    if (isLoginPage) {
-      setChecking(false)
-      return
+    // ⛔ NEVER run auth check on login page
+    if (typeof window !== 'undefined') {
+      if (window.location.pathname.startsWith('/super-admin/login')) {
+        setChecking(false)
+        return
+      }
     }
+
+    let cancelled = false
 
     const verify = async () => {
       try {
         const res = await api.get('/auth/me')
-        if (res?.data?.success && res.data.user?.role === 'SUPER_ADMIN') {
+
+        if (
+          !cancelled &&
+          res?.data?.success &&
+          res.data.user?.role === 'SUPER_ADMIN'
+        ) {
           setAuthorized(true)
         } else {
           router.replace('/super-admin/login')
@@ -274,14 +284,24 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       } catch {
         router.replace('/super-admin/login')
       } finally {
-        setChecking(false)
+        if (!cancelled) setChecking(false)
       }
     }
 
     verify()
-  }, [isLoginPage, router])
 
-  if (isLoginPage) return <>{children}</>
+    return () => {
+      cancelled = true
+    }
+  }, [router])
+
+  // ✅ Allow login page to render freely
+  if (
+    typeof window !== 'undefined' &&
+    window.location.pathname.startsWith('/super-admin/login')
+  ) {
+    return <>{children}</>
+  }
 
   if (checking) {
     return (
@@ -293,10 +313,5 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   if (!authorized) return null
 
-  return (
-    <div className="min-h-screen bg-cream">
-      {/* 🔥 Your existing sidebar + topbar layout remains unchanged */}
-      {children}
-    </div>
-  )
+  return <>{children}</>
 }
