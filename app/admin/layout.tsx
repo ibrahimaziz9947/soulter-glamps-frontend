@@ -248,22 +248,105 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 
 
-
+/*
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { api } from '@/src/services/apiClient'
-import Link from 'next/link'
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const router = useRouter()
+  const pathname = usePathname()
 
   const [checking, setChecking] = useState(true)
   const [authorized, setAuthorized] = useState(false)
 
-  // Admin login is ROOT (/admin)
+  // ✅ THIS IS THE CRITICAL LINE
+  const isLoginPage = pathname === '/admin'
+
+  useEffect(() => {
+    // 🔥 Never run auth check on login page
+    if (isLoginPage) {
+      setChecking(false)
+      return
+    }
+
+    let cancelled = false
+
+    const verify = async () => {
+      try {
+        const res = await api.get('/auth/me')
+
+        if (
+          !cancelled &&
+          res?.success &&
+          res.user?.role === 'ADMIN'
+        ) {
+          setAuthorized(true)
+        } else {
+          router.replace('/admin')
+        }
+      } catch {
+        router.replace('/admin')
+      } finally {
+        if (!cancelled) setChecking(false)
+      }
+    }
+
+    verify()
+
+    return () => {
+      cancelled = true
+    }
+  }, [router, isLoginPage])
+
+  // ✅ Login page renders freely
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // ⏳ Loader for protected pages only
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Verifying access…</p>
+      </div>
+    )
+  }
+
+  if (!authorized) return null
+
+  return (
+    <div className="min-h-screen bg-[#f6f3ea]">
+      {children}
+    </div>
+  )
+} */
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const [checking, setChecking] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
   const isLoginPage = pathname === '/admin'
 
   useEffect(() => {
@@ -278,7 +361,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       try {
         const res = await api.get('/auth/me')
 
-        // ✅ IMPORTANT: res IS the data
         if (
           !cancelled &&
           res?.success &&
@@ -299,14 +381,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => {
       cancelled = true
     }
-  }, [isLoginPage, router])
+  }, [router, isLoginPage])
 
-  // ✅ Allow login page freely
-  if (isLoginPage) {
-    return <>{children}</>
-  }
+  if (isLoginPage) return <>{children}</>
 
-  // ⏳ Loader
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -317,34 +395,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!authorized) return null
 
-  // ✅ Admin layout UI
   return (
-    <div className="flex min-h-screen bg-cream">
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-green text-cream p-6">
-        <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
-
-        <nav className="space-y-3">
-          <Link href="/admin/dashboard">Dashboard</Link>
-          <Link href="/admin/bookings">Bookings</Link>
-          <Link href="/admin/agents">Agents</Link>
-          <Link href="/admin/finance">Finance</Link>
-          <Link href="/admin/reports">Reports</Link>
-        </nav>
-
-        <Link
-          href="/admin"
-          className="block mt-10 text-sm text-yellow"
-        >
-          Logout
-        </Link>
-      </aside>
-
-      {/* CONTENT */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        {children}
-      </main>
+    <div className="min-h-screen bg-[#f6f3ea]">
+      {children}
     </div>
   )
 }
-
