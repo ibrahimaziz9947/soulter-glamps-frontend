@@ -305,7 +305,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
 
 
-'use client'
+/*'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -345,9 +345,48 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   }
 
   return <>{children}</>
+} */
+
+
+
+
+
+
+
+'use client'
+
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+export default function AgentLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [ready, setReady] = useState(false)
+
+  // 🚨 Allow login page to render freely
+  if (pathname === '/agent/login') {
+    return <>{children}</>
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      router.replace('/agent/login')
+      return
+    }
+    setReady(true)
+  }, [router])
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Verifying session...
+      </div>
+    )
+  }
+
+  return <>{children}</>
 }
-
-
 
 
 
