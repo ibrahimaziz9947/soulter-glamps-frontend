@@ -329,7 +329,7 @@ export default function AdminLayout({
 } */
 
 
-
+/*
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -400,4 +400,94 @@ export default function AdminLayout({
       {children}
     </div>
   )
+} */
+
+
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+import AdminSidebar from '@/app/components/AdminSidebar'
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const [checking, setChecking] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  // 🔑 IMPORTANT: /admin IS LOGIN PAGE
+  const isLoginPage = pathname === '/admin'
+
+  useEffect(() => {
+    if (isLoginPage) {
+      setChecking(false)
+      setAuthorized(false)
+      return
+    }
+
+    let cancelled = false
+
+    const verify = async () => {
+      try {
+        const res = await api.get('/auth/me')
+
+        if (
+          !cancelled &&
+          res?.success &&
+          res.user?.role === 'ADMIN'
+        ) {
+          setAuthorized(true)
+        } else {
+          router.replace('/admin')
+        }
+      } catch {
+        router.replace('/admin')
+      } finally {
+        if (!cancelled) setChecking(false)
+      }
+    }
+
+    verify()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isLoginPage, router])
+
+  // ✅ Login page renders freely
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // ⏳ Loader
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Verifying access…</p>
+      </div>
+    )
+  }
+
+  if (!authorized) return null
+
+  // ✅ Protected admin layout
+  return (
+    <div className="flex min-h-screen bg-[#f6f3ea]">
+      <AdminSidebar />
+      <main className="flex-1 p-6 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  )
 }
+

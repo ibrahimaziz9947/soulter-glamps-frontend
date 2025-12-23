@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -90,4 +90,54 @@ export default function AdminLoginPage() {
       </form>
     </div>
   )
+} */
+
+
+
+
+
+
+
+
+
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+
+export default function AdminLoginPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      setLoading(true)
+
+      const res = await api.post('/auth/login', {
+        email,
+        password,
+      })
+
+      if (res?.success && res?.token) {
+        // ✅ STORE TOKEN FIRST
+        localStorage.setItem('auth_token', res.token)
+
+        // ✅ THEN REDIRECT
+        router.replace('/admin/dashboard')
+      }
+    } catch (err) {
+      alert('Invalid credentials')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    // your UI here
+    <button onClick={() => handleLogin('admin@email.com', 'password')}>
+      {loading ? 'Logging in…' : 'Login'}
+    </button>
+  )
 }
+
