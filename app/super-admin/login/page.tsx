@@ -214,7 +214,7 @@ export default function SuperAdminLogin() {
 
 
 
-
+/*
 'use client'
 
 import { useState } from 'react'
@@ -284,6 +284,134 @@ export default function SuperAdminLoginPage() {
           {loading ? 'Signing in…' : 'Login'}
         </button>
       </form>
+    </div>
+  )
+} */
+
+
+
+
+
+
+
+
+
+
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { loginSuperAdmin } from '@/src/services/auth.api'
+
+export default function SuperAdminLoginPage() {
+  const router = useRouter()
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const res = await loginSuperAdmin({ email, password })
+
+      if (!res?.success || !res?.token) {
+        setError('Invalid credentials')
+        return
+      }
+
+      // ✅ Store JWT
+      localStorage.setItem('auth_token', res.token)
+
+      // ✅ Redirect ONCE
+      router.replace('/super-admin/dashboard')
+    } catch {
+      setError('Login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f1f14] via-[#1f3d1a] to-[#2e5a23] px-4">
+      <div className="w-full max-w-md bg-[#f9f7ef] rounded-2xl shadow-xl p-8">
+
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="mx-auto w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center mb-4">
+            <span className="text-2xl">🛡️</span>
+          </div>
+          <h1 className="text-3xl font-bold text-green-900">Super Admin</h1>
+          <p className="text-sm text-yellow-700 tracking-wide">
+            SYSTEM CONTROL PANEL
+          </p>
+        </div>
+
+        {/* Warning */}
+        <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm text-center">
+          Restricted access — authorized personnel only
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <p className="text-red-600 text-sm text-center">{error}</p>
+          )}
+
+          <div>
+            <label className="block text-sm font-semibold mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border rounded-md p-3 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border rounded-md p-3 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-800 hover:bg-green-900 text-white py-3 rounded-md font-semibold transition"
+          >
+            {loading ? 'Signing in…' : 'SECURE LOGIN'}
+          </button>
+        </form>
+
+        {/* Security Notice */}
+        <div className="mt-6 border-t pt-4 text-sm text-gray-700">
+          <p className="font-semibold mb-1 text-center">SECURITY NOTICE</p>
+          <div className="bg-yellow-50 border border-yellow-300 p-3 rounded">
+            <strong>High-Level Access:</strong>  
+            All login attempts are monitored and logged. Unauthorized access
+            is strictly prohibited.
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6 text-center text-xs text-gray-500">
+          © 2025 Soulter Glamps. All rights reserved.
+        </div>
+      </div>
     </div>
   )
 }
