@@ -265,14 +265,14 @@ function DashboardContent() {
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-/*import { getAuthToken } from "@lib/auth";
-import { getAuthToken } from "@/lib/auth";
+//import { getAuthToken } from "@lib/auth";
+import { getAuthToken } from "@lib/auth";
 
 const token = getAuthToken();
 
 if (!token) {
   throw new Error("No auth token found");
-} */
+} 
 
 type Booking = {
   id: string;
