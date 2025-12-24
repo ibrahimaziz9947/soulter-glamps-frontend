@@ -266,7 +266,8 @@ function DashboardContent() {
 import { useEffect, useState } from "react";
 import Link from "next/link";
 //import { getAuthToken } from "@lib/auth";
-import { getAuthToken } from "@lib/auth";
+//import { getAuthToken } from "@lib/auth";
+import { getAuthToken } from "../../../src/lib/auth";
 
 const token = getAuthToken();
 
