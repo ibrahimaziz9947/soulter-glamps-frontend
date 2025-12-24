@@ -591,7 +591,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 
 
-  'use client'
+ /* 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -697,6 +697,100 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="admin-container">
       {children}
+    </div>
+  )
+} */
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+import AdminSidebar from '@/app/components/AdminSidebar'
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const [checking, setChecking] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  // Login routes (do NOT show sidebar here)
+  const isLoginPage = pathname === '/admin' || pathname === '/admin/login'
+
+  useEffect(() => {
+    if (isLoginPage) {
+      setChecking(false)
+      setAuthorized(false)
+      return
+    }
+
+    const verify = async () => {
+      try {
+        if (typeof window === 'undefined') return
+
+        const token = localStorage.getItem('auth_token')
+
+        console.log('[Admin Layout] Token check:', {
+          exists: !!token,
+        })
+
+        if (!token) {
+          router.replace('/admin')
+          setChecking(false)
+          return
+        }
+
+        const res = await api.get('/auth/me')
+
+        if (res?.success && res.user?.role === 'ADMIN') {
+          setAuthorized(true)
+        } else {
+          localStorage.removeItem('auth_token')
+          router.replace('/admin')
+        }
+      } catch (err) {
+        console.error('[Admin Layout] Verification failed:', err)
+        localStorage.removeItem('auth_token')
+        router.replace('/admin')
+      } finally {
+        setChecking(false)
+      }
+    }
+
+    verify()
+  }, [pathname, router, isLoginPage])
+
+  // 🔹 LOGIN PAGE (no sidebar)
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  // 🔹 LOADING
+  if (checking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-sm text-gray-600">Verifying access...</p>
+      </div>
+    )
+  }
+
+  // 🔹 NOT AUTHORIZED
+  if (!authorized) {
+    return null
+  }
+
+  // ✅ AUTHORIZED ADMIN LAYOUT
+  return (
+    <div className="flex min-h-screen bg-[#f6f3eb]">
+      {/* LEFT SIDEBAR */}
+      <AdminSidebar />
+
+      {/* RIGHT CONTENT */}
+      <div className="flex-1 overflow-y-auto">
+        {children}
+      </div>
     </div>
   )
 }
