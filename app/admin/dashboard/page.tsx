@@ -537,7 +537,7 @@ function DashboardContent() {
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bookings`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/bookings`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
