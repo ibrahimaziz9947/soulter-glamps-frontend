@@ -115,6 +115,7 @@ export default function GlampsPage() {
               description: glamp.description,
               capacity: glamp.capacity,
               price: glamp.pricePerNight,
+              features: glamp.features || [],
               amenities: glamp.amenities || [],
             }
             
