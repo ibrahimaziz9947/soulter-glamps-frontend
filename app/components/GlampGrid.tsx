@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import GlampCard from './GlampCard'
 
@@ -60,6 +60,46 @@ export default function GlampGrid({ glamps }: GlampGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {validGlamps.map((glamp) => (
+        <GlampCard key={glamp.id} {...glamp} />
+      ))}
+    </div>
+  )
+} */
+
+
+
+
+
+
+
+'use client'
+
+import GlampCard from './GlampCard'
+
+interface Glamp {
+  id: string
+  name: string
+  image: string
+  description: string
+  capacity: number
+  price: string | number
+  features: string[]
+}
+
+interface GlampGridProps {
+  glamps: Glamp[]
+}
+
+export default function GlampGrid({ glamps }: GlampGridProps) {
+  const validGlamps = glamps.filter(glamp => {
+    const isUUID = glamp.id?.includes('-') && glamp.id.length > 10
+    const isNumeric = /^[0-9]+$/.test(glamp.id || '')
+    return glamp.id && isUUID && !isNumeric
+  })
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {validGlamps.map(glamp => (
         <GlampCard key={glamp.id} {...glamp} />
       ))}
     </div>
