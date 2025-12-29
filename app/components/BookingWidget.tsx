@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { useState } from 'react'
 import Button from './Button'
@@ -110,7 +110,9 @@ export default function BookingWidget({ glampId, glampName }: BookingWidgetProps
       
       if (bookingId) {
         // Redirect to confirmation page
-        window.location.href = `/booking/confirmation/${bookingId}`
+        //window.location.href = `/booking/confirmation/${bookingId}`
+        router.push(`/booking?glampId=${glampId}`)
+
       } else {
         setSuccessMessage('Booking created successfully!')
         setBookingReference(bookingId || 'N/A')
@@ -122,7 +124,8 @@ export default function BookingWidget({ glampId, glampName }: BookingWidgetProps
     } finally {
       setIsSubmitting(false)
     }
-  }
+  } 
+
 
   const inputClassName = (fieldName: string) => 
     `w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent ${
@@ -313,4 +316,162 @@ export default function BookingWidget({ glampId, glampName }: BookingWidgetProps
       </form>
     </div>
   )
+} */
+
+
+
+
+
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Button from './Button'
+
+interface BookingWidgetProps {
+  glampId: string
+  glampName?: string
 }
+
+export default function BookingWidget({ glampId, glampName }: BookingWidgetProps) {
+  const router = useRouter()
+
+  const [formData, setFormData] = useState({
+    checkInDate: '',
+    checkOutDate: '',
+    guests: 2,
+  })
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // ---------------- VALIDATION ----------------
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.checkInDate) {
+      newErrors.checkInDate = 'Check-in date is required'
+    }
+
+    if (!formData.checkOutDate) {
+      newErrors.checkOutDate = 'Check-out date is required'
+    }
+
+    if (formData.checkInDate && formData.checkOutDate) {
+      const checkIn = new Date(formData.checkInDate)
+      const checkOut = new Date(formData.checkOutDate)
+
+      if (checkOut <= checkIn) {
+        newErrors.checkOutDate = 'Check-out must be after check-in'
+      }
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (checkIn < today) {
+        newErrors.checkInDate = 'Check-in date cannot be in the past'
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // ---------------- SUBMIT ----------------
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    /**
+     * IMPORTANT:
+     * BookingWidget DOES NOT create bookings.
+     * It only redirects to the real booking page.
+     */
+    router.push(`/booking?glampId=${glampId}`)
+  }
+
+  const inputClassName = (fieldName: string) =>
+    `w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent ${
+      errors[fieldName] ? 'border-red-500' : 'border-gray-300'
+    }`
+
+  // ---------------- UI ----------------
+  return (
+    <div className="space-y-4">
+      <h3 className="font-serif text-2xl font-bold text-green">
+        Book Your Stay {glampName ? `at ${glampName}` : ''}
+      </h3>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+
+        {/* Check-in */}
+        <div>
+          <label className="block text-sm font-medium text-text-dark mb-2">
+            Check-in Date
+          </label>
+          <input
+            type="date"
+            value={formData.checkInDate}
+            onChange={(e) => {
+              setFormData({ ...formData, checkInDate: e.target.value })
+              setErrors({ ...errors, checkInDate: '' })
+            }}
+            className={inputClassName('checkInDate')}
+            min={new Date().toISOString().split('T')[0]}
+          />
+          {errors.checkInDate && (
+            <p className="text-red-500 text-xs mt-1">{errors.checkInDate}</p>
+          )}
+        </div>
+
+        {/* Check-out */}
+        <div>
+          <label className="block text-sm font-medium text-text-dark mb-2">
+            Check-out Date
+          </label>
+          <input
+            type="date"
+            value={formData.checkOutDate}
+            onChange={(e) => {
+              setFormData({ ...formData, checkOutDate: e.target.value })
+              setErrors({ ...errors, checkOutDate: '' })
+            }}
+            className={inputClassName('checkOutDate')}
+            min={formData.checkInDate || new Date().toISOString().split('T')[0]}
+          />
+          {errors.checkOutDate && (
+            <p className="text-red-500 text-xs mt-1">{errors.checkOutDate}</p>
+          )}
+        </div>
+
+        {/* Guests */}
+        <div>
+          <label className="block text-sm font-medium text-text-dark mb-2">
+            Number of Guests
+          </label>
+          <select
+            value={formData.guests}
+            onChange={(e) =>
+              setFormData({ ...formData, guests: parseInt(e.target.value) })
+            }
+            className={inputClassName('guests')}
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+              <option key={num} value={num}>
+                {num} {num === 1 ? 'Guest' : 'Guests'}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <Button type="submit" variant="primary" size="large" className="w-full">
+          Book Now
+        </Button>
+
+        <p className="text-xs text-text-light text-center">
+          You will complete your booking on the next page
+        </p>
+      </form>
+    </div>
+  )
+}
+
