@@ -1,7 +1,4 @@
-/**
- * Bookings API Service
- * Handles all booking-related API calls
- *
+
 
 import { api } from './apiClient'
 
@@ -48,8 +45,7 @@ export interface BookingsListResponse {
   count: number
 }
 
-/**
- * Create a new booking
+
  
 export async function createBooking(
   payload: BookingPayload
@@ -57,19 +53,17 @@ export async function createBooking(
   return api.post<BookingResponse>('/bookings', payload)
 }
 
-/**
- * Get all bookings (admin/agent)
+
  
 export async function getBookings(): Promise<BookingsListResponse> {
   return api.get<BookingsListResponse>('/bookings')
 }
 
-/**
- * Get a single booking by ID
+
  
 export async function getBookingById(id: string): Promise<BookingResponse> {
   return api.get<BookingResponse>(`/bookings/${id}`)
-} */
+} 
 
 
 
@@ -77,7 +71,7 @@ export async function getBookingById(id: string): Promise<BookingResponse> {
 
 
 
-// src/services/bookings.api.ts
+/* src/services/bookings.api.ts
 
 export interface BookingPayload {
   glampId: string
@@ -181,4 +175,4 @@ export async function getBookingById(id: string): Promise<BookingResponse> {
     console.error('[bookings.api] Error fetching booking:', error)
     throw new Error(error.message || 'Failed to fetch booking')
   }
-}
+} */
