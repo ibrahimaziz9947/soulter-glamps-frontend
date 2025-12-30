@@ -362,36 +362,53 @@ export type BookingResponse =
   | { success: true; message?: string; booking: Booking }
   | { success: false; error: string }
 
-// 🚨 CRITICAL: NO localhost fallback
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+// ⚠️ DO NOT throw at module level (breaks Next.js build)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
-if (!API_BASE_URL) {
-  throw new Error(
-    'NEXT_PUBLIC_API_URL is not defined. Booking API cannot be called.'
-  )
+function getApiBaseUrl(): string | null {
+  if (!API_BASE_URL) {
+    console.error(
+      '[bookings.api] NEXT_PUBLIC_API_URL is missing. Booking API unavailable.'
+    )
+    return null
+  }
+  return API_BASE_URL
 }
 
 export async function createBooking(
   payload: BookingPayload
 ): Promise<BookingResponse> {
   console.log('[bookings.api] Creating booking with payload:', payload)
-  console.log('[bookings.api] API_BASE_URL:', API_BASE_URL)
+
+  const baseUrl = getApiBaseUrl()
+  if (!baseUrl) {
+    return {
+      success: false,
+      error: 'Booking service is currently unavailable',
+    }
+  }
 
   if (!payload.glampId || !payload.checkInDate || !payload.checkOutDate) {
-    return { success: false, error: 'Missing required booking fields' }
+    return {
+      success: false,
+      error: 'Missing required booking fields',
+    }
   }
 
   if (!payload.customerName || !payload.customerEmail || !payload.customerPhone) {
-    return { success: false, error: 'Missing required customer information' }
+    return {
+      success: false,
+      error: 'Missing required customer information',
+    }
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings`, {
+    const response = await fetch(`${baseUrl}/bookings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // safe for future auth
+      credentials: 'include', // future-safe for auth
       body: JSON.stringify(payload),
     })
 
@@ -417,7 +434,7 @@ export async function createBooking(
       message: data.message,
       booking: data.booking,
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('[bookings.api] Network error:', error)
     return {
       success: false,
@@ -431,8 +448,16 @@ export async function getBookingById(
 ): Promise<BookingResponse> {
   console.log('[bookings.api] Fetching booking:', id)
 
+  const baseUrl = getApiBaseUrl()
+  if (!baseUrl) {
+    return {
+      success: false,
+      error: 'Booking service is currently unavailable',
+    }
+  }
+
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+    const response = await fetch(`${baseUrl}/bookings/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -454,7 +479,7 @@ export async function getBookingById(
       success: true,
       booking: data.booking,
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('[bookings.api] Network error:', error)
     return {
       success: false,
