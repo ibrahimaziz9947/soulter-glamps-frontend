@@ -182,7 +182,7 @@ export async function getBookingById(id: string): Promise<BookingResponse> {
 
 
 
-// src/services/bookings.api.ts
+/* src/services/bookings.api.ts
 
 export interface BookingPayload {
   glampId: string
@@ -321,6 +321,144 @@ export async function getBookingById(id: string): Promise<BookingResponse> {
     return {
       success: false,
       error: error.message || 'Failed to fetch booking',
+    }
+  }
+} */
+
+
+
+
+
+
+// src/services/bookings.api.ts
+
+export interface BookingPayload {
+  glampId: string
+  checkInDate: string
+  checkOutDate: string
+  guests: number
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+}
+
+export interface Booking {
+  id: string
+  status: string
+  totalAmount?: number
+  amountPaid?: number
+  remainingAmount?: number
+  checkInDate: string
+  checkOutDate: string
+  guests: number
+  glampId: string
+  glampName?: string
+  customerName: string
+  customerEmail?: string
+}
+
+// Discriminated union for strict type safety
+export type BookingResponse =
+  | { success: true; message?: string; booking: Booking }
+  | { success: false; error: string }
+
+// 🚨 CRITICAL: NO localhost fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+
+if (!API_BASE_URL) {
+  throw new Error(
+    'NEXT_PUBLIC_API_URL is not defined. Booking API cannot be called.'
+  )
+}
+
+export async function createBooking(
+  payload: BookingPayload
+): Promise<BookingResponse> {
+  console.log('[bookings.api] Creating booking with payload:', payload)
+  console.log('[bookings.api] API_BASE_URL:', API_BASE_URL)
+
+  if (!payload.glampId || !payload.checkInDate || !payload.checkOutDate) {
+    return { success: false, error: 'Missing required booking fields' }
+  }
+
+  if (!payload.customerName || !payload.customerEmail || !payload.customerPhone) {
+    return { success: false, error: 'Missing required customer information' }
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // safe for future auth
+      body: JSON.stringify(payload),
+    })
+
+    const data = await response.json()
+    console.log('[bookings.api] API response:', data)
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.error || `HTTP ${response.status}`,
+      }
+    }
+
+    if (!data?.success || !data?.booking) {
+      return {
+        success: false,
+        error: data?.error || 'Booking creation failed',
+      }
+    }
+
+    return {
+      success: true,
+      message: data.message,
+      booking: data.booking,
+    }
+  } catch (error: any) {
+    console.error('[bookings.api] Network error:', error)
+    return {
+      success: false,
+      error: 'Unable to reach booking server',
+    }
+  }
+}
+
+export async function getBookingById(
+  id: string
+): Promise<BookingResponse> {
+  console.log('[bookings.api] Fetching booking:', id)
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    })
+
+    const data = await response.json()
+    console.log('[bookings.api] Booking details:', data)
+
+    if (!response.ok || !data?.success || !data?.booking) {
+      return {
+        success: false,
+        error: data?.error || 'Failed to fetch booking',
+      }
+    }
+
+    return {
+      success: true,
+      booking: data.booking,
+    }
+  } catch (error: any) {
+    console.error('[bookings.api] Network error:', error)
+    return {
+      success: false,
+      error: 'Unable to reach booking server',
     }
   }
 }
