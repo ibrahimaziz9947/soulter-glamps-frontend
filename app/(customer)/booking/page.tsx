@@ -718,6 +718,7 @@ export default function BookingPage() {
 
 
 'use client'
+import { API_BASE_URL } from '@/app/config/api'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -752,9 +753,20 @@ function BookingPageContent() {
     const fetchGlamps = async () => {
       try {
         setIsLoadingGlamps(true)
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/glamps`)
+        //const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/glamps`)
+        const response = await fetch(`${API_BASE_URL}/api/glamps`)
+
+        /*const data = await response.json()
+        setGlamps(data.data || []) */
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+
         const data = await response.json()
-        setGlamps(data.data || [])
+
+        // support both formats just in case
+        setGlamps(Array.isArray(data) ? data : data.data || [])
+
         console.log('[BookingPage] Glamps loaded:', data.data)
       } catch (err) {
         console.error('[BookingPage] Failed to load glamps:', err)
@@ -923,9 +935,9 @@ function BookingPageContent() {
     <div className="min-h-screen bg-cream">
       {/* Page Header */}
       <section className="relative h-64 flex items-center justify-center bg-green">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center opacity-30"
-          style={{backgroundImage: "url('https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=1920')"}}
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=1920')" }}
         ></div>
         <div className="relative z-10 text-center px-4">
           <h1 className="font-serif text-5xl md:text-6xl font-bold text-cream mb-4 animate-fade-in">
@@ -992,7 +1004,7 @@ function BookingPageContent() {
                 <form onSubmit={handleAvailabilitySubmit}>
                   <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
                     <h2 className="font-serif text-3xl font-bold text-green mb-6">Check Availability</h2>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
@@ -1091,7 +1103,7 @@ function BookingPageContent() {
                 <form onSubmit={handleDetailsSubmit}>
                   <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
                     <h2 className="font-serif text-2xl font-bold text-green mb-6">Guest Information</h2>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
@@ -1192,10 +1204,10 @@ function BookingPageContent() {
                     </div>
 
                     <div className="mt-8 flex gap-4">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="large" 
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="large"
                         className="flex-1"
                         onClick={() => setCurrentStep(1)}
                         disabled={isSubmitting}
@@ -1214,7 +1226,7 @@ function BookingPageContent() {
               {currentStep === 3 && (
                 <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
                   <h2 className="font-serif text-2xl font-bold text-green mb-6">Choose Payment Method</h2>
-                  
+
                   <div className="space-y-4">
                     <button
                       onClick={handleAdvancePayment}
@@ -1274,10 +1286,10 @@ function BookingPageContent() {
                   </div>
 
                   <div className="mt-8">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="large" 
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="large"
                       className="w-full"
                       onClick={() => setCurrentStep(2)}
                       disabled={isSubmitting}
@@ -1293,7 +1305,7 @@ function BookingPageContent() {
             <div className="lg:col-span-1">
               <div className="sticky top-24 bg-white rounded-lg shadow-lg p-6">
                 <h2 className="font-serif text-2xl font-bold text-green mb-6">Booking Summary</h2>
-                
+
                 {selectedGlamp ? (
                   <>
                     <div className="mb-6">
