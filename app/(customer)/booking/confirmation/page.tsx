@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Button from '../../../components/Button'
 
+export const dynamic = 'force-dynamic'
+
 export default function ConfirmationPage() {
   const router = useRouter()
   const [bookingData, setBookingData] = useState<any>(null)

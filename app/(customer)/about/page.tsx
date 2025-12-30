@@ -5,6 +5,7 @@ export const metadata = {
   title: 'About Us - Soulter Glamps',
   description: 'Learn about Soulter Glamps - your hill-top retreat surrounded by nature',
 }
+export const dynamic = 'force-dynamic'
 
 export default function AboutPage() {
   return (

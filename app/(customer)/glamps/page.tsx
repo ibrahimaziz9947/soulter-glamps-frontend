@@ -6,6 +6,8 @@ import GlampGrid from '../../components/GlampGrid'
 import PageHeader from '../../components/PageHeader'
 import { getGlamps, type Glamp } from '@/src/services'
 
+export const dynamic = 'force-dynamic'
+
 export default function GlampsPage() {
   const [glamps, setGlamps] = useState<any[]>([])
   const [loading, setLoading] = useState(true)

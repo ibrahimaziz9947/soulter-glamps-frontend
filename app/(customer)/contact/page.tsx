@@ -5,6 +5,8 @@ import SectionHeading from '../../components/SectionHeading'
 import Button from '../../components/Button'
 import PageHeader from '../../components/PageHeader'
 
+export const dynamic = 'force-dynamic'
+
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',

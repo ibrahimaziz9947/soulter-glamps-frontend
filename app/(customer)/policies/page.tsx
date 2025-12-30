@@ -5,6 +5,8 @@ export const metadata = {
   description: 'Our policies for check-in, privacy, refunds, cancellations, and safety',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function PoliciesPage() {
   return (
     <div className="min-h-screen bg-cream">

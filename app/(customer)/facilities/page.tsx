@@ -6,6 +6,8 @@ export const metadata = {
   description: 'Explore all the facilities and amenities available at Soulter Glamps',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function FacilitiesPage() {
   return (
     <div className="min-h-screen bg-cream">

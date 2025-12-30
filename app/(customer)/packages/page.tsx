@@ -10,6 +10,8 @@ export const metadata = {
   description: 'Explore our curated glamping packages and special experiences',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function PackagesPage() {
   return (
     <div className="min-h-screen bg-cream">

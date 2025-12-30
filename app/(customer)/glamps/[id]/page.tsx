@@ -8,6 +8,8 @@ import BookingWidget from '../../../components/BookingWidget'
 import ImageGallery from '../../../components/ImageGallery'
 import { getGlampById, type Glamp } from '@/src/services'
 
+export const dynamic = 'force-dynamic'
+
 export default function GlampDetailPage({ params }: { params: { id: string } }) {
   const [glamp, setGlamp] = useState<Glamp | null>(null)
   const [loading, setLoading] = useState(true)

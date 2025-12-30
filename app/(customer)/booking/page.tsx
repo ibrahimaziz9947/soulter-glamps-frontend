@@ -2030,6 +2030,8 @@ import Button from '../../components/Button'
 import { glamps } from '../../data/glamps'
 import { createBooking, type BookingPayload } from '@/src/services/bookings.api'
 
+export const dynamic = 'force-dynamic'
+
 function BookingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()

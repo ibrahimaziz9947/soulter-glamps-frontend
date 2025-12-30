@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import SectionHeading from '../../components/SectionHeading'
 
+export const dynamic = 'force-dynamic'
+
 const galleryImages = [
   {
     id: 1,
