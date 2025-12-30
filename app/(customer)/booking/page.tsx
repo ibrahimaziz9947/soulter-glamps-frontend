@@ -2710,7 +2710,7 @@ export default function BookingPage() {
 
 
 
-
+/*
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
@@ -2895,4 +2895,195 @@ export default function BookingPage() {
       <BookingPageContent />
     </Suspense>
   )
+} */
+
+
+
+
+
+'use client'
+
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Button from '../../components/Button'
+import { createBooking, type BookingPayload } from '@/src/services/bookings.api'
+import { API_BASE_URL } from '@/app/config/api'
+
+export const dynamic = 'force-dynamic'
+
+interface Glamp {
+  id: string       // UUID from backend
+  name: string
+  pricePerNight?: number
+  capacity?: number
 }
+
+function BookingPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // ---------------- STATE ----------------
+  const [currentStep, setCurrentStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [glamps, setGlamps] = useState<Glamp[]>([])
+  const [selectedGlamp, setSelectedGlamp] = useState<Glamp | null>(null)
+
+  const [formData, setFormData] = useState({
+    checkIn: '',
+    checkOut: '',
+    guests: 2,
+    glampId: '',
+
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+  })
+
+  const [nights, setNights] = useState(0)
+  const [totalPrice, setTotalPrice] = useState(0)
+
+  // ---------------- FETCH GLAMPS ----------------
+  useEffect(() => {
+    async function loadGlamps() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/glamps`)
+        const data = await res.json()
+
+        if (data?.success && Array.isArray(data.glamps)) {
+          setGlamps(data.glamps)
+        } else {
+          throw new Error('Invalid glamps response')
+        }
+      } catch (err) {
+        console.error('Failed to load glamps', err)
+        setError('Unable to load glamps')
+      }
+    }
+
+    loadGlamps()
+  }, [])
+
+  // ---------------- DERIVED DATA ----------------
+  useEffect(() => {
+    if (formData.glampId) {
+      const g = glamps.find(x => x.id === formData.glampId) || null
+      setSelectedGlamp(g)
+    }
+  }, [formData.glampId, glamps])
+
+  useEffect(() => {
+    if (formData.checkIn && formData.checkOut) {
+      const d1 = new Date(formData.checkIn)
+      const d2 = new Date(formData.checkOut)
+      const diff = Math.ceil(
+        (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)
+      )
+      setNights(diff > 0 ? diff : 0)
+    }
+  }, [formData.checkIn, formData.checkOut])
+
+  useEffect(() => {
+    if (selectedGlamp && nights > 0) {
+      const price = (selectedGlamp.pricePerNight || 25000) * nights
+      setTotalPrice(price)
+    }
+  }, [selectedGlamp, nights])
+
+  // ---------------- HANDLERS ----------------
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+    setError(null)
+  }
+
+  const handleCreateBooking = async () => {
+    setIsSubmitting(true)
+    setError(null)
+
+    const payload: BookingPayload = {
+      glampId: formData.glampId, // ✅ UUID
+      checkInDate: formData.checkIn,
+      checkOutDate: formData.checkOut,
+      guests: formData.guests,
+      customerName: `${formData.firstName} ${formData.lastName}`,
+      customerEmail: formData.email,
+      customerPhone: formData.phone,
+    }
+
+    const response = await createBooking(payload)
+
+    if (response.success) {
+      router.push(`/booking/confirmation/${response.booking.id}`)
+    } else {
+      setError(response.error)
+      setIsSubmitting(false)
+    }
+  }
+
+  // ---------------- UI ----------------
+  return (
+    <div className="min-h-screen bg-cream p-8">
+      {error && (
+        <div className="mb-6 bg-red-100 border border-red-300 p-4 rounded text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} />
+          <input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} />
+
+          <select name="guests" value={formData.guests} onChange={handleChange}>
+            {[1, 2, 3].map(n => (
+              <option key={n} value={n}>{n} Guests</option>
+            ))}
+          </select>
+
+          <select name="glampId" value={formData.glampId} onChange={handleChange}>
+            <option value="">Select Glamp</option>
+            {glamps.map(g => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+
+          <input name="firstName" placeholder="First name" value={formData.firstName} onChange={handleChange} />
+          <input name="lastName" placeholder="Last name" value={formData.lastName} onChange={handleChange} />
+          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} />
+          <input name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} />
+
+          <Button onClick={handleCreateBooking} disabled={isSubmitting}>
+            Confirm Booking
+          </Button>
+        </div>
+
+        <div>
+          {selectedGlamp && (
+            <div className="bg-white p-6 rounded shadow">
+              <h3 className="font-bold">{selectedGlamp.name}</h3>
+              <p>{nights} nights</p>
+              <p>Total: PKR {totalPrice.toLocaleString()}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={<div>Loading booking…</div>}>
+      <BookingPageContent />
+    </Suspense>
+  )
+}
+
+
