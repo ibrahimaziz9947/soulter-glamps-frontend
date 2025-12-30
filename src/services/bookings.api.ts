@@ -412,7 +412,7 @@ export async function createBooking(
   }
 
   try {
-    const response = await fetch(`${baseUrl}/bookings`, {
+    const response = await fetch(`${baseUrl}/api/bookings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -466,7 +466,7 @@ export async function getBookingById(
   }
 
   try {
-    const response = await fetch(`${baseUrl}/bookings/${id}`, {
+    const response = await fetch(`${baseUrl}/api/bookings/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
