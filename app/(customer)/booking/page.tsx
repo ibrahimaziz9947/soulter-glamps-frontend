@@ -2033,6 +2033,11 @@ import { createBooking, type BookingPayload } from '@/src/services/bookings.api'
 export const dynamic = 'force-dynamic'
 
 function BookingPageContent() {
+  console.log(
+  '[BookingPage] NEXT_PUBLIC_API_URL =',
+  process.env.NEXT_PUBLIC_API_URL
+)
+
   const router = useRouter()
   const searchParams = useSearchParams()
   
