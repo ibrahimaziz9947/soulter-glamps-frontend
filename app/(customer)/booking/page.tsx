@@ -2021,7 +2021,7 @@ export default function BookingPage() {
 
 
 
-
+/*
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
@@ -2167,7 +2167,7 @@ function BookingPageContent() {
     const response = await createBooking(payload)
     
     if (response.success) {
-      // Redirect after showing success animation
+      
       setTimeout(() => {
         router.push(`/booking/confirmation/${response.booking.id}`)
       }, 2000)
@@ -2181,7 +2181,7 @@ function BookingPageContent() {
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* Page Header */}
+      
       <section className="relative h-64 flex items-center justify-center bg-green">
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-30"
@@ -2197,7 +2197,6 @@ function BookingPageContent() {
         </div>
       </section>
 
-      {/* Progress Steps */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
@@ -2225,7 +2224,7 @@ function BookingPageContent() {
         </div>
       </section>
 
-      {/* Error Message */}
+    
       {error && (
         <section className="py-4 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
@@ -2241,13 +2240,13 @@ function BookingPageContent() {
         </section>
       )}
 
-      {/* Booking Form */}
+
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Form */}
+          
             <div className="lg:col-span-2 space-y-8">
-              {/* Step 1: Check Availability */}
+          
               {currentStep === 1 && (
                 <form onSubmit={handleAvailabilitySubmit}>
                   <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
@@ -2337,7 +2336,7 @@ function BookingPageContent() {
                 </form>
               )}
 
-              {/* Step 2: Guest Details */}
+        
               {currentStep === 2 && (
                 <form onSubmit={handleDetailsSubmit}>
                   <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
@@ -2461,7 +2460,7 @@ function BookingPageContent() {
                 </form>
               )}
 
-              {/* Step 3: Payment Options */}
+            
               {currentStep === 3 && (
                 <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
                   <h2 className="font-serif text-2xl font-bold text-green mb-6">Choose Payment Method</h2>
@@ -2540,7 +2539,7 @@ function BookingPageContent() {
               )}
             </div>
 
-            {/* Booking Summary */}
+          
             <div className="lg:col-span-1">
               <div className="sticky top-24 bg-white rounded-lg shadow-lg p-6">
                 <h2 className="font-serif text-2xl font-bold text-green mb-6">Booking Summary</h2>
@@ -2600,7 +2599,7 @@ function BookingPageContent() {
         </div>
       </section>
 
-      {/* EasyPaisa Payment Modal */}
+    
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-8 animate-fade-in">
@@ -2702,7 +2701,7 @@ export default function BookingPage() {
       <BookingPageContent />
     </Suspense>
   )
-}
+} */
 
 
 
@@ -2712,264 +2711,178 @@ export default function BookingPage() {
 
 
 
-/*
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Button from '../../components/Button'
-import { createBooking } from '@/src/services/bookings.api'
+import { createBooking, type BookingPayload } from '@/src/services/bookings.api'
+import { API_BASE_URL } from '@/app/config/api'
+
+export const dynamic = 'force-dynamic'
+
+interface Glamp {
+  id: string        // ✅ UUID FROM BACKEND
+  name: string
+  pricePerNight: number
+  maxGuests: number
+}
 
 function BookingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // 🔒 Booking is ALWAYS tied to glampId from URL
-  const glampId = searchParams.get('glampId')
-
-  if (!glampId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <p className="text-text-light">
-          Invalid booking request. Please select a glamp first.
-        </p>
-      </div>
-    )
-  }
-
-  // ---------------- STATE ----------------
   const [currentStep, setCurrentStep] = useState(1)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [glamps, setGlamps] = useState<Glamp[]>([])
+  const [selectedGlamp, setSelectedGlamp] = useState<Glamp | null>(null)
 
   const [formData, setFormData] = useState({
     checkIn: '',
     checkOut: '',
     guests: 2,
+    glampId: '',
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    arrivalTime: '',
-    specialRequests: '',
   })
 
-  // ---------------- HANDLERS ----------------
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  const [nights, setNights] = useState(0)
+  const [totalPrice, setTotalPrice] = useState(0)
 
-  const submitBooking = async () => {
-    setError(null)
-    setIsSubmitting(true)
-
-    try {
-      const res = await createBooking({
-        glampId,
-        checkInDate: formData.checkIn,
-        checkOutDate: formData.checkOut,
-        guests: formData.guests,
-        customerName: `${formData.firstName} ${formData.lastName}`,
-        customerEmail: formData.email,
-        customerPhone: formData.phone,
+  // 🔹 FETCH REAL GLAMPS FROM BACKEND
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/glamps`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setGlamps(data.glamps)
+        }
       })
+      .catch(() => {
+        setError('Failed to load glamps')
+      })
+  }, [])
 
-      const bookingId = res?.booking?.id
-      if (!bookingId) throw new Error('Booking creation failed')
+  // 🔹 SET SELECTED GLAMP
+  useEffect(() => {
+    const glamp = glamps.find(g => g.id === formData.glampId)
+    setSelectedGlamp(glamp || null)
+  }, [formData.glampId, glamps])
 
-      router.push(`/booking/confirmation/${bookingId}`)
-    } catch (err: any) {
-      setError(err.message || 'Failed to create booking. Please try again.')
-    } finally {
+  // 🔹 CALCULATE NIGHTS
+  useEffect(() => {
+    if (formData.checkIn && formData.checkOut) {
+      const inDate = new Date(formData.checkIn)
+      const outDate = new Date(formData.checkOut)
+      setNights(Math.max(1, Math.ceil((+outDate - +inDate) / 86400000)))
+    }
+  }, [formData.checkIn, formData.checkOut])
+
+  // 🔹 CALCULATE PRICE
+  useEffect(() => {
+    if (selectedGlamp) {
+      setTotalPrice(selectedGlamp.pricePerNight * nights)
+    }
+  }, [selectedGlamp, nights])
+
+  const handleCreateBooking = async () => {
+    setIsSubmitting(true)
+    setError(null)
+
+    const payload: BookingPayload = {
+      glampId: formData.glampId, // ✅ UUID
+      checkInDate: formData.checkIn,
+      checkOutDate: formData.checkOut,
+      guests: formData.guests,
+      customerName: `${formData.firstName} ${formData.lastName}`,
+      customerEmail: formData.email,
+      customerPhone: formData.phone,
+    }
+
+    const response = await createBooking(payload)
+
+    if (response.success) {
+      router.push(`/booking/confirmation/${response.booking.id}`)
+    } else {
+      setError(response.error)
       setIsSubmitting(false)
     }
   }
 
-  // ---------------- UI ----------------
   return (
-    <div className="min-h-screen bg-cream">
-
-      
-      <section className="relative h-64 flex items-center justify-center bg-green">
-        <div className="relative z-10 text-center px-4">
-          <h1 className="font-serif text-5xl font-bold text-cream mb-4">
-            Complete Your Booking
-          </h1>
-          <p className="text-xl text-cream/90">
-            You&apos;re just a few steps away from your getaway
-          </p>
-        </div>
-      </section>
-
-      
-      <section className="py-8 bg-white">
-        <div className="max-w-4xl mx-auto flex justify-between text-sm">
-          <span className={currentStep >= 1 ? 'text-green font-semibold' : ''}>Availability</span>
-          <span className={currentStep >= 2 ? 'text-green font-semibold' : ''}>Details</span>
-          <span className={currentStep >= 3 ? 'text-green font-semibold' : ''}>Confirm</span>
-        </div>
-      </section>
-
+    <div className="min-h-screen bg-cream p-8">
       {error && (
-        <div className="max-w-3xl mx-auto mt-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <div className="bg-red-100 border border-red-300 text-red-700 p-4 mb-6 rounded">
           {error}
         </div>
       )}
 
-      <section className="py-12 px-4 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {currentStep === 1 && (
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="text-2xl font-bold mb-4">Check Availability</h2>
 
-          
-          <div className="lg:col-span-2 space-y-8">
+          <input
+            type="date"
+            value={formData.checkIn}
+            onChange={e => setFormData({ ...formData, checkIn: e.target.value })}
+          />
 
-            
-            {currentStep === 1 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="font-serif text-3xl font-bold text-green mb-6">
-                  Check Availability
-                </h2>
+          <input
+            type="date"
+            value={formData.checkOut}
+            onChange={e => setFormData({ ...formData, checkOut: e.target.value })}
+          />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <input
-                    type="date"
-                    name="checkIn"
-                    value={formData.checkIn}
-                    onChange={handleInputChange}
-                    required
-                    className="input"
-                  />
-                  <input
-                    type="date"
-                    name="checkOut"
-                    value={formData.checkOut}
-                    onChange={handleInputChange}
-                    required
-                    className="input"
-                  />
-                  <select
-                    name="guests"
-                    value={formData.guests}
-                    onChange={handleInputChange}
-                    className="input"
-                  >
-                    {[1, 2, 3, 4].map(n => (
-                      <option key={n} value={n}>{n} Guest{n > 1 && 's'}</option>
-                    ))}
-                  </select>
-                </div>
+          <select
+            value={formData.guests}
+            onChange={e =>
+              setFormData({ ...formData, guests: Number(e.target.value) })
+            }
+          >
+            {[1, 2, 3].map(n => (
+              <option key={n} value={n}>{n} Guests</option>
+            ))}
+          </select>
 
-                <Button className="w-full mt-8" onClick={() => setCurrentStep(2)}>
-                  Continue
-                </Button>
-              </div>
-            )}
+          <select
+            value={formData.glampId}
+            onChange={e =>
+              setFormData({ ...formData, glampId: e.target.value })
+            }
+          >
+            <option value="">Select Glamp</option>
+            {glamps.map(g => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
 
-            
-            {currentStep === 2 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="font-serif text-2xl font-bold text-green mb-6">
-                  Guest Information
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <input
-                    name="firstName"
-                    placeholder="First Name"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="input"
-                    required
-                  />
-                  <input
-                    name="lastName"
-                    placeholder="Last Name"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className="input"
-                    required
-                  />
-                  <input
-                    name="email"
-                    type="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="input"
-                    required
-                  />
-                  <input
-                    name="phone"
-                    placeholder="Phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="input"
-                    required
-                  />
-                </div>
-
-                <div className="flex gap-4 mt-8">
-                  <Button variant="outline" onClick={() => setCurrentStep(1)}>Back</Button>
-                  <Button onClick={() => setCurrentStep(3)}>Continue</Button>
-                </div>
-              </div>
-            )}
-
-            
-            {currentStep === 3 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="font-serif text-2xl font-bold text-green mb-6">
-                  Confirm Booking
-                </h2>
-
-                <p className="text-text-light mb-6">
-                  Pricing and availability will be confirmed by our team.
-                </p>
-
-                <div className="flex gap-4">
-                  <Button variant="outline" onClick={() => setCurrentStep(2)}>
-                    Back
-                  </Button>
-                  <Button onClick={submitBooking} disabled={isSubmitting}>
-                    {isSubmitting ? 'Submitting...' : 'Confirm Booking'}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 bg-white rounded-lg shadow-lg p-6">
-              <h2 className="font-serif text-2xl font-bold text-green mb-4">
-                Booking Summary
-              </h2>
-
-              <p className="text-text-light text-sm">
-                Final pricing will be confirmed after booking.
-              </p>
-
-              <div className="mt-6 bg-cream rounded-lg p-4 text-xs text-center">
-                Breakfast, parking & room service included.
-              </div>
-            </div>
-          </div>
+          <Button onClick={() => setCurrentStep(2)}>Continue</Button>
         </div>
-      </section>
+      )}
 
-      
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8">
-            <h3 className="text-xl font-bold text-green mb-4">
-              Payment Coming Soon
-            </h3>
-            <Button onClick={() => setShowPaymentModal(false)}>Close</Button>
-          </div>
+      {currentStep === 2 && (
+        <div className="bg-white p-6 rounded shadow">
+          <input placeholder="First Name" onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
+          <input placeholder="Last Name" onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
+          <input placeholder="Email" onChange={e => setFormData({ ...formData, email: e.target.value })} />
+          <input placeholder="Phone" onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+
+          <Button onClick={() => setCurrentStep(3)}>Continue</Button>
+        </div>
+      )}
+
+      {currentStep === 3 && (
+        <div className="bg-white p-6 rounded shadow">
+          <p>Total: PKR {totalPrice.toLocaleString()}</p>
+          <Button onClick={handleCreateBooking} disabled={isSubmitting}>
+            Confirm Booking
+          </Button>
         </div>
       )}
     </div>
@@ -2978,8 +2891,8 @@ function BookingPageContent() {
 
 export default function BookingPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div>Loading...</div>}>
       <BookingPageContent />
     </Suspense>
   )
-} */
+}
