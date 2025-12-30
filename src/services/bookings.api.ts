@@ -363,13 +363,22 @@ export type BookingResponse =
   | { success: false; error: string }
 
 // ⚠️ DO NOT throw at module level (breaks Next.js build)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
+/*const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 function getApiBaseUrl(): string | null {
   if (!API_BASE_URL) {
     console.error(
       '[bookings.api] NEXT_PUBLIC_API_URL is missing. Booking API unavailable.'
     )
+    return null
+  }
+  return API_BASE_URL
+}*/
+
+import { API_BASE_URL } from '@/app/config/api'
+function getApiBaseUrl(): string | null {
+  if (!API_BASE_URL) {
+    console.error('[bookings.api] NEXT_PUBLIC_API_URL is missing. Booking API unavailable.')
     return null
   }
   return API_BASE_URL
