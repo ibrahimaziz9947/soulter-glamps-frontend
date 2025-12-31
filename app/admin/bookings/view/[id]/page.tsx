@@ -648,7 +648,9 @@ export default function ViewBookingPage() {
     const fetchBooking = async () => {
       try {
         const data = await api.get(`/admin/bookings/${params.id}`)
-        setBooking(data)
+        setBooking(data.booking)
+        console.log('API RESPONSE:', data)
+
         //const data = await api.get(`/admin/bookings/${params.id}`)
 
         // 🔁 Map backend → UI format
