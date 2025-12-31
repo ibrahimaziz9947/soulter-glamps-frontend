@@ -648,7 +648,7 @@ export default function ViewBookingPage() {
     const fetchBooking = async () => {
       try {
         const data = await api.get(`/admin/bookings/${params.id}`)
-        setBooking(data.booking)
+        setBooking(data.data)
         console.log('API RESPONSE:', data)
 
         //const data = await api.get(`/admin/bookings/${params.id}`)
