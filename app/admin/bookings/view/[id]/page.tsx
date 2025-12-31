@@ -594,6 +594,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/src/services/apiClient'
 
+
 interface Booking {
   id: string
   customerName: string
@@ -614,6 +615,25 @@ interface Booking {
   }
 }
 
+/*
+interface Booking {
+  id: string
+  customerName: string
+  guests: number
+  status: string
+  createdAt: string
+
+  checkIn: string
+  checkOut: string
+  nights: number
+
+  totalPrice?: number
+  amountPaid?: number
+  remainingAmount?: number
+
+  glampName: string
+} */
+
 export default function ViewBookingPage() {
   const params = useParams()
   const router = useRouter()
@@ -629,6 +649,40 @@ export default function ViewBookingPage() {
       try {
         const data = await api.get(`/admin/bookings/${params.id}`)
         setBooking(data)
+        //const data = await api.get(`/admin/bookings/${params.id}`)
+
+        // 🔁 Map backend → UI format
+        /*const mappedBooking = {
+          id: data.id,
+          customerName: data.customerName,
+          guests: data.guests,
+          status: data.status,
+          createdAt: data.createdAt,
+
+          // map dates
+          checkIn: data.checkInDate,
+          checkOut: data.checkOutDate,
+
+          // derived values
+          nights: Math.max(
+            1,
+            Math.ceil(
+              (new Date(data.checkOutDate).getTime() -
+                new Date(data.checkInDate).getTime()) /
+              (1000 * 60 * 60 * 24)
+            )
+          ),
+
+          totalPrice: data.totalAmount,
+          amountPaid: data.amountPaid ?? 0,
+          remainingAmount:
+            (data.totalAmount ?? 0) - (data.amountPaid ?? 0),
+
+          glampName: data.glamp?.name ?? '—',
+        }
+
+        setBooking(mappedBooking) */
+
       } catch (err: any) {
         setError(err.message || 'Failed to load booking')
       } finally {
@@ -730,9 +784,16 @@ export default function ViewBookingPage() {
             <h2 className="font-serif text-2xl font-bold text-green mb-4">
               Booking Timeline
             </h2>
-            <p className="text-text-light">
+            {/*<p className="text-text-light">
               Created at: {new Date(booking.createdAt).toLocaleString()}
+            </p> */}
+            <p className="text-text-light">
+              Created at:{' '}
+              {booking.createdAt
+                ? new Date(booking.createdAt).toLocaleString()
+                : '—'}
             </p>
+
           </div>
         </div>
 
