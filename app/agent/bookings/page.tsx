@@ -1,3 +1,187 @@
+/*'use client'
+
+import { useState } from 'react'
+
+export default function AgentBookings() {
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const bookings = [
+    { id: 'BK-2401', customer: 'Ali Hassan', email: 'ali@example.com', phone: '0300-1234567', glamping: 'Luxury Tent', checkIn: '2025-12-15', checkOut: '2025-12-17', guests: 2, total: 'PKR 25,000', commission: 'PKR 2,500', status: 'Confirmed' },
+    { id: 'BK-2402', customer: 'Sara Ahmed', email: 'sara@example.com', phone: '0301-2345678', glamping: 'Tree House', checkIn: '2025-12-18', checkOut: '2025-12-20', guests: 3, total: 'PKR 32,000', commission: 'PKR 3,200', status: 'Pending' },
+    { id: 'BK-2403', customer: 'Usman Khan', email: 'usman@example.com', phone: '0302-3456789', glamping: 'Safari Tent', checkIn: '2025-12-20', checkOut: '2025-12-22', guests: 4, total: 'PKR 28,000', commission: 'PKR 2,800', status: 'Confirmed' },
+    { id: 'BK-2404', customer: 'Fatima Noor', email: 'fatima@example.com', phone: '0303-4567890', glamping: 'Dome Tent', checkIn: '2025-12-25', checkOut: '2025-12-27', guests: 2, total: 'PKR 30,000', commission: 'PKR 3,000', status: 'Confirmed' },
+    { id: 'BK-2405', customer: 'Ahmed Malik', email: 'ahmed@example.com', phone: '0304-5678901', glamping: 'Cabin', checkIn: '2025-12-28', checkOut: '2025-12-30', guests: 5, total: 'PKR 35,000', commission: 'PKR 3,500', status: 'Cancelled' },
+    { id: 'BK-2406', customer: 'Zainab Ali', email: 'zainab@example.com', phone: '0305-6789012', glamping: 'Luxury Tent', checkIn: '2025-12-10', checkOut: '2025-12-12', guests: 2, total: 'PKR 25,000', commission: 'PKR 2,500', status: 'Confirmed' },
+  ]
+
+  const filteredBookings = bookings.filter(booking => {
+    const matchesStatus = filterStatus === 'all' || booking.status.toLowerCase() === filterStatus
+    const matchesSearch = searchQuery === '' || 
+      booking.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.glamping.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesStatus && matchesSearch
+  })
+
+  const stats = {
+    total: bookings.length,
+    confirmed: bookings.filter(b => b.status === 'Confirmed').length,
+    pending: bookings.filter(b => b.status === 'Pending').length,
+    cancelled: bookings.filter(b => b.status === 'Cancelled').length,
+  }
+
+  return (
+    <div className="space-y-6">
+      
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-green mb-2">My Bookings</h1>
+            <p className="text-text-light">Manage all bookings created by you</p>
+          </div>
+          <a
+            href="/agent/add-booking"
+            className="px-6 py-3 bg-green text-cream rounded-lg font-semibold hover:bg-green-dark transition-smooth"
+          >
+            + Add New Booking
+          </a>
+        </div>
+      </div>
+
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <p className="text-text-light text-sm">Total Bookings</p>
+          <p className="text-2xl font-bold text-green mt-1">{stats.total}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <p className="text-text-light text-sm">Confirmed</p>
+          <p className="text-2xl font-bold text-green mt-1">{stats.confirmed}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <p className="text-text-light text-sm">Pending</p>
+          <p className="text-2xl font-bold text-yellow mt-1">{stats.pending}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <p className="text-text-light text-sm">Cancelled</p>
+          <p className="text-2xl font-bold text-red-500 mt-1">{stats.cancelled}</p>
+        </div>
+      </div>
+
+      
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by Booking ID, Customer Name, or Glamp..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green focus:border-transparent"
+              />
+              <svg 
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+
+          
+          <div className="flex items-center gap-3">
+            <label className="font-semibold text-text-dark whitespace-nowrap">Filter Status:</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green focus:border-transparent min-w-[160px]"
+            >
+              <option value="all">All Bookings</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-cream/50 border-b-2 border-gray-200">
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Booking ID</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Customer Name</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Glamp</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Dates</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Status</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Commission</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredBookings.map((booking) => (
+                <tr key={booking.id} className="border-b border-gray-100 hover:bg-cream/30 transition-colors">
+                  <td className="py-4 px-4">
+                    <span className="font-bold text-green">{booking.id}</span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-text-dark">{booking.customer}</div>
+                    <div className="text-xs text-text-light">{booking.email}</div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-medium text-text-dark">{booking.glamping}</div>
+                    <div className="text-xs text-text-light">{booking.guests} guests</div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="text-sm">
+                      <div className="font-medium text-text-dark">{booking.checkIn}</div>
+                      <div className="text-xs text-text-light">to {booking.checkOut}</div>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                      booking.status === 'Confirmed' ? 'bg-green/10 text-green' :
+                      booking.status === 'Pending' ? 'bg-yellow/20 text-yellow' :
+                      'bg-red-100 text-red-600'
+                    }`}>
+                      {booking.status}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-bold text-yellow text-lg">{booking.commission}</div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <button className="px-4 py-2 bg-green/10 text-green rounded-lg text-sm font-semibold hover:bg-green hover:text-white transition-smooth">
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredBookings.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-text-light text-lg">No bookings found</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+} */
+
+
+
+
+
+
+
+
 'use client'
 
 import { useState } from 'react'
@@ -174,3 +358,4 @@ export default function AgentBookings() {
     </div>
   )
 }
+
