@@ -1,4 +1,4 @@
-
+/*
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -30,7 +30,7 @@ export default function AddBooking() {
 
   /* ------------------------------------------------------------
      FETCH GLAMPS (REAL DATA)
-  ------------------------------------------------------------ */
+  ------------------------------------------------------------ *
   useEffect(() => {
     const fetchGlamps = async () => {
       try {
@@ -52,7 +52,7 @@ export default function AddBooking() {
 
   /* ------------------------------------------------------------
      SUBMIT BOOKING (AGENT API)
-  ------------------------------------------------------------ */
+  ------------------------------------------------------------ *
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -84,7 +84,7 @@ export default function AddBooking() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header *
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h1 className="text-3xl font-bold text-green mb-2">
           Add New Booking
@@ -94,19 +94,19 @@ export default function AddBooking() {
         </p>
       </div>
 
-      {/* Error */}
+      {/* Error *
       {error && (
         <div className="bg-red-100 text-red-700 p-4 rounded-lg font-semibold">
           {error}
         </div>
       )}
 
-      {/* Form */}
+      {/* Form *
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-lg shadow-lg p-6 space-y-6"
       >
-        {/* Customer Information */}
+        {/* Customer Information *
         <div>
           <h2 className="text-xl font-bold text-green mb-4 pb-2 border-b-2 border-green/20">
             Customer Information
@@ -160,7 +160,7 @@ export default function AddBooking() {
           </div>
         </div>
 
-        {/* Booking Details */}
+        {/* Booking Details *
         <div>
           <h2 className="text-xl font-bold text-green mb-4 pb-2 border-b-2 border-green/20">
             Booking Details
@@ -225,7 +225,7 @@ export default function AddBooking() {
           </div>
         </div>
 
-        {/* Submit */}
+        {/* Submit *
         <div className="flex justify-end gap-4 pt-4 border-t-2 border-gray-200">
           <button
             type="button"
@@ -246,5 +246,163 @@ export default function AddBooking() {
       </form>
     </div>
   )
+} */
+
+
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { api } from '@/src/services/apiClient'
+
+type Glamp = {
+  id: string
+  name: string
+  pricePerNight: number
 }
+
+export default function AddBooking() {
+  const router = useRouter()
+
+  const [glamps, setGlamps] = useState<Glamp[]>([])
+  const [loadingGlamps, setLoadingGlamps] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [formData, setFormData] = useState({
+    customerName: '',
+    email: '',
+    phone: '',
+    glampId: '',
+    checkIn: '',
+    checkOut: '',
+    guests: 2,
+  })
+
+  /* ---------------- FETCH GLAMPS ---------------- */
+  useEffect(() => {
+    const fetchGlamps = async () => {
+      try {
+        const res = await api.get('/glamps')
+        const list = Array.isArray(res.data?.data) ? res.data.data : []
+        setGlamps(list)
+      } catch (e) {
+        setError('Unable to load glamping options')
+      } finally {
+        setLoadingGlamps(false)
+      }
+    }
+
+    fetchGlamps()
+  }, [])
+
+  /* ---------------- SUBMIT ---------------- */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      await api.post('/agent/bookings', {
+        customerName: formData.customerName,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        glampId: formData.glampId,
+        checkInDate: formData.checkIn,
+        checkOutDate: formData.checkOut,
+        guests: formData.guests,
+      })
+
+      router.push('/agent/bookings')
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to create booking')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-6">
+
+        {error && (
+          <div className="bg-red-100 text-red-700 p-3 rounded">
+            {error}
+          </div>
+        )}
+
+        <input
+          required
+          placeholder="Customer Name"
+          className="input"
+          value={formData.customerName}
+          onChange={e => setFormData({ ...formData, customerName: e.target.value })}
+        />
+
+        <input
+          required
+          placeholder="Phone"
+          className="input"
+          value={formData.phone}
+          onChange={e => setFormData({ ...formData, phone: e.target.value })}
+        />
+
+        <input
+          required
+          type="email"
+          placeholder="Email"
+          className="input"
+          value={formData.email}
+          onChange={e => setFormData({ ...formData, email: e.target.value })}
+        />
+
+        <select
+          required
+          disabled={loadingGlamps}
+          className="input"
+          value={formData.glampId}
+          onChange={e => setFormData({ ...formData, glampId: e.target.value })}
+        >
+          <option value="">
+            {loadingGlamps ? 'Loading glamps…' : 'Choose a glamp'}
+          </option>
+          {glamps.map(g => (
+            <option key={g.id} value={g.id}>
+              {g.name} – PKR {g.pricePerNight.toLocaleString()}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="date"
+          required
+          className="input"
+          value={formData.checkIn}
+          onChange={e => setFormData({ ...formData, checkIn: e.target.value })}
+        />
+
+        <input
+          type="date"
+          required
+          className="input"
+          value={formData.checkOut}
+          onChange={e => setFormData({ ...formData, checkOut: e.target.value })}
+        />
+
+        <button
+          type="submit"
+          disabled={loading || !formData.glampId}
+          className="btn-primary"
+        >
+          {loading ? 'Creating…' : 'Create Booking'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
 
