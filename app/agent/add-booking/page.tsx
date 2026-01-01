@@ -34,8 +34,13 @@ export default function AddBooking() {
   useEffect(() => {
     const fetchGlamps = async () => {
       try {
+        //const res = await api.get('/glamps')
+        //setGlamps(res.data?.data || [])
         const res = await api.get('/glamps')
-        setGlamps(res.data?.data || [])
+        console.log('GLAMPS RAW RESPONSE:', res.data)
+
+        setGlamps(Array.isArray(res.data?.data) ? res.data.data : [])
+
       } catch (err) {
         console.error('Failed to fetch glamps', err)
         setError('Unable to load glamping options')
@@ -70,7 +75,7 @@ export default function AddBooking() {
       console.error('Booking creation failed', err)
       setError(
         err?.response?.data?.message ||
-          'Failed to create booking. Please try again.'
+        'Failed to create booking. Please try again.'
       )
     } finally {
       setLoading(false)
@@ -166,6 +171,10 @@ export default function AddBooking() {
               <label className="block text-sm font-bold text-text-dark mb-2">
                 Glamp Selection <span className="text-red-500">*</span>
               </label>
+              <p className="text-xs text-gray-500">
+                Loaded glamps: {glamps.length}
+              </p>
+
               <select
                 required
                 value={formData.glampId}
