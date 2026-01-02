@@ -524,7 +524,7 @@ export default function AgentBookingsPage() {
   /* =========================
      FETCH BOOKINGS
   ========================= */
-
+/*
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -540,7 +540,52 @@ export default function AgentBookingsPage() {
     }
 
     fetchBookings()
-  }, [])
+  }, []) */
+
+  /* =========================
+   FETCH BOOKINGS (ISOLATED)
+========================= */
+
+useEffect(() => {
+  let isMounted = true
+
+  const fetchBookings = async () => {
+    try {
+      // 🔒 Clear stale data first (important)
+      setBookings([])
+      setLoading(true)
+
+      const res = await api.get<{ success: boolean; data: Booking[] }>(
+        '/agent/bookings',
+        {
+          // 🚫 Disable caching completely
+          cache: 'no-store',
+        }
+      )
+
+      if (isMounted) {
+        setBookings(res.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch agent bookings', err)
+      if (isMounted) {
+        setBookings([])
+      }
+    } finally {
+      if (isMounted) {
+        setLoading(false)
+      }
+    }
+  }
+
+  fetchBookings()
+
+  // 🧹 Cleanup to prevent bleed-over
+  return () => {
+    isMounted = false
+  }
+}, [])
+
 
   /* =========================
      FILTERING
