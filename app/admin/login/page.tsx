@@ -307,7 +307,7 @@ export default function AdminLoginPage() {
 
 
 
-// ============================================
+/* ============================================
 // FILE 1: app/admin/login/page.tsx
 // ============================================
 'use client'
@@ -335,7 +335,7 @@ export default function AdminLoginPage() {
       // Store token FIRST
       //localStorage.setItem('admin_auth_token', res.token)
       // Clear agent session if switching roles
-      localStorage.removeItem('agent_auth_token')
+      //localStorage.removeItem('agent_auth_token')
 
       localStorage.setItem('admin_auth_token', res.token)
 
@@ -382,5 +382,83 @@ export default function AdminLoginPage() {
       </form>
     </div>
   )
+} */
+
+
+
+
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { loginAdmin } from '@/src/services/auth.api'
+
+export default function AdminLoginPage() {
+  const router = useRouter()
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (loading) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await loginAdmin({ email, password })
+
+      if (!res?.token) {
+        throw new Error('No token received')
+      }
+
+      localStorage.setItem('admin_auth_token', res.token)
+      router.push('/admin/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+          disabled={loading}
+        />
+
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Password"
+          required
+          disabled={loading}
+        />
+
+        <button type="submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+      </form>
+    </div>
+  )
 }
+
+
+
+
+
+
+
 
