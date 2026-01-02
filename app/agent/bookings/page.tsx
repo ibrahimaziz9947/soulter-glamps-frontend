@@ -173,7 +173,7 @@ export default function AgentBookings() {
       </div>
     </div>
   )
-} */
+} 
 
 
 
@@ -207,7 +207,7 @@ export default function AgentBookings() {
 
   /* =========================
      FETCH BOOKINGS
-  ========================= */
+  ========================= *
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -227,7 +227,7 @@ export default function AgentBookings() {
 
   /* =========================
      FILTERED BOOKINGS
-  ========================= */
+  ========================= *
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => {
       const matchesStatus =
@@ -245,7 +245,7 @@ export default function AgentBookings() {
 
   /* =========================
      STATS
-  ========================= */
+  ========================= *
   const stats = useMemo(() => {
     return {
       total: bookings.length,
@@ -257,10 +257,10 @@ export default function AgentBookings() {
 
   /* =========================
      RENDER
-  ========================= */
+  ========================= *
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header *
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -276,7 +276,7 @@ export default function AgentBookings() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats *
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Bookings" value={stats.total} color="green" />
         <StatCard label="Confirmed" value={stats.confirmed} color="green" />
@@ -284,7 +284,7 @@ export default function AgentBookings() {
         <StatCard label="Cancelled" value={stats.cancelled} color="red" />
       </div>
 
-      {/* Search & Filter */}
+      {/* Search & Filter *
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <input
@@ -307,7 +307,7 @@ export default function AgentBookings() {
           </select>
         </div>
 
-        {/* Table */}
+        {/* Table *
         {loading ? (
           <p className="text-center py-12 text-text-light">Loading bookings...</p>
         ) : filteredBookings.length === 0 ? (
@@ -356,7 +356,7 @@ export default function AgentBookings() {
 
 /* =========================
    SMALL STAT COMPONENT
-========================= */
+========================= *
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -364,5 +364,120 @@ function StatCard({ label, value, color }: { label: string; value: number; color
       <p className={`text-2xl font-bold text-${color} mt-1`}>{value}</p>
     </div>
   )
+} */
+
+
+
+
+
+
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { api } from '@/src/services/apiClient'
+
+interface Booking {
+  id: string
+  customerName: string
+  glampName: string
+  checkInDate: string
+  checkOutDate: string
+  status: string
+  totalAmount: number
 }
+
+export default function AgentBookingsPage() {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true)
+
+        // ✅ CRITICAL FIX: agent-specific endpoint
+        const res = await api.get<{ success: boolean; data: Booking[] }>(
+          '/agent/bookings'
+        )
+
+        setBookings(res.data || [])
+      } catch (err: any) {
+        console.error('Failed to load agent bookings', err)
+        setError(err.message || 'Failed to load bookings')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBookings()
+  }, [])
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-green-900">My Bookings</h1>
+          <p className="text-sm text-gray-600">
+            Manage all bookings created by you
+          </p>
+        </div>
+
+        <Link
+          href="/agent/add-booking"
+          className="bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-800"
+        >
+          + Add New Booking
+        </Link>
+      </div>
+
+      {/* States */}
+      {loading && <p>Loading bookings...</p>}
+      {error && <p className="text-red-600">{error}</p>}
+
+      {!loading && bookings.length === 0 && (
+        <p className="text-gray-600">No bookings created by you yet.</p>
+      )}
+
+      {/* Table */}
+      {!loading && bookings.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100 text-left">
+                <th className="p-3">Booking ID</th>
+                <th className="p-3">Customer</th>
+                <th className="p-3">Glamp</th>
+                <th className="p-3">Dates</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.map((b) => (
+                <tr key={b.id} className="border-b">
+                  <td className="p-3 text-green-700 font-medium">{b.id}</td>
+                  <td className="p-3">{b.customerName}</td>
+                  <td className="p-3">{b.glampName || 'Unknown'}</td>
+                  <td className="p-3">
+                    {new Date(b.checkInDate).toLocaleDateString()} →{' '}
+                    {new Date(b.checkOutDate).toLocaleDateString()}
+                  </td>
+                  <td className="p-3 font-semibold">{b.status}</td>
+                  <td className="p-3 text-right font-semibold">
+                    PKR {b.totalAmount.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 
