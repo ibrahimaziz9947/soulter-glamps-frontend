@@ -416,7 +416,7 @@ export default function AdminLoginPage() {
         throw new Error('No token received')
       }
 
-      localStorage.setItem('admin_auth_token', res.token)
+      localStorage.setItem('auth_token', res.token)
       router.push('/admin/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
