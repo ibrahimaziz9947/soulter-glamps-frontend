@@ -333,17 +333,22 @@ export default function AdminLoginPage() {
       if (!res?.token) throw new Error('No token received')
 
       // Store token FIRST
-      localStorage.setItem('auth_token', res.token)
-      
+      //localStorage.setItem('admin_auth_token', res.token)
+      // Clear agent session if switching roles
+      localStorage.removeItem('agent_auth_token')
+
+      localStorage.setItem('admin_auth_token', res.token)
+
+
       console.log('[Login] Token stored:', res.token.substring(0, 20) + '...')
 
       // CRITICAL FIX: Use router.push() instead of window.location.href
       // This maintains the React context and preserves localStorage
       router.push('/admin/dashboard')
-      
+
       // Alternative if router.push doesn't work:
       // router.replace('/admin/dashboard')
-      
+
     } catch (err) {
       console.error('[Login] Error:', err)
       setError(err instanceof Error ? err.message : 'Login failed')
@@ -354,18 +359,18 @@ export default function AdminLoginPage() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <input 
+        <input
           type="email"
-          value={email} 
-          onChange={e => setEmail(e.target.value)} 
+          value={email}
+          onChange={e => setEmail(e.target.value)}
           placeholder="Email"
           required
           disabled={loading}
         />
-        <input 
-          type="password" 
-          value={password} 
-          onChange={e => setPassword(e.target.value)} 
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
           placeholder="Password"
           required
           disabled={loading}
