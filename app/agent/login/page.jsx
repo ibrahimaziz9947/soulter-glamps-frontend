@@ -305,7 +305,7 @@ export default function AgentLoginPage() {
 
   // ✅ Session check (NO redirect loops)
   useEffect(() => {
-    const token = localStorage.getItem('agent_auth_token')
+    const token = localStorage.getItem('auth_token')
     if (token) {
       router.replace('/agent/dashboard')
     } else {
@@ -326,7 +326,7 @@ export default function AgentLoginPage() {
         return
       }
 
-      localStorage.setItem('agent_auth_token', res.token)
+      localStorage.setItem('auth_token', res.token)
       router.replace('/agent/dashboard')
     } catch {
       setError('Something went wrong. Please try again.')
