@@ -490,7 +490,7 @@ export default function AddBooking() {
     } catch (err: any) {
       setError(
         err?.message ||
-          'Failed to create booking. Please try again.'
+        'Failed to create booking. Please try again.'
       )
     } finally {
       setLoading(false)
@@ -591,7 +591,7 @@ export default function AddBooking() {
           />
 
           {/* Guests */}
-          <input
+          {/*<input
             type="number"
             min={1}
             max={3}
@@ -605,8 +605,36 @@ export default function AddBooking() {
             }
             placeholder="Number of Guests (Max 3)"
             className="md:col-span-2 w-full px-4 py-3 border rounded-lg"
-          />
+          /> */}
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-bold text-text-dark mb-2">
+              Number of Guests <span className="text-red-500">*</span>
+            </label>
+
+            <input
+              type="number"
+              min={1}
+              max={3}
+              required
+              value={formData.guests}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  guests: Math.min(3, Number(e.target.value)),
+                })
+              }
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg"
+            />
+
+            <p className="text-xs text-gray-500 mt-1">
+              Maximum 3 guests per glamp
+            </p>
+          </div>
+
         </div>
+
+
 
         <div className="flex justify-end pt-4">
           <button
