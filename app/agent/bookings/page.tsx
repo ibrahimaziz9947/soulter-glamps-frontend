@@ -282,7 +282,10 @@ type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED'
 interface Booking {
   id: string
   customerName: string
-  glampName: string
+  //glampName: string
+  glamp?: {
+    name: string
+  }
   checkInDate: string
   checkOutDate: string
   status: BookingStatus
@@ -340,7 +343,7 @@ export default function AgentBookingsPage() {
      FILTERING
   ========================= */
 
-  const filteredBookings = useMemo(() => {
+  /*const filteredBookings = useMemo(() => {
     return bookings.filter(b => {
       const matchesSearch =
         b.customerName.toLowerCase().includes(search.toLowerCase()) ||
@@ -352,7 +355,24 @@ export default function AgentBookingsPage() {
 
       return matchesSearch && matchesStatus
     })
-  }, [bookings, search, statusFilter])
+  }, [bookings, search, statusFilter]) */
+
+    const filteredBookings = useMemo(() => {
+  const q = search.toLowerCase()
+
+  return bookings.filter(b => {
+    const matchesSearch =
+      b.customerName.toLowerCase().includes(q) ||
+      b.glamp?.name?.toLowerCase().includes(q) ||
+      b.id.includes(search)
+
+    const matchesStatus =
+      statusFilter === 'ALL' || b.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
+}, [bookings, search, statusFilter])
+
 
   /* =========================
      STATS
@@ -446,7 +466,9 @@ export default function AgentBookingsPage() {
               <tr key={b.id} className="border-t">
                 <td className="p-4 font-mono text-green-800">{b.id}</td>
                 <td className="p-4">{b.customerName}</td>
-                <td className="p-4">{b.glampName || 'Unknown'}</td>
+                {/*<td className="p-4">{b.glampName || 'Unknown'}</td>*/}
+                <td className="p-4">{b.glamp?.name || 'Unknown'}</td>
+
                 <td className="p-4">
                   {new Date(b.checkInDate).toLocaleDateString()} →{' '}
                   {new Date(b.checkOutDate).toLocaleDateString()}
