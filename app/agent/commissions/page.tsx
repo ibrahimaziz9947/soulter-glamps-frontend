@@ -1,30 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getAgentCommissions, type Commission } from '@/src/services/commissions.api'
 
 export default function AgentCommissions() {
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'PAID' | 'UNPAID'>('all')
+  const [commissions, setCommissions] = useState<Commission[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const commissions = [
-    { id: 1, bookingId: 'BK-2401', customer: 'Ali Hassan', glamping: 'Luxury Tent', bookingDate: '2025-11-20', checkIn: '2025-12-15', bookingAmount: 'PKR 25,000', commissionRate: '10%', commissionAmount: 'PKR 2,500', status: 'Paid', paidDate: '2025-12-01' },
-    { id: 2, bookingId: 'BK-2402', customer: 'Sara Ahmed', glamping: 'Tree House', bookingDate: '2025-11-22', checkIn: '2025-12-18', bookingAmount: 'PKR 32,000', commissionRate: '10%', commissionAmount: 'PKR 3,200', status: 'Pending', paidDate: null },
-    { id: 3, bookingId: 'BK-2403', customer: 'Usman Khan', glamping: 'Safari Tent', bookingDate: '2025-11-25', checkIn: '2025-12-20', bookingAmount: 'PKR 28,000', commissionRate: '10%', commissionAmount: 'PKR 2,800', status: 'Paid', paidDate: '2025-12-03' },
-    { id: 4, bookingId: 'BK-2404', customer: 'Fatima Noor', glamping: 'Dome Tent', bookingDate: '2025-11-28', checkIn: '2025-12-25', bookingAmount: 'PKR 30,000', commissionRate: '10%', commissionAmount: 'PKR 3,000', status: 'Paid', paidDate: '2025-12-04' },
-    { id: 5, bookingId: 'BK-2405', customer: 'Ahmed Malik', glamping: 'Cabin', bookingDate: '2025-12-01', checkIn: '2025-12-28', bookingAmount: 'PKR 35,000', commissionRate: '10%', commissionAmount: 'PKR 3,500', status: 'Pending', paidDate: null },
-    { id: 6, bookingId: 'BK-2301', customer: 'Hassan Ali', glamping: 'Luxury Tent', bookingDate: '2025-10-15', checkIn: '2025-11-10', bookingAmount: 'PKR 24,000', commissionRate: '10%', commissionAmount: 'PKR 2,400', status: 'Paid', paidDate: '2025-11-20' },
-  ]
+  /* =========================
+     FETCH COMMISSIONS
+  ========================= */
+  useEffect(() => {
+    const fetchCommissions = async () => {
+      try {
+        setLoading(true)
+        const data = await getAgentCommissions()
+        setCommissions(data)
+      } catch (err: any) {
+        console.error('Failed to fetch commissions:', err)
+        setError(err.message || 'Failed to load commissions')
+      } finally {
+        setLoading(false)
+      }
+    }
 
+    fetchCommissions()
+  }, [])
+
+  /* =========================
+     FILTER & CALCULATIONS
+  ========================= */
   const filteredCommissions = filterStatus === 'all'
     ? commissions
-    : commissions.filter(c => c.status.toLowerCase() === filterStatus)
+    : commissions.filter(c => c.status === filterStatus)
 
   const totalEarned = commissions
-    .filter(c => c.status === 'Paid')
-    .reduce((sum, c) => sum + parseFloat(c.commissionAmount.replace(/[^\d]/g, '')), 0)
+    .filter(c => c.status === 'PAID')
+    .reduce((sum, c) => sum + Number(c.amount), 0)
 
   const totalPending = commissions
-    .filter(c => c.status === 'Pending')
-    .reduce((sum, c) => sum + parseFloat(c.commissionAmount.replace(/[^\d]/g, '')), 0)
+    .filter(c => c.status === 'UNPAID')
+    .reduce((sum, c) => sum + Number(c.amount), 0)
 
   return (
     <div className="space-y-6">
@@ -34,30 +52,49 @@ export default function AgentCommissions() {
         <p className="text-text-light">Track all your commission earnings</p>
       </div>
 
-      {/* Total Commission Summary Card */}
-      <div className="bg-gradient-to-r from-green to-green-dark rounded-lg shadow-xl p-8 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-cream/80 text-lg mb-2">Total Commission Earned</p>
-            <p className="text-5xl font-bold mb-4">PKR {totalEarned.toLocaleString()}</p>
-            <div className="flex gap-6 text-sm">
-              <div>
-                <span className="text-cream/70">Pending: </span>
-                <span className="font-bold text-yellow">PKR {totalPending.toLocaleString()}</span>
-              </div>
-              <div>
-                <span className="text-cream/70">Total Bookings: </span>
-                <span className="font-bold">{commissions.length}</span>
-              </div>
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <span className="text-6xl">💰</span>
-            </div>
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+          <div className="animate-pulse">
+            <div className="text-text-light text-lg">Loading commissions...</div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-6">
+          <p className="text-red-700 font-semibold">⚠️ Error: {error}</p>
+        </div>
+      )}
+
+      {/* Content - Only show when not loading */}
+      {!loading && !error && (
+        <>
+          {/* Total Commission Summary Card */}
+          <div className="bg-gradient-to-r from-green to-green-dark rounded-lg shadow-xl p-8 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-cream/80 text-lg mb-2">Total Commission Earned</p>
+                <p className="text-5xl font-bold mb-4">PKR {totalEarned.toLocaleString()}</p>
+                <div className="flex gap-6 text-sm">
+                  <div>
+                    <span className="text-cream/70">Pending: </span>
+                    <span className="font-bold text-yellow">PKR {totalPending.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-cream/70">Total Bookings: </span>
+                    <span className="font-bold">{commissions.length}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="hidden md:block">
+                <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-6xl">💰</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
       {/* Commission Table */}
       <div className="bg-white rounded-lg shadow-lg p-6">
@@ -66,12 +103,12 @@ export default function AgentCommissions() {
             <label className="font-semibold text-text-dark">Filter:</label>
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => setFilterStatus(e.target.value as 'all' | 'PAID' | 'UNPAID')}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green focus:border-transparent"
             >
               <option value="all">All Commissions</option>
-              <option value="paid">Paid</option>
-              <option value="pending">Pending</option>
+              <option value="PAID">Paid</option>
+              <option value="UNPAID">Unpaid</option>
             </select>
           </div>
 
@@ -85,38 +122,51 @@ export default function AgentCommissions() {
             <thead>
               <tr className="bg-cream/50 border-b-2 border-gray-200">
                 <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Booking ID</th>
-                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Commission %</th>
-                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Earned Amount</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Customer</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Glamp</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Check-in</th>
+                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Commission</th>
                 <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Status</th>
-                <th className="text-left py-4 px-4 text-sm font-bold text-green uppercase tracking-wide">Date</th>
               </tr>
             </thead>
             <tbody>
               {filteredCommissions.map((commission) => (
                 <tr key={commission.id} className="border-b border-gray-100 hover:bg-cream/30 transition-colors">
                   <td className="py-4 px-4">
-                    <span className="font-bold text-green text-lg">{commission.bookingId}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="font-semibold text-text-dark">{commission.commissionRate}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="font-bold text-yellow text-lg">{commission.commissionAmount}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className={`px-4 py-2 rounded-full text-xs font-bold ${
-                      commission.status === 'Paid' 
-                        ? 'bg-green/10 text-green' 
-                        : 'bg-yellow/20 text-yellow'
-                    }`}>
-                      {commission.status}
+                    <span className="font-bold text-green text-sm">
+                      {commission.bookingId.slice(0, 8)}
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <div className="text-sm">
-                      <div className="font-medium text-text-dark">{commission.paidDate || commission.bookingDate}</div>
-                      <div className="text-xs text-text-light">{commission.paidDate ? 'Paid on' : 'Booked on'}</div>
-                    </div>
+                    <span className="text-text-dark">
+                      {commission.booking?.customerName || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className="text-text-dark">
+                      {commission.booking?.glamp?.name || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className="text-sm text-text-light">
+                      {commission.booking?.checkInDate 
+                        ? new Date(commission.booking.checkInDate).toLocaleDateString() 
+                        : 'N/A'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className="font-bold text-yellow text-lg">
+                      PKR {Number(commission.amount).toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className={`px-4 py-2 rounded-full text-xs font-bold ${
+                      commission.status === 'PAID' 
+                        ? 'bg-green/10 text-green' 
+                        : 'bg-yellow/20 text-yellow'
+                    }`}>
+                      {commission.status === 'PAID' ? 'Paid' : 'Pending'}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -141,6 +191,8 @@ export default function AgentCommissions() {
           <li>✓ Payment is processed via bank transfer to your registered account</li>
         </ul>
       </div>
+        </>
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/src/services/apiClient'
+import { getAgentCommissionSummary, type CommissionSummary } from '@/src/services/commissions.api'
 
 type Booking = {
   id: string
@@ -21,6 +22,7 @@ type Booking = {
 export default function AgentDashboard() {
   const router = useRouter()
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [commissionSummary, setCommissionSummary] = useState<CommissionSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -30,28 +32,42 @@ export default function AgentDashboard() {
       return
     }
 
-    const fetchBookings = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/agent/bookings')
-        setBookings(res.data?.data || [])
+        // Fetch bookings and commissions in parallel
+        const [bookingsRes, commissionsData] = await Promise.all([
+          api.get('/agent/bookings'),
+          getAgentCommissionSummary(),
+        ])
+        
+        setBookings(bookingsRes.data?.data || [])
+        setCommissionSummary(commissionsData)
       } catch (error) {
-        console.error('Failed to load agent bookings', error)
+        console.error('Failed to load dashboard data', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchBookings()
+    fetchData()
   }, [router])
 
-  return <DashboardContent bookings={bookings} loading={loading} />
+  return (
+    <DashboardContent 
+      bookings={bookings} 
+      commissionSummary={commissionSummary}
+      loading={loading} 
+    />
+  )
 }
 
 function DashboardContent({
   bookings,
+  commissionSummary,
   loading,
 }: {
   bookings: Booking[]
+  commissionSummary: CommissionSummary | null
   loading: boolean
 }) {
   /* -------------------- DERIVED STATS -------------------- */
@@ -61,7 +77,7 @@ function DashboardContent({
 
   const recentBookings = bookings.slice(0, 5)
 
-  /* -------------------- STATIC (INTENTIONAL) -------------------- */
+  /* -------------------- COMMISSION STATS -------------------- */
   const summaryCards = [
     { 
       label: 'Total Customers Brought', 
@@ -77,13 +93,17 @@ function DashboardContent({
     },
     { 
       label: 'Commission Earned', 
-      value: '—', // commission logic pending
+      value: commissionSummary 
+        ? `PKR ${commissionSummary.totalEarned.toLocaleString()}`
+        : '—',
       icon: '💰', 
       bgColor: 'bg-yellow',
     },
     { 
       label: 'Pending Commission', 
-      value: '—', // commission logic pending
+      value: commissionSummary 
+        ? `PKR ${commissionSummary.totalPending.toLocaleString()}`
+        : '—',
       icon: '⏳', 
       bgColor: 'bg-purple-500',
     },
