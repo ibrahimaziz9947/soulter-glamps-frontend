@@ -2,19 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-
-// ⚠️ DASHBOARD IS INTENTIONALLY STATIC
-// Commission data will be added later when fully tested
-// For now, this shows placeholder data only
+import { api } from '@/src/services/apiClient'
+import { getAgentCommissions, type Commission } from '@/src/services/commissions.api'
 
 type Booking = {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
   totalAmount: number
   checkInDate: string
+  checkOutDate: string
+  createdAt: string
   customerName?: string
+  customerEmail?: string
   customer?: {
     name: string
+    email?: string
   }
   glamp?: {
     name: string
@@ -23,7 +25,10 @@ type Booking = {
 
 export default function AgentDashboard() {
   const router = useRouter()
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [commissions, setCommissions] = useState<Commission[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
@@ -32,50 +37,107 @@ export default function AgentDashboard() {
       return
     }
 
-    // Dashboard loads successfully with auth check only
-    setLoading(false)
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch bookings and commissions in parallel
+        const [bookingsRes, commissionsData] = await Promise.all([
+          api.get('/agent/bookings').catch(() => ({ data: [] })),
+          getAgentCommissions().catch(() => []),
+        ])
+
+        setBookings(bookingsRes.data || [])
+        setCommissions(commissionsData || [])
+      } catch (err: any) {
+        console.error('Failed to load dashboard data:', err)
+        setError(err.message || 'Failed to load dashboard')
+        // Set empty arrays as fallback
+        setBookings([])
+        setCommissions([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
   }, [router])
 
-  return <DashboardContent loading={loading} />
+  return (
+    <DashboardContent 
+      bookings={bookings} 
+      commissions={commissions}
+      loading={loading}
+      error={error}
+    />
+  )
 }
 
 function DashboardContent({
+  bookings,
+  commissions,
   loading,
+  error,
 }: {
+  bookings: Booking[]
+  commissions: Commission[]
   loading: boolean
+  error: string | null
 }) {
-  // ⚠️ STATIC DATA - Dashboard is not connected to backend yet
-  const bookings: Booking[] = []
+  /* -------------------- COMPUTE DYNAMIC STATS -------------------- */
   
-  /* -------------------- STATIC STATS -------------------- */
-  const totalBookings = 0
-  const pendingBookings = 0
-  const confirmedBookings = 0
-  const recentBookings: Booking[] = []
+  // Total Bookings
+  const totalBookings = bookings.length
 
-  /* -------------------- STATIC SUMMARY CARDS -------------------- */
+  // Total Customers (distinct by email or name)
+  const uniqueCustomers = new Set(
+    bookings.map(b => {
+      // Prefer email for uniqueness, fallback to name
+      const email = b.customerEmail || b.customer?.email
+      const name = b.customerName || b.customer?.name
+      return email || name || ''
+    }).filter(Boolean)
+  )
+  const totalCustomers = uniqueCustomers.size
+
+  // Commission Earned (PAID commissions only)
+  const commissionEarned = commissions
+    .filter(c => c.status === 'PAID')
+    .reduce((sum, c) => sum + Number(c.amount), 0)
+
+  // Pending Commission (UNPAID commissions only)
+  const pendingCommission = commissions
+    .filter(c => c.status === 'UNPAID')
+    .reduce((sum, c) => sum + Number(c.amount), 0)
+
+  // Recent Bookings (latest 5, sorted by createdAt desc)
+  const recentBookings = [...bookings]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5)
+
+  /* -------------------- DYNAMIC SUMMARY CARDS -------------------- */
   const summaryCards = [
     { 
       label: 'Total Customers Brought', 
-      value: '—',
+      value: totalCustomers.toString(),
       icon: '👥', 
       bgColor: 'bg-blue-500',
     },
     { 
       label: 'Total Bookings', 
-      value: '—', 
+      value: totalBookings.toString(), 
       icon: '📅', 
       bgColor: 'bg-green',
     },
     { 
       label: 'Commission Earned', 
-      value: '—', // Will be dynamic when dashboard is converted
+      value: `PKR ${commissionEarned.toLocaleString()}`,
       icon: '💰', 
       bgColor: 'bg-yellow',
     },
     { 
       label: 'Pending Commission', 
-      value: '—', // Will be dynamic when dashboard is converted
+      value: `PKR ${pendingCommission.toLocaleString()}`,
       icon: '⏳', 
       bgColor: 'bg-purple-500',
     },
@@ -86,6 +148,18 @@ function DashboardContent({
     return (
       <div className="p-6 text-sm text-gray-500">
         Loading dashboard...
+      </div>
+    )
+  }
+
+  /* -------------------- ERROR STATE -------------------- */
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-300 rounded-lg p-6">
+          <p className="text-red-700 font-semibold">⚠️ Error loading dashboard</p>
+          <p className="text-red-600 text-sm mt-2">{error}</p>
+        </div>
       </div>
     )
   }
