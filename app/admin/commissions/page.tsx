@@ -79,64 +79,77 @@ export default function AdminCommissionsPage() {
           {commissions.map((commission) => (
             <div 
               key={commission.id} 
-              className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
+              className="bg-white rounded-lg shadow-lg p-6 hover:bg-cream/30 transition-colors"
             >
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                {/* Left Section: Commission Details */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Agent ID</p>
-                    <p className="text-sm font-medium text-text-dark">{commission.agentId.slice(0, 8)}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Booking ID</p>
-                    <p className="text-sm font-medium text-yellow">{commission.bookingId.slice(0, 8)}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Glamp</p>
-                    <p className="text-sm font-medium text-text-dark">
-                      {commission.booking?.glamp?.name || 'N/A'}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Customer</p>
-                    <p className="text-sm font-medium text-text-dark">
-                      {commission.booking?.customerName || 'N/A'}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Created Date</p>
-                    <p className="text-sm font-medium text-text-dark">
-                      {new Date(commission.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {/* Left Column */}
+                <div>
+                  <span className="font-semibold text-gray-600">Commission ID:</span>{' '}
+                  <span className="text-gray-900">{commission.id.slice(0, 8)}</span>
                 </div>
-
-                {/* Right Section: Amount & Status */}
-                <div className="lg:text-right space-y-3 lg:min-w-[200px]">
-                  <div>
-                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Commission Amount</p>
-                    <p className="text-2xl font-bold text-green">
-                      PKR {Number(commission.amount).toLocaleString()}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <span
-                      className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
-                        commission.status === 'PAID'
-                          ? 'bg-green text-white'
-                          : 'bg-yellow text-green'
-                      }`}
-                    >
-                      {commission.status}
-                    </span>
-                  </div>
+                
+                <div>
+                  <span className="font-semibold text-gray-600">Amount:</span>{' '}
+                  <span className="text-green font-bold text-lg">PKR {Number(commission.amount).toLocaleString()}</span>
                 </div>
+                
+                <div>
+                  <span className="font-semibold text-gray-600">Status:</span>{' '}
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    commission.status === 'PAID' 
+                      ? 'bg-green/10 text-green' 
+                      : 'bg-yellow/20 text-yellow'
+                  }`}>
+                    {commission.status}
+                  </span>
+                </div>
+                
+                <div>
+                  <span className="font-semibold text-gray-600">Created:</span>{' '}
+                  <span className="text-gray-900">
+                    {new Date(commission.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                
+                <div>
+                  <span className="font-semibold text-gray-600">Agent ID:</span>{' '}
+                  <span className="text-gray-900">{commission.agentId.slice(0, 8)}</span>
+                </div>
+                
+                <div>
+                  <span className="font-semibold text-gray-600">Booking ID:</span>{' '}
+                  <span className="text-gray-900">{commission.bookingId.slice(0, 8)}</span>
+                </div>
+                
+                {commission.booking && (
+                  <>
+                    <div>
+                      <span className="font-semibold text-gray-600">Customer:</span>{' '}
+                      <span className="text-gray-900">{commission.booking.customerName}</span>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-gray-600">Glamp:</span>{' '}
+                      <span className="text-gray-900">
+                        {commission.booking.glamp?.name || 'N/A'}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-gray-600">Check-in:</span>{' '}
+                      <span className="text-gray-900">
+                        {new Date(commission.booking.checkInDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-gray-600">Booking Total:</span>{' '}
+                      <span className="text-gray-900">
+                        PKR {Number(commission.booking.totalAmount).toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ))}
