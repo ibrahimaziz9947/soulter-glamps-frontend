@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { api } from '@/src/services/apiClient'
+import { getAgentCommissions, type Commission } from '@/src/services/commissions.api'
 
 /* =========================
    TYPES
@@ -33,11 +34,12 @@ export default function AgentBookingDetailsPage() {
   const router = useRouter()
 
   const [booking, setBooking] = useState<Booking | null>(null)
+  const [commission, setCommission] = useState<Commission | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   /* =========================
-     FETCH BOOKING
+     FETCH BOOKING & COMMISSION
   ========================= */
 
   useEffect(() => {
@@ -47,6 +49,21 @@ export default function AgentBookingDetailsPage() {
           `/agent/bookings/${bookingId}`,
           { cache: 'no-store' }
         )
+
+        setBooking(res.data)
+
+        // Fetch commission data for this booking
+        try {
+          const commissions = await getAgentCommissions()
+          const bookingCommission = commissions.find(
+            c => c.bookingId === bookingId
+          )
+          setCommission(bookingCommission || null)
+        } catch (commErr) {
+          console.warn('Commission data not available:', commErr)
+          // Don't fail the whole page if commission fetch fails
+          setCommission(null)
+        }
 
         setBooking(res.data)
       } catch (err) {
@@ -141,9 +158,48 @@ export default function AgentBookingDetailsPage() {
         <h2 className="text-lg font-semibold text-green-900">
           Payment Summary
         </h2>
-        <p className="text-xl font-bold text-yellow-700">
-          PKR {booking.totalAmount.toLocaleString()}
-        </p>
+        <div className="space-y-3">
+          <div>
+            <span className="text-sm text-gray-600">Total Amount:</span>
+            <p className="text-xl font-bold text-yellow-700">
+              PKR {booking.totalAmount.toLocaleString()}
+            </p>
+          </div>
+
+          {/* Commission Info - Only show if commission exists */}
+          {commission && (
+            <>
+              <div className="border-t pt-3">
+                <span className="text-sm text-gray-600">Your Commission:</span>
+                <p className="text-lg font-semibold text-green-700">
+                  PKR {Number(commission.amount).toLocaleString()}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-sm text-gray-600">Commission Status:</span>
+                <div className="mt-1">
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                      commission.status === 'PAID'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
+                    {commission.status === 'PAID' ? '✓ PAID' : '⏳ UNPAID'}
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* If no commission exists, show info message */}
+          {!commission && (
+            <div className="text-xs text-gray-500 italic pt-2 border-t">
+              Commission will be generated once booking is confirmed
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Timeline */}

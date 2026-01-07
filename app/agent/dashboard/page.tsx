@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { api } from '@/src/services/apiClient'
-import { getAgentCommissionSummary, type CommissionSummary } from '@/src/services/commissions.api'
+
+// ⚠️ DASHBOARD IS INTENTIONALLY STATIC
+// Commission data will be added later when fully tested
+// For now, this shows placeholder data only
 
 type Booking = {
   id: string
@@ -21,8 +23,6 @@ type Booking = {
 
 export default function AgentDashboard() {
   const router = useRouter()
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [commissionSummary, setCommissionSummary] = useState<CommissionSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -32,78 +32,50 @@ export default function AgentDashboard() {
       return
     }
 
-    const fetchData = async () => {
-      try {
-        // Fetch bookings and commissions in parallel
-        const [bookingsRes, commissionsData] = await Promise.all([
-          api.get('/agent/bookings'),
-          getAgentCommissionSummary(),
-        ])
-        
-        setBookings(bookingsRes.data?.data || [])
-        setCommissionSummary(commissionsData)
-      } catch (error) {
-        console.error('Failed to load dashboard data', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
+    // Dashboard loads successfully with auth check only
+    setLoading(false)
   }, [router])
 
-  return (
-    <DashboardContent 
-      bookings={bookings} 
-      commissionSummary={commissionSummary}
-      loading={loading} 
-    />
-  )
+  return <DashboardContent loading={loading} />
 }
 
 function DashboardContent({
-  bookings,
-  commissionSummary,
   loading,
 }: {
-  bookings: Booking[]
-  commissionSummary: CommissionSummary | null
   loading: boolean
 }) {
-  /* -------------------- DERIVED STATS -------------------- */
-  const totalBookings = bookings.length
-  const pendingBookings = bookings.filter(b => b.status === 'PENDING').length
-  const confirmedBookings = bookings.filter(b => b.status === 'CONFIRMED').length
+  // ⚠️ STATIC DATA - Dashboard is not connected to backend yet
+  const bookings: Booking[] = []
+  
+  /* -------------------- STATIC STATS -------------------- */
+  const totalBookings = 0
+  const pendingBookings = 0
+  const confirmedBookings = 0
+  const recentBookings: Booking[] = []
 
-  const recentBookings = bookings.slice(0, 5)
-
-  /* -------------------- COMMISSION STATS -------------------- */
+  /* -------------------- STATIC SUMMARY CARDS -------------------- */
   const summaryCards = [
     { 
       label: 'Total Customers Brought', 
-      value: new Set(bookings.map(b => b.customerName || b.customer?.name)).size || 0,
+      value: '—',
       icon: '👥', 
       bgColor: 'bg-blue-500',
     },
     { 
       label: 'Total Bookings', 
-      value: totalBookings.toString(), 
+      value: '—', 
       icon: '📅', 
       bgColor: 'bg-green',
     },
     { 
       label: 'Commission Earned', 
-      value: commissionSummary 
-        ? `PKR ${commissionSummary.totalEarned.toLocaleString()}`
-        : '—',
+      value: '—', // Will be dynamic when dashboard is converted
       icon: '💰', 
       bgColor: 'bg-yellow',
     },
     { 
       label: 'Pending Commission', 
-      value: commissionSummary 
-        ? `PKR ${commissionSummary.totalPending.toLocaleString()}`
-        : '—',
+      value: '—', // Will be dynamic when dashboard is converted
       icon: '⏳', 
       bgColor: 'bg-purple-500',
     },
