@@ -85,7 +85,7 @@ export async function getAgentCommissionSummary(): Promise<CommissionSummary> {
  */
 export async function getAllCommissions(): Promise<Commission[]> {
   try {
-    const response = await api.get<CommissionsListResponse>('/admin/commissions')
+    const response = await api.get<CommissionsListResponse>('/commissions')
     return response.data || []
   } catch (error: any) {
     console.error('[commissions.api] Error fetching all commissions:', error)
