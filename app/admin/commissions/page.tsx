@@ -73,101 +73,63 @@ export default function AdminCommissionsPage() {
         </div>
       )}
 
-      {/* Data Display - Simple List for Verification */}
+      {/* Commissions Table */}
       {!loading && !error && commissions.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-green mb-4">
-            Commission Data ({commissions.length} records)
-          </h2>
-          
-          <div className="space-y-4">
-            {commissions.map((commission) => (
-              <div 
-                key={commission.id} 
-                className="border border-gray-200 rounded-lg p-4 hover:bg-cream/30 transition-colors"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="font-semibold text-gray-600">Commission ID:</span>{' '}
-                    <span className="text-gray-900">{commission.id.slice(0, 8)}</span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold text-gray-600">Amount:</span>{' '}
-                    <span className="text-green font-bold">PKR {Number(commission.amount).toLocaleString()}</span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold text-gray-600">Status:</span>{' '}
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      commission.status === 'PAID' 
-                        ? 'bg-green/10 text-green' 
-                        : 'bg-yellow/20 text-yellow'
-                    }`}>
-                      {commission.status}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold text-gray-600">Created:</span>{' '}
-                    <span className="text-gray-900">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-cream">
+                <tr>
+                  <th className="py-4 px-6 text-left">Agent</th>
+                  <th className="py-4 px-6 text-left">Booking ID</th>
+                  <th className="py-4 px-6 text-left">Glamp</th>
+                  <th className="py-4 px-6 text-left">Commission</th>
+                  <th className="py-4 px-6 text-left">Status</th>
+                  <th className="py-4 px-6 text-left">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {commissions.map((commission) => (
+                  <tr key={commission.id} className="border-b hover:bg-cream/50">
+                    <td className="py-4 px-6">
+                      <div className="text-sm">
+                        <div className="font-medium text-text-dark">
+                          {commission.agentId.slice(0, 8)}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-yellow font-medium">
+                        {commission.bookingId.slice(0, 8)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {commission.booking?.glamp?.name || 'N/A'}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-semibold text-green">
+                        PKR {Number(commission.amount).toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          commission.status === 'PAID'
+                            ? 'bg-green/10 text-green'
+                            : 'bg-yellow/10 text-yellow'
+                        }`}
+                      >
+                        {commission.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-text-light">
                       {new Date(commission.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold text-gray-600">Agent ID:</span>{' '}
-                    <span className="text-gray-900">{commission.agentId.slice(0, 8)}</span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold text-gray-600">Booking ID:</span>{' '}
-                    <span className="text-gray-900">{commission.bookingId.slice(0, 8)}</span>
-                  </div>
-                  
-                  {commission.booking && (
-                    <>
-                      <div>
-                        <span className="font-semibold text-gray-600">Customer:</span>{' '}
-                        <span className="text-gray-900">{commission.booking.customerName}</span>
-                      </div>
-                      
-                      <div>
-                        <span className="font-semibold text-gray-600">Glamp:</span>{' '}
-                        <span className="text-gray-900">
-                          {commission.booking.glamp?.name || 'N/A'}
-                        </span>
-                      </div>
-                      
-                      <div>
-                        <span className="font-semibold text-gray-600">Check-in:</span>{' '}
-                        <span className="text-gray-900">
-                          {new Date(commission.booking.checkInDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      
-                      <div>
-                        <span className="font-semibold text-gray-600">Booking Total:</span>{' '}
-                        <span className="text-gray-900">
-                          PKR {Number(commission.booking.totalAmount).toLocaleString()}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-
-          {/* Raw JSON for debugging */}
-          <details className="mt-6">
-            <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-              📄 View Raw JSON Data
-            </summary>
-            <pre className="mt-2 p-4 bg-gray-50 rounded-lg text-xs overflow-x-auto">
-              {JSON.stringify(commissions, null, 2)}
-            </pre>
-          </details>
         </div>
       )}
     </div>
