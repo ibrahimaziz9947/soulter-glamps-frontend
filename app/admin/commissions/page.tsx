@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAllCommissions, type Commission } from '@/src/services/commissions.api'
+import { getAllCommissions, updateCommissionStatus, type Commission } from '@/src/services/commissions.api'
 
 export default function AdminCommissionsPage() {
   const [commissions, setCommissions] = useState<Commission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set())
+  const [updateError, setUpdateError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchCommissions = async () => {
@@ -24,6 +26,36 @@ export default function AdminCommissionsPage() {
 
     fetchCommissions()
   }, [])
+
+  const handleMarkAsPaid = async (commissionId: string) => {
+    try {
+      // Add to updating set
+      setUpdatingIds(prev => new Set(prev).add(commissionId))
+      setUpdateError(null)
+
+      // Call API
+      await updateCommissionStatus(commissionId, 'PAID')
+
+      // Update local state
+      setCommissions(prev => 
+        prev.map(comm => 
+          comm.id === commissionId 
+            ? { ...comm, status: 'PAID' as const }
+            : comm
+        )
+      )
+    } catch (err: any) {
+      console.error('Failed to update commission status:', err)
+      setUpdateError(err.message || 'Failed to mark commission as paid')
+    } finally {
+      // Remove from updating set
+      setUpdatingIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(commissionId)
+        return newSet
+      })
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -76,83 +108,111 @@ export default function AdminCommissionsPage() {
       {/* Commissions Cards */}
       {!loading && !error && commissions.length > 0 && (
         <div className="space-y-4">
-          {commissions.map((commission) => (
-            <div 
-              key={commission.id} 
-              className="bg-white rounded-lg shadow-lg p-6 hover:bg-cream/30 transition-colors"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                {/* Left Column */}
-                <div>
-                  <span className="font-semibold text-gray-600">Commission ID:</span>{' '}
-                  <span className="text-gray-900">{commission.id.slice(0, 8)}</span>
+          {/* Update Error Message */}
+          {updateError && (
+            <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+              <p className="text-red-700 font-semibold text-sm">⚠️ {updateError}</p>
+            </div>
+          )}
+
+          {commissions.map((commission) => {
+            const isUpdating = updatingIds.has(commission.id)
+            
+            return (
+              <div 
+                key={commission.id} 
+                className="bg-white rounded-lg shadow-lg p-6 hover:bg-cream/30 transition-colors"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  {/* Left Column */}
+                  <div>
+                    <span className="font-semibold text-gray-600">Commission ID:</span>{' '}
+                    <span className="text-gray-900">{commission.id.slice(0, 8)}</span>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-600">Amount:</span>{' '}
+                    <span className="text-green font-bold text-lg">PKR {Number(commission.amount).toLocaleString()}</span>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-600">Status:</span>{' '}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      commission.status === 'PAID' 
+                        ? 'bg-green/10 text-green' 
+                        : 'bg-yellow/20 text-yellow'
+                    }`}>
+                      {commission.status}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-600">Created:</span>{' '}
+                    <span className="text-gray-900">
+                      {new Date(commission.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-600">Agent ID:</span>{' '}
+                    <span className="text-gray-900">{commission.agentId.slice(0, 8)}</span>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-600">Booking ID:</span>{' '}
+                    <span className="text-gray-900">{commission.bookingId.slice(0, 8)}</span>
+                  </div>
+                  
+                  {commission.booking && (
+                    <>
+                      <div>
+                        <span className="font-semibold text-gray-600">Customer:</span>{' '}
+                        <span className="text-gray-900">{commission.booking.customerName}</span>
+                      </div>
+                      
+                      <div>
+                        <span className="font-semibold text-gray-600">Glamp:</span>{' '}
+                        <span className="text-gray-900">
+                          {commission.booking.glamp?.name || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <span className="font-semibold text-gray-600">Check-in:</span>{' '}
+                        <span className="text-gray-900">
+                          {new Date(commission.booking.checkInDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <span className="font-semibold text-gray-600">Booking Total:</span>{' '}
+                        <span className="text-gray-900">
+                          PKR {Number(commission.booking.totalAmount).toLocaleString()}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
-                
-                <div>
-                  <span className="font-semibold text-gray-600">Amount:</span>{' '}
-                  <span className="text-green font-bold text-lg">PKR {Number(commission.amount).toLocaleString()}</span>
-                </div>
-                
-                <div>
-                  <span className="font-semibold text-gray-600">Status:</span>{' '}
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    commission.status === 'PAID' 
-                      ? 'bg-green/10 text-green' 
-                      : 'bg-yellow/20 text-yellow'
-                  }`}>
-                    {commission.status}
-                  </span>
-                </div>
-                
-                <div>
-                  <span className="font-semibold text-gray-600">Created:</span>{' '}
-                  <span className="text-gray-900">
-                    {new Date(commission.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                
-                <div>
-                  <span className="font-semibold text-gray-600">Agent ID:</span>{' '}
-                  <span className="text-gray-900">{commission.agentId.slice(0, 8)}</span>
-                </div>
-                
-                <div>
-                  <span className="font-semibold text-gray-600">Booking ID:</span>{' '}
-                  <span className="text-gray-900">{commission.bookingId.slice(0, 8)}</span>
-                </div>
-                
-                {commission.booking && (
-                  <>
-                    <div>
-                      <span className="font-semibold text-gray-600">Customer:</span>{' '}
-                      <span className="text-gray-900">{commission.booking.customerName}</span>
-                    </div>
-                    
-                    <div>
-                      <span className="font-semibold text-gray-600">Glamp:</span>{' '}
-                      <span className="text-gray-900">
-                        {commission.booking.glamp?.name || 'N/A'}
-                      </span>
-                    </div>
-                    
-                    <div>
-                      <span className="font-semibold text-gray-600">Check-in:</span>{' '}
-                      <span className="text-gray-900">
-                        {new Date(commission.booking.checkInDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                    
-                    <div>
-                      <span className="font-semibold text-gray-600">Booking Total:</span>{' '}
-                      <span className="text-gray-900">
-                        PKR {Number(commission.booking.totalAmount).toLocaleString()}
-                      </span>
-                    </div>
-                  </>
+
+                {/* Action Button - Only show for UNPAID */}
+                {commission.status === 'UNPAID' && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => handleMarkAsPaid(commission.id)}
+                      disabled={isUpdating}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        isUpdating
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-green text-white hover:bg-green/90'
+                      }`}
+                    >
+                      {isUpdating ? 'Updating...' : 'Mark as PAID'}
+                    </button>
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
