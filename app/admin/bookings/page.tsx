@@ -7,10 +7,13 @@ import { getAuthToken } from '../../../src/lib/auth'
 interface AdminBooking {
   id: string
   customerName: string
-  glampName: string
+  glampName?: string // Legacy field
   guests: number
   status: string
   createdAt: string
+  glamp?: {
+    name: string
+  }
 }
 
 export default function BookingsPage() {
@@ -173,7 +176,7 @@ export default function BookingsPage() {
                       {booking.id.slice(0, 8)}
                     </td>
                     <td className="py-4 px-6">{booking.customerName}</td>
-                    <td className="py-4 px-6">{booking.glampName}</td>
+                    <td className="py-4 px-6">{booking.glamp?.name ?? booking.glampName ?? 'Unknown'}</td>
                     <td className="py-4 px-6">{booking.guests}</td>
                     <td className="py-4 px-6 text-sm text-text-light">
                       {new Date(booking.createdAt).toLocaleDateString()}
@@ -216,10 +219,13 @@ import { getAuthToken } from '../../../src/lib/auth'
 interface AdminBooking {
   id: string
   customerName: string
-  glampName: string
+  glampName?: string // Legacy field (may not exist for agent bookings)
   guests: number
   status: string
   createdAt: string
+  glamp?: {
+    name: string
+  }
 }
 
 export default function BookingsPage() {
@@ -407,7 +413,7 @@ export default function BookingsPage() {
                     {booking.id.slice(0, 8)}
                   </td>
                   <td className="py-4 px-6">{booking.customerName}</td>
-                  <td className="py-4 px-6">{booking.glampName}</td>
+                  <td className="py-4 px-6">{booking.glamp?.name ?? booking.glampName ?? 'Unknown'}</td>
                   <td className="py-4 px-6">{booking.guests}</td>
                   <td className="py-4 px-6 text-sm text-text-light">
                     {new Date(booking.createdAt).toLocaleDateString()}
