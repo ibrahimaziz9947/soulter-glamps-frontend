@@ -101,7 +101,7 @@ export async function updateCommissionStatus(
   status: 'UNPAID' | 'PAID'
 ): Promise<void> {
   try {
-    await api.patch(`/admin/commissions/${commissionId}/status`, { status })
+    await api.patch(`/commissions/${commissionId}/status`, { status })
   } catch (error: any) {
     console.error('[commissions.api] Error updating commission status:', error)
     throw new Error(error.message || 'Failed to update commission status')
