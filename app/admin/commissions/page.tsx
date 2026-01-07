@@ -73,63 +73,73 @@ export default function AdminCommissionsPage() {
         </div>
       )}
 
-      {/* Commissions Table */}
+      {/* Commissions Cards */}
       {!loading && !error && commissions.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-cream">
-                <tr>
-                  <th className="py-4 px-6 text-left">Agent</th>
-                  <th className="py-4 px-6 text-left">Booking ID</th>
-                  <th className="py-4 px-6 text-left">Glamp</th>
-                  <th className="py-4 px-6 text-left">Commission</th>
-                  <th className="py-4 px-6 text-left">Status</th>
-                  <th className="py-4 px-6 text-left">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {commissions.map((commission) => (
-                  <tr key={commission.id} className="border-b hover:bg-cream/50">
-                    <td className="py-4 px-6">
-                      <div className="text-sm">
-                        <div className="font-medium text-text-dark">
-                          {commission.agentId.slice(0, 8)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-yellow font-medium">
-                        {commission.bookingId.slice(0, 8)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
+        <div className="space-y-4">
+          {commissions.map((commission) => (
+            <div 
+              key={commission.id} 
+              className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                {/* Left Section: Commission Details */}
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Agent ID</p>
+                    <p className="text-sm font-medium text-text-dark">{commission.agentId.slice(0, 8)}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Booking ID</p>
+                    <p className="text-sm font-medium text-yellow">{commission.bookingId.slice(0, 8)}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Glamp</p>
+                    <p className="text-sm font-medium text-text-dark">
                       {commission.booking?.glamp?.name || 'N/A'}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-semibold text-green">
-                        PKR {Number(commission.amount).toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          commission.status === 'PAID'
-                            ? 'bg-green/10 text-green'
-                            : 'bg-yellow/10 text-yellow'
-                        }`}
-                      >
-                        {commission.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-text-light">
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Customer</p>
+                    <p className="text-sm font-medium text-text-dark">
+                      {commission.booking?.customerName || 'N/A'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Created Date</p>
+                    <p className="text-sm font-medium text-text-dark">
                       {new Date(commission.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Section: Amount & Status */}
+                <div className="lg:text-right space-y-3 lg:min-w-[200px]">
+                  <div>
+                    <p className="text-xs text-text-light uppercase tracking-wide mb-1">Commission Amount</p>
+                    <p className="text-2xl font-bold text-green">
+                      PKR {Number(commission.amount).toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <span
+                      className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
+                        commission.status === 'PAID'
+                          ? 'bg-green text-white'
+                          : 'bg-yellow text-green'
+                      }`}
+                    >
+                      {commission.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
