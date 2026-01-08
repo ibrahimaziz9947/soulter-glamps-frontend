@@ -74,12 +74,31 @@ export default function ExpensesPage() {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true)
-        const response = await apiClient<{ categories: Category[] }>('/finance/categories', {
+        const response = await apiClient<any>('/finance/categories', {
           method: 'GET',
         })
-        setCategories(response.categories || [])
+        console.log('[Expenses] Categories API response:', response)
+        
+        // Handle different response structures
+        let categoriesData: Category[] = []
+        if (Array.isArray(response)) {
+          // Response is directly an array
+          categoriesData = response
+        } else if (response.categories && Array.isArray(response.categories)) {
+          // Response has categories property
+          categoriesData = response.categories
+        } else if (response.data && Array.isArray(response.data)) {
+          // Response has data property that's an array
+          categoriesData = response.data
+        } else if (response.data && response.data.categories && Array.isArray(response.data.categories)) {
+          // Response has data.categories
+          categoriesData = response.data.categories
+        }
+        
+        console.log('[Expenses] Categories array:', categoriesData)
+        setCategories(categoriesData)
       } catch (err: any) {
-        console.error('Failed to fetch categories:', err)
+        console.error('[Expenses] Failed to fetch categories:', err)
       } finally {
         setCategoriesLoading(false)
       }
@@ -654,11 +673,16 @@ export default function ExpensesPage() {
                     disabled={submitting || categoriesLoading}
                     required
                   >
-                    <option value="">Select a category</option>
+                    <option value="">
+                      {categoriesLoading ? 'Loading categories...' : 'Select a category'}
+                    </option>
                     {categories.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
+                  {!categoriesLoading && categories.length === 0 && (
+                    <p className="text-red-500 text-xs mt-1">No categories available. Please contact support.</p>
+                  )}
                 </div>
 
                 <div>
