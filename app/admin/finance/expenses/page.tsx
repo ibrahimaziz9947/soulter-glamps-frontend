@@ -48,6 +48,7 @@ export default function ExpensesPage() {
 
   // Add expense modal state
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
@@ -56,6 +57,9 @@ export default function ExpensesPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+
+  // Delete expense state
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
 
   // Category mapping to IDs
   const categoryMap: Record<string, string> = {
@@ -136,12 +140,26 @@ export default function ExpensesPage() {
 
   const handleOpenAddModal = () => {
     setShowAddModal(true)
+    setEditingExpense(null)
     setFormData({ title: '', amount: '', category: '', description: '' })
+    setFormError(null)
+  }
+
+  const handleOpenEditModal = (expense: Expense) => {
+    setShowAddModal(true)
+    setEditingExpense(expense)
+    setFormData({
+      title: expense.name,
+      amount: expense.amount.toString(),
+      category: expense.category,
+      description: ''
+    })
     setFormError(null)
   }
 
   const handleCloseAddModal = () => {
     setShowAddModal(false)
+    setEditingExpense(null)
     setFormData({ title: '', amount: '', category: '', description: '' })
     setFormError(null)
   }
@@ -180,18 +198,31 @@ export default function ExpensesPage() {
         description: formData.description.trim() || undefined
       }
 
-      await apiClient('/finance/expenses', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
+      if (editingExpense) {
+        // Edit mode - PATCH request
+        await apiClient(`/finance/expenses/${editingExpense.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload)
+        })
+      } else {
+        // Add mode - POST request
+        await apiClient('/finance/expenses', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        })
+      }
 
       // Success - close modal and refetch
       handleCloseAddModal()
-      setPage(1)
+      
+      // Only reset to page 1 when adding new expense
+      if (!editingExpense) {
+        setPage(1)
+      }
       
       // Refetch expenses
       const params = new URLSearchParams()
-      params.append('page', '1')
+      params.append('page', editingExpense ? page.toString() : '1')
       params.append('limit', '10')
       
       if (searchQuery.trim()) {
@@ -210,7 +241,7 @@ export default function ExpensesPage() {
       })
 
       setExpenses(response.expenses || [])
-      setPagination(response.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 })
+      setPagination(response.pagination || { page: editingExpense ? page : 1, limit: 10, total: 0, totalPages: 0 })
       setTotalExpenses(response.totalAmount || 0)
       setApprovedCount(response.approvedCount || 0)
       setPendingCount(response.pendingCount || 0)
@@ -219,6 +250,60 @@ export default function ExpensesPage() {
       setFormError(err.message || 'Failed to add expense. Please try again.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDeleteExpense = async (expense: Expense) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete this expense?\n\n${expense.name} - PKR ${expense.amount.toLocaleString()}`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setDeletingExpenseId(expense.id)
+
+      await apiClient(`/finance/expenses/${expense.id}`, {
+        method: 'DELETE',
+      })
+
+      // Success - refetch expenses
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      params.append('limit', '10')
+      
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim())
+      }
+      
+      if (filter !== 'all') {
+        const categoryId = categoryMap[filter]
+        if (categoryId) {
+          params.append('categoryId', categoryId)
+        }
+      }
+
+      const response = await apiClient<ExpensesResponse>(`/finance/expenses?${params.toString()}`, {
+        method: 'GET',
+      })
+
+      setExpenses(response.expenses || [])
+      setPagination(response.pagination || { page, limit: 10, total: 0, totalPages: 0 })
+      setTotalExpenses(response.totalAmount || 0)
+      setApprovedCount(response.approvedCount || 0)
+      setPendingCount(response.pendingCount || 0)
+
+      // If current page is empty and not page 1, go to previous page
+      if (response.expenses.length === 0 && page > 1) {
+        setPage(page - 1)
+      }
+    } catch (err: any) {
+      console.error('Failed to delete expense:', err)
+      alert(`Failed to delete expense: ${err.message || 'Please try again.'}`)
+    } finally {
+      setDeletingExpenseId(null)
     }
   }
 
@@ -391,6 +476,7 @@ export default function ExpensesPage() {
                           </svg>
                         </button>
                         <button 
+                          onClick={() => handleOpenEditModal(expense)}
                           className="p-2 text-yellow hover:bg-cream rounded-lg transition-smooth"
                           title="Edit"
                         >
@@ -399,12 +485,24 @@ export default function ExpensesPage() {
                           </svg>
                         </button>
                         <button 
-                          className="p-2 text-red-500 hover:bg-cream rounded-lg transition-smooth"
+                          onClick={() => handleDeleteExpense(expense)}
+                          disabled={deletingExpenseId === expense.id}
+                          className={`p-2 rounded-lg transition-smooth ${
+                            deletingExpenseId === expense.id
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-red-500 hover:bg-cream'
+                          }`}
                           title="Delete"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          {deletingExpenseId === expense.id ? (
+                            <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </td>
@@ -458,7 +556,9 @@ export default function ExpensesPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-serif text-2xl font-bold text-green">Add New Expense</h2>
+                <h2 className="font-serif text-2xl font-bold text-green">
+                  {editingExpense ? 'Edit Expense' : 'Add New Expense'}
+                </h2>
                 <button
                   onClick={handleCloseAddModal}
                   className="text-text-light hover:text-text-dark transition-smooth"
@@ -559,7 +659,10 @@ export default function ExpensesPage() {
                     className="flex-1 px-4 py-2 bg-yellow text-green rounded-lg font-semibold hover:bg-yellow-light transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={submitting}
                   >
-                    {submitting ? 'Adding...' : 'Add Expense'}
+                    {submitting 
+                      ? (editingExpense ? 'Updating...' : 'Adding...') 
+                      : (editingExpense ? 'Update Expense' : 'Add Expense')
+                    }
                   </button>
                 </div>
               </form>
