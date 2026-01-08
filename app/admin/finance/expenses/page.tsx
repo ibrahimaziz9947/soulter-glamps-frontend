@@ -7,7 +7,7 @@ import { apiClient } from '@/src/services/apiClient'
 interface Expense {
   id: string
   name: string
-  category: string
+  category: string | { id: string; name: string }
   amount: number
   date: string
   addedBy: string
@@ -136,9 +136,6 @@ export default function ExpensesPage() {
         })
 
         console.log('[Expenses] GET /finance/expenses response:', response)
-        console.log('[Expenses] response.expenses:', response.expenses)
-        console.log('[Expenses] response.pagination:', response.pagination)
-        console.log('[Expenses] response.totalAmount:', response.totalAmount)
         
         // Handle different response structures
         let expensesData = []
@@ -151,15 +148,16 @@ export default function ExpensesPage() {
           // Response is directly an array
           expensesData = response
         } else if (response.data) {
-          // Response has data wrapper
-          expensesData = response.data.expenses || response.data || []
-          paginationData = response.data.pagination || response.pagination || paginationData
-          totalAmount = response.data.totalAmount || response.totalAmount || 0
-          approved = response.data.approvedCount || response.approvedCount || 0
-          pending = response.data.pendingCount || response.pendingCount || 0
-        } else {
-          // Response has properties directly
-          expensesData = response.expenses || []
+          // Backend returns { success: true, data: {...} }
+          const data = response.data
+          expensesData = Array.isArray(data) ? data : (data.expenses || [])
+          paginationData = data.pagination || paginationData
+          totalAmount = data.totalAmount || 0
+          approved = data.approvedCount || 0
+          pending = data.pendingCount || 0
+        } else if (response.expenses) {
+          // Direct expenses property
+          expensesData = response.expenses
           paginationData = response.pagination || paginationData
           totalAmount = response.totalAmount || 0
           approved = response.approvedCount || 0
@@ -224,8 +222,13 @@ export default function ExpensesPage() {
     setShowAddModal(true)
     setEditingExpense(expense)
     
+    // Get category name (handle both string and object)
+    const categoryName = typeof expense.category === 'string' 
+      ? expense.category 
+      : expense.category?.name || ''
+    
     // Find category ID by name
-    const category = categories.find(cat => cat.name === expense.category)
+    const category = categories.find(cat => cat.name === categoryName)
     
     setFormData({
       title: expense.name,
@@ -333,13 +336,14 @@ export default function ExpensesPage() {
       if (Array.isArray(response)) {
         expensesData = response
       } else if (response.data) {
-        expensesData = response.data.expenses || response.data || []
-        paginationData = response.data.pagination || response.pagination || paginationData
-        totalAmount = response.data.totalAmount || response.totalAmount || 0
-        approved = response.data.approvedCount || response.approvedCount || 0
-        pending = response.data.pendingCount || response.pendingCount || 0
-      } else {
-        expensesData = response.expenses || []
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+        paginationData = data.pagination || paginationData
+        totalAmount = data.totalAmount || 0
+        approved = data.approvedCount || 0
+        pending = data.pendingCount || 0
+      } else if (response.expenses) {
+        expensesData = response.expenses
         paginationData = response.pagination || paginationData
         totalAmount = response.totalAmount || 0
         approved = response.approvedCount || 0
@@ -411,13 +415,14 @@ export default function ExpensesPage() {
       if (Array.isArray(response)) {
         expensesData = response
       } else if (response.data) {
-        expensesData = response.data.expenses || response.data || []
-        paginationData = response.data.pagination || response.pagination || paginationData
-        totalAmount = response.data.totalAmount || response.totalAmount || 0
-        approved = response.data.approvedCount || response.approvedCount || 0
-        pending = response.data.pendingCount || response.pendingCount || 0
-      } else {
-        expensesData = response.expenses || []
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+        paginationData = data.pagination || paginationData
+        totalAmount = data.totalAmount || 0
+        approved = data.approvedCount || 0
+        pending = data.pendingCount || 0
+      } else if (response.expenses) {
+        expensesData = response.expenses
         paginationData = response.pagination || paginationData
         totalAmount = response.totalAmount || 0
         approved = response.approvedCount || 0
@@ -592,15 +597,15 @@ export default function ExpensesPage() {
                     <td className="py-4 px-6">
                       <span className="font-medium text-yellow">{expense.id}</span>
                     </td>
-                    <td className="py-4 px-6 text-text-dark">{expense.name}</td>
+                    <td className="py-4 px-6 text-text-dark">{expense.name || 'N/A'}</td>
                     <td className="py-4 px-6">
                       <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cream text-text-dark">
-                        {expense.category}
+                        {typeof expense.category === 'string' ? expense.category : (expense.category?.name || 'N/A')}
                       </span>
                     </td>
-                    <td className="py-4 px-6 font-semibold text-red-500">PKR {expense.amount.toLocaleString()}</td>
-                    <td className="py-4 px-6 text-text-light text-sm">{expense.date}</td>
-                    <td className="py-4 px-6 text-text-dark">{expense.addedBy}</td>
+                    <td className="py-4 px-6 font-semibold text-red-500">PKR {(expense.amount || 0).toLocaleString()}</td>
+                    <td className="py-4 px-6 text-text-light text-sm">{expense.date || 'N/A'}</td>
+                    <td className="py-4 px-6 text-text-dark">{expense.addedBy || 'N/A'}</td>
                     <td className="py-4 px-6">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                         expense.status === 'approved' 
