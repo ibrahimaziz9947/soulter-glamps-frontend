@@ -131,15 +131,49 @@ export default function ExpensesPage() {
           }
         }
 
-        const response = await apiClient<ExpensesResponse>(`/finance/expenses?${params.toString()}`, {
+        const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, {
           method: 'GET',
         })
 
-        setExpenses(response.expenses || [])
-        setPagination(response.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 })
-        setTotalExpenses(response.totalAmount || 0)
-        setApprovedCount(response.approvedCount || 0)
-        setPendingCount(response.pendingCount || 0)
+        console.log('[Expenses] GET /finance/expenses response:', response)
+        console.log('[Expenses] response.expenses:', response.expenses)
+        console.log('[Expenses] response.pagination:', response.pagination)
+        console.log('[Expenses] response.totalAmount:', response.totalAmount)
+        
+        // Handle different response structures
+        let expensesData = []
+        let paginationData = { page: 1, limit: 10, total: 0, totalPages: 0 }
+        let totalAmount = 0
+        let approved = 0
+        let pending = 0
+        
+        if (Array.isArray(response)) {
+          // Response is directly an array
+          expensesData = response
+        } else if (response.data) {
+          // Response has data wrapper
+          expensesData = response.data.expenses || response.data || []
+          paginationData = response.data.pagination || response.pagination || paginationData
+          totalAmount = response.data.totalAmount || response.totalAmount || 0
+          approved = response.data.approvedCount || response.approvedCount || 0
+          pending = response.data.pendingCount || response.pendingCount || 0
+        } else {
+          // Response has properties directly
+          expensesData = response.expenses || []
+          paginationData = response.pagination || paginationData
+          totalAmount = response.totalAmount || 0
+          approved = response.approvedCount || 0
+          pending = response.pendingCount || 0
+        }
+        
+        console.log('[Expenses] Parsed expensesData:', expensesData)
+        console.log('[Expenses] Parsed paginationData:', paginationData)
+
+        setExpenses(expensesData)
+        setPagination(paginationData)
+        setTotalExpenses(totalAmount)
+        setApprovedCount(approved)
+        setPendingCount(pending)
       } catch (err: any) {
         console.error('Failed to fetch expenses:', err)
         setError(err.message || 'Failed to load expenses')
@@ -160,6 +194,12 @@ export default function ExpensesPage() {
   useEffect(() => {
     setPage(1)
   }, [searchQuery, filter])
+
+  // Debug: Log expenses state changes
+  useEffect(() => {
+    console.log('[Expenses] Expenses state updated:', expenses)
+    console.log('[Expenses] Expenses count:', expenses.length)
+  }, [expenses])
 
   const handlePreviousPage = () => {
     if (page > 1) {
@@ -254,6 +294,8 @@ export default function ExpensesPage() {
       // Success - close modal and refetch
       handleCloseAddModal()
       
+      console.log('[Expenses] Add/Edit success, refetching...')
+      
       // Only reset to page 1 when adding new expense
       if (!editingExpense) {
         setPage(1)
@@ -275,15 +317,42 @@ export default function ExpensesPage() {
         }
       }
 
-      const response = await apiClient<ExpensesResponse>(`/finance/expenses?${params.toString()}`, {
+      const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, {
         method: 'GET',
       })
 
-      setExpenses(response.expenses || [])
-      setPagination(response.pagination || { page: editingExpense ? page : 1, limit: 10, total: 0, totalPages: 0 })
-      setTotalExpenses(response.totalAmount || 0)
-      setApprovedCount(response.approvedCount || 0)
-      setPendingCount(response.pendingCount || 0)
+      console.log('[Expenses] Refetch response:', response)
+      
+      // Handle different response structures
+      let expensesData = []
+      let paginationData = { page: editingExpense ? page : 1, limit: 10, total: 0, totalPages: 0 }
+      let totalAmount = 0
+      let approved = 0
+      let pending = 0
+      
+      if (Array.isArray(response)) {
+        expensesData = response
+      } else if (response.data) {
+        expensesData = response.data.expenses || response.data || []
+        paginationData = response.data.pagination || response.pagination || paginationData
+        totalAmount = response.data.totalAmount || response.totalAmount || 0
+        approved = response.data.approvedCount || response.approvedCount || 0
+        pending = response.data.pendingCount || response.pendingCount || 0
+      } else {
+        expensesData = response.expenses || []
+        paginationData = response.pagination || paginationData
+        totalAmount = response.totalAmount || 0
+        approved = response.approvedCount || 0
+        pending = response.pendingCount || 0
+      }
+      
+      console.log('[Expenses] Refetch parsed expenses:', expensesData)
+
+      setExpenses(expensesData)
+      setPagination(paginationData)
+      setTotalExpenses(totalAmount)
+      setApprovedCount(approved)
+      setPendingCount(pending)
     } catch (err: any) {
       console.error('Failed to add expense:', err)
       setFormError(err.message || 'Failed to add expense. Please try again.')
@@ -308,6 +377,8 @@ export default function ExpensesPage() {
         method: 'DELETE',
       })
 
+      console.log('[Expenses] Delete success, refetching...')
+
       // Success - refetch expenses
       const params = new URLSearchParams()
       params.append('page', page.toString())
@@ -324,18 +395,43 @@ export default function ExpensesPage() {
         }
       }
 
-      const response = await apiClient<ExpensesResponse>(`/finance/expenses?${params.toString()}`, {
+      const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, {
         method: 'GET',
       })
 
-      setExpenses(response.expenses || [])
-      setPagination(response.pagination || { page, limit: 10, total: 0, totalPages: 0 })
-      setTotalExpenses(response.totalAmount || 0)
-      setApprovedCount(response.approvedCount || 0)
-      setPendingCount(response.pendingCount || 0)
+      console.log('[Expenses] Delete refetch response:', response)
+      
+      // Handle different response structures
+      let expensesData = []
+      let paginationData = { page, limit: 10, total: 0, totalPages: 0 }
+      let totalAmount = 0
+      let approved = 0
+      let pending = 0
+      
+      if (Array.isArray(response)) {
+        expensesData = response
+      } else if (response.data) {
+        expensesData = response.data.expenses || response.data || []
+        paginationData = response.data.pagination || response.pagination || paginationData
+        totalAmount = response.data.totalAmount || response.totalAmount || 0
+        approved = response.data.approvedCount || response.approvedCount || 0
+        pending = response.data.pendingCount || response.pendingCount || 0
+      } else {
+        expensesData = response.expenses || []
+        paginationData = response.pagination || paginationData
+        totalAmount = response.totalAmount || 0
+        approved = response.approvedCount || 0
+        pending = response.pendingCount || 0
+      }
+
+      setExpenses(expensesData)
+      setPagination(paginationData)
+      setTotalExpenses(totalAmount)
+      setApprovedCount(approved)
+      setPendingCount(pending)
 
       // If current page is empty and not page 1, go to previous page
-      if (response.expenses.length === 0 && page > 1) {
+      if (expensesData.length === 0 && page > 1) {
         setPage(page - 1)
       }
     } catch (err: any) {
