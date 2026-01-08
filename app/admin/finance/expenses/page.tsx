@@ -1,23 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { apiClient } from '@/src/services/apiClient'
+
+interface Expense {
+  id: string
+  name: string
+  category: string
+  amount: number
+  date: string
+  addedBy: string
+  status: string
+}
 
 export default function ExpensesPage() {
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock expense data
-  const expenses = [
-    { id: 'EXP-001', name: 'Food Supplies - Fresh Vegetables', category: 'Food & Beverage', amount: 12500, date: '2025-12-04', addedBy: 'Ahmad Khan', status: 'approved' },
-    { id: 'EXP-002', name: 'Electricity Bill - November', category: 'Utilities', amount: 8900, date: '2025-12-03', addedBy: 'Sara Ahmed', status: 'approved' },
-    { id: 'EXP-003', name: 'Cleaning Supplies', category: 'Housekeeping', amount: 4500, date: '2025-12-03', addedBy: 'Fatima Ali', status: 'approved' },
-    { id: 'EXP-004', name: 'Vehicle Fuel', category: 'Transportation', amount: 6200, date: '2025-12-02', addedBy: 'Hassan Raza', status: 'pending' },
-    { id: 'EXP-005', name: 'Internet & WiFi - Monthly', category: 'Utilities', amount: 3500, date: '2025-12-02', addedBy: 'Ahmad Khan', status: 'approved' },
-    { id: 'EXP-006', name: 'Maintenance - Plumbing Repair', category: 'Maintenance', amount: 15000, date: '2025-12-01', addedBy: 'Hassan Raza', status: 'approved' },
-    { id: 'EXP-007', name: 'Toiletries & Amenities', category: 'Housekeeping', amount: 8700, date: '2025-12-01', addedBy: 'Fatima Ali', status: 'approved' },
-    { id: 'EXP-008', name: 'Marketing - Social Media Ads', category: 'Marketing', amount: 25000, date: '2025-11-30', addedBy: 'Sara Ahmed', status: 'approved' },
-  ]
+  // Fetch expenses from API
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await apiClient<{ expenses: Expense[] }>('/finance/expenses', {
+          method: 'GET',
+        })
+        setExpenses(response.expenses || [])
+      } catch (err: any) {
+        console.error('Failed to fetch expenses:', err)
+        setError(err.message || 'Failed to load expenses')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchExpenses()
+  }, [])
 
   const filteredExpenses = expenses.filter(expense => {
     if (filter !== 'all' && expense.category !== filter) return false
@@ -28,6 +51,45 @@ export default function ExpensesPage() {
   const categories = ['all', 'Food & Beverage', 'Utilities', 'Housekeeping', 'Transportation', 'Maintenance', 'Marketing']
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0)
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-yellow border-t-transparent"></div>
+            <p className="mt-4 text-text-light">Loading expenses...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center gap-3">
+            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-red-800">Failed to load expenses</h3>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-smooth"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
