@@ -61,17 +61,32 @@ export default function ExpensesPage() {
   // Delete expense state
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
 
-  // Category mapping to IDs
-  const categoryMap: Record<string, string> = {
-    'Food & Beverage': 'food-beverage',
-    'Utilities': 'utilities',
-    'Housekeeping': 'housekeeping',
-    'Transportation': 'transportation',
-    'Maintenance': 'maintenance',
-    'Marketing': 'marketing'
+  // Categories from API
+  interface Category {
+    id: string
+    name: string
   }
+  const [categories, setCategories] = useState<Category[]>([])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
 
-  const categories = ['all', 'Food & Beverage', 'Utilities', 'Housekeeping', 'Transportation', 'Maintenance', 'Marketing']
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true)
+        const response = await apiClient<{ categories: Category[] }>('/finance/categories', {
+          method: 'GET',
+        })
+        setCategories(response.categories || [])
+      } catch (err: any) {
+        console.error('Failed to fetch categories:', err)
+      } finally {
+        setCategoriesLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   // Fetch expenses from API with filters and pagination
   useEffect(() => {
@@ -90,9 +105,10 @@ export default function ExpensesPage() {
         }
         
         if (filter !== 'all') {
-          const categoryId = categoryMap[filter]
-          if (categoryId) {
-            params.append('categoryId', categoryId)
+          // Find category by name to get its ID
+          const category = categories.find(cat => cat.name === filter)
+          if (category) {
+            params.append('categoryId', category.id)
           }
         }
 
@@ -148,10 +164,14 @@ export default function ExpensesPage() {
   const handleOpenEditModal = (expense: Expense) => {
     setShowAddModal(true)
     setEditingExpense(expense)
+    
+    // Find category ID by name
+    const category = categories.find(cat => cat.name === expense.category)
+    
     setFormData({
       title: expense.name,
       amount: expense.amount.toString(),
-      category: expense.category,
+      category: category?.id || '', // Use category ID, not name
       description: ''
     })
     setFormError(null)
@@ -194,7 +214,7 @@ export default function ExpensesPage() {
       const payload = {
         title: formData.title.trim(),
         amount: parseFloat(formData.amount),
-        categoryId: categoryMap[formData.category],
+        categoryId: formData.category, // formData.category is now the UUID
         description: formData.description.trim() || undefined
       }
 
@@ -230,9 +250,9 @@ export default function ExpensesPage() {
       }
       
       if (filter !== 'all') {
-        const categoryId = categoryMap[filter]
-        if (categoryId) {
-          params.append('categoryId', categoryId)
+        const category = categories.find(cat => cat.name === filter)
+        if (category) {
+          params.append('categoryId', category.id)
         }
       }
 
@@ -279,9 +299,9 @@ export default function ExpensesPage() {
       }
       
       if (filter !== 'all') {
-        const categoryId = categoryMap[filter]
-        if (categoryId) {
-          params.append('categoryId', categoryId)
+        const category = categories.find(cat => cat.name === filter)
+        if (category) {
+          params.append('categoryId', category.id)
         }
       }
 
@@ -400,17 +420,28 @@ export default function ExpensesPage() {
           </div>
 
           <div className="flex gap-2 flex-wrap">
+            <button
+              key="all"
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                filter === 'all'
+                  ? 'bg-yellow text-green'
+                  : 'bg-cream text-text-dark hover:bg-yellow/20'
+              }`}
+            >
+              All
+            </button>
             {categories.map((category) => (
               <button
-                key={category}
-                onClick={() => setFilter(category)}
-                className={`px-4 py-2 rounded-lg font-medium transition-smooth capitalize ${
-                  filter === category
+                key={category.id}
+                onClick={() => setFilter(category.name)}
+                className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                  filter === category.name
                     ? 'bg-yellow text-green'
                     : 'bg-cream text-text-dark hover:bg-yellow/20'
                 }`}
               >
-                {category}
+                {category.name}
               </button>
             ))}
           </div>
@@ -620,12 +651,12 @@ export default function ExpensesPage() {
                     value={formData.category}
                     onChange={handleFormChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
-                    disabled={submitting}
+                    disabled={submitting || categoriesLoading}
                     required
                   >
                     <option value="">Select a category</option>
-                    {categories.filter(cat => cat !== 'all').map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
