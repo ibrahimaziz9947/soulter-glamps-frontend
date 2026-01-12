@@ -44,13 +44,14 @@ export interface Income {
 }
 
 export interface IncomePayload {
-  title: string
+  source: string // BOOKING | MANUAL | OTHER
+  status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
   amount: number // Amount in cents (integer)
-  date: string // ISO date string
-  category?: string
-  description?: string
+  currency: string // PKR | USD | EUR | GBP
+  dateReceived: string // ISO date string (YYYY-MM-DD)
   reference?: string
-  status?: 'DRAFT' | 'SUBMITTED'
+  notes?: string
+  bookingId?: string // Required when source is BOOKING
 }
 
 export interface IncomeListResponse {
