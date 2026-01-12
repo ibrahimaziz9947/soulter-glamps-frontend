@@ -75,18 +75,18 @@ export default function EditIncomePage() {
       }
 
       const apiPayload = {
-        title: `${payload.source} Income - ${new Date(payload.dateReceived).toLocaleDateString()}`,
-        amount: payload.amount, // Already in cents
-        currency: payload.currency.trim(), // <-- FIX: Include currency
-        date: payload.dateReceived,
-        category: payload.source.toLowerCase(),
-        description: payload.notes || `${payload.source} income${payload.bookingId ? ` for booking ${payload.bookingId}` : ''}`,
-        reference: payload.reference,
-        status: payload.status as 'DRAFT' | 'SUBMITTED',
+        source: payload.source, // BOOKING | MANUAL | OTHER
+        status: payload.status, // DRAFT | CONFIRMED | CANCELLED
+        amount: payload.amount, // Already in cents (integer)
+        currency: payload.currency.trim(), // PKR | USD | EUR | GBP
+        dateReceived: payload.dateReceived, // ISO date string
+        reference: payload.reference?.trim() || undefined,
+        notes: payload.notes?.trim() || undefined,
+        bookingId: payload.bookingId?.trim() || undefined,
       }
 
       // TEMP DEBUG: Log final API payload
-      console.log('[Income Edit Submit Payload]', apiPayload)
+      console.log('[Income Edit Submit Payload FINAL]', apiPayload)
 
       await updateIncome(incomeId, apiPayload)
       setToast({ message: 'Income updated successfully!', type: 'success' })
