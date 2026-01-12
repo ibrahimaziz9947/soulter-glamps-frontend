@@ -61,15 +61,34 @@ export default function EditIncomePage() {
     setToast(null)
 
     try {
-      await updateIncome(incomeId, {
+      // TEMP DEBUG: Log form values and payload
+      console.log('[Income Edit Form Values]', payload)
+      
+      // Validate currency before API call
+      if (!payload.currency || !payload.currency.trim()) {
+        setToast({
+          message: 'Currency is required',
+          type: 'error',
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      const apiPayload = {
         title: `${payload.source} Income - ${new Date(payload.dateReceived).toLocaleDateString()}`,
         amount: payload.amount, // Already in cents
+        currency: payload.currency.trim(), // <-- FIX: Include currency
         date: payload.dateReceived,
         category: payload.source.toLowerCase(),
         description: payload.notes || `${payload.source} income${payload.bookingId ? ` for booking ${payload.bookingId}` : ''}`,
         reference: payload.reference,
         status: payload.status as 'DRAFT' | 'SUBMITTED',
-      })
+      }
+
+      // TEMP DEBUG: Log final API payload
+      console.log('[Income Edit Submit Payload]', apiPayload)
+
+      await updateIncome(incomeId, apiPayload)
       setToast({ message: 'Income updated successfully!', type: 'success' })
       setTimeout(() => { router.push(`/admin/finance/income/${incomeId}`) }, 500)
     } catch (error: any) {
