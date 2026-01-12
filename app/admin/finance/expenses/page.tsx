@@ -588,15 +588,57 @@ export default function ExpensesPage() {
       params.append('page', page.toString())
       params.append('limit', '10')
       if (searchQuery.trim()) params.append('search', searchQuery.trim())
-      if (filter !== 'all') {
-        const category = categories.find(cat => cat.name === filter)
-        if (category) params.append('categoryId', category.id)
-      }
-      if (statusFilter !== 'all') params.append('status', statusFilter)
       
       const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, { method: 'GET' })
-      let expensesData = Array.isArray(response) ? response : (response.data?.expenses || response.expenses || [])
-      setExpenses(expensesData)
+      
+      // Parse response
+      let expensesData = []
+      if (Array.isArray(response)) {
+        expensesData = response
+      } else if (response.success && response.data) {
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+      } else if (response.data) {
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+      } else if (response.expenses) {
+        expensesData = response.expenses
+      }
+      
+      // Update allExpenses
+      setAllExpenses(expensesData)
+      
+      // Apply client-side filtering
+      let filteredExpenses: Expense[] = expensesData
+      
+      if (statusFilter !== 'all') {
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => 
+          (exp.status || 'DRAFT') === statusFilter
+        )
+      }
+      
+      if (filter !== 'all') {
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+          const expCategoryName = typeof exp.category === 'string' 
+            ? exp.category 
+            : exp.category?.name || ''
+          return expCategoryName === filter
+        })
+      }
+      
+      if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase()
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+          const title = (exp.title || '').toLowerCase()
+          const id = (exp.id || '').toLowerCase()
+          const categoryName = typeof exp.category === 'string' 
+            ? exp.category.toLowerCase()
+            : (exp.category?.name || '').toLowerCase()
+          return title.includes(query) || id.includes(query) || categoryName.includes(query)
+        })
+      }
+      
+      setExpenses(filteredExpenses)
     } catch (err: any) {
       const statusCode = err.statusCode || err.status
       if (statusCode === 409) {
@@ -635,15 +677,57 @@ export default function ExpensesPage() {
       params.append('page', page.toString())
       params.append('limit', '10')
       if (searchQuery.trim()) params.append('search', searchQuery.trim())
-      if (filter !== 'all') {
-        const category = categories.find(cat => cat.name === filter)
-        if (category) params.append('categoryId', category.id)
-      }
-      if (statusFilter !== 'all') params.append('status', statusFilter)
       
       const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, { method: 'GET' })
-      let expensesData = Array.isArray(response) ? response : (response.data?.expenses || response.expenses || [])
-      setExpenses(expensesData)
+      
+      // Parse response
+      let expensesData = []
+      if (Array.isArray(response)) {
+        expensesData = response
+      } else if (response.success && response.data) {
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+      } else if (response.data) {
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+      } else if (response.expenses) {
+        expensesData = response.expenses
+      }
+      
+      // Update allExpenses
+      setAllExpenses(expensesData)
+      
+      // Apply client-side filtering
+      let filteredExpenses: Expense[] = expensesData
+      
+      if (statusFilter !== 'all') {
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => 
+          (exp.status || 'DRAFT') === statusFilter
+        )
+      }
+      
+      if (filter !== 'all') {
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+          const expCategoryName = typeof exp.category === 'string' 
+            ? exp.category 
+            : exp.category?.name || ''
+          return expCategoryName === filter
+        })
+      }
+      
+      if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase()
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+          const title = (exp.title || '').toLowerCase()
+          const id = (exp.id || '').toLowerCase()
+          const categoryName = typeof exp.category === 'string' 
+            ? exp.category.toLowerCase()
+            : (exp.category?.name || '').toLowerCase()
+          return title.includes(query) || id.includes(query) || categoryName.includes(query)
+        })
+      }
+      
+      setExpenses(filteredExpenses)
     } catch (err: any) {
       const statusCode = err.statusCode || err.status
       if (statusCode === 409) {
@@ -681,15 +765,57 @@ export default function ExpensesPage() {
       params.append('page', page.toString())
       params.append('limit', '10')
       if (searchQuery.trim()) params.append('search', searchQuery.trim())
-      if (filter !== 'all') {
-        const category = categories.find(cat => cat.name === filter)
-        if (category) params.append('categoryId', category.id)
-      }
-      if (statusFilter !== 'all') params.append('status', statusFilter)
       
       const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, { method: 'GET' })
-      let expensesData = Array.isArray(response) ? response : (response.data?.expenses || response.expenses || [])
-      setExpenses(expensesData)
+      
+      // Parse response
+      let expensesData = []
+      if (Array.isArray(response)) {
+        expensesData = response
+      } else if (response.success && response.data) {
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+      } else if (response.data) {
+        const data = response.data
+        expensesData = Array.isArray(data) ? data : (data.expenses || [])
+      } else if (response.expenses) {
+        expensesData = response.expenses
+      }
+      
+      // Update allExpenses
+      setAllExpenses(expensesData)
+      
+      // Apply client-side filtering
+      let filteredExpenses: Expense[] = expensesData
+      
+      if (statusFilter !== 'all') {
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => 
+          (exp.status || 'DRAFT') === statusFilter
+        )
+      }
+      
+      if (filter !== 'all') {
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+          const expCategoryName = typeof exp.category === 'string' 
+            ? exp.category 
+            : exp.category?.name || ''
+          return expCategoryName === filter
+        })
+      }
+      
+      if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase()
+        filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+          const title = (exp.title || '').toLowerCase()
+          const id = (exp.id || '').toLowerCase()
+          const categoryName = typeof exp.category === 'string' 
+            ? exp.category.toLowerCase()
+            : (exp.category?.name || '').toLowerCase()
+          return title.includes(query) || id.includes(query) || categoryName.includes(query)
+        })
+      }
+      
+      setExpenses(filteredExpenses)
     } catch (err: any) {
       const statusCode = err.statusCode || err.status
       if (statusCode === 409) {
