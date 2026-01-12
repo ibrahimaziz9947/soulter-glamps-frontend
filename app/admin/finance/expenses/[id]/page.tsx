@@ -4,17 +4,40 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { apiClient } from '@/src/services/apiClient'
 
+interface Event {
+  id: string
+  type: string
+  description: string
+  performedBy: string
+  timestamp: string
+  metadata?: any
+}
+
 interface Expense {
   id: string
   title: string
   category: string | { id: string; name: string }
   amount: number
   date: string
-  addedBy: string
-  status: string
   description?: string
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  
+  // Audit fields
+  createdBy?: string
   createdAt?: string
   updatedAt?: string
+  
+  // Approval metadata
+  submittedAt?: string
+  submittedBy?: string
+  approvedAt?: string
+  approvedBy?: string
+  rejectedAt?: string
+  rejectedBy?: string
+  rejectionReason?: string
+  
+  // Events timeline
+  events?: Event[]
 }
 
 export default function ExpenseDetailPage() {
@@ -105,6 +128,11 @@ export default function ExpenseDetailPage() {
   const categoryName = typeof expense.category === 'string' 
     ? expense.category 
     : expense.category?.name || 'N/A'
+  
+  // Sort events by timestamp (newest first)
+  const sortedEvents = expense.events 
+    ? [...expense.events].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    : []
 
   return (
     <div className="space-y-6">
@@ -137,10 +165,16 @@ export default function ExpenseDetailPage() {
           {/* Status */}
           <div>
             <label className="block text-sm font-semibold text-text-light mb-2">Status</label>
-            <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-              expense.status === 'approved' 
+            <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold uppercase ${
+              expense.status === 'DRAFT' 
+                ? 'bg-gray-200 text-gray-700' 
+                : expense.status === 'SUBMITTED'
+                ? 'bg-blue-100 text-blue-700'
+                : expense.status === 'APPROVED' 
                 ? 'bg-green/10 text-green' 
-                : 'bg-yellow/10 text-yellow'
+                : expense.status === 'REJECTED'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-orange-100 text-orange-700'
             }`}>
               {expense.status}
             </span>
@@ -172,10 +206,10 @@ export default function ExpenseDetailPage() {
             <p className="text-lg text-text-dark">{expense.date}</p>
           </div>
 
-          {/* Added By */}
+          {/* Created By */}
           <div>
-            <label className="block text-sm font-semibold text-text-light mb-2">Added By</label>
-            <p className="text-lg text-text-dark">{expense.addedBy}</p>
+            <label className="block text-sm font-semibold text-text-light mb-2">Created By</label>
+            <p className="text-lg text-text-dark">{expense.createdBy || 'N/A'}</p>
           </div>
 
           {/* Description */}
@@ -186,7 +220,14 @@ export default function ExpenseDetailPage() {
             </p>
           </div>
 
-          {/* Timestamps if available */}
+          {/* Timestamps */}
+          {expense.createdAt && (
+            <div>
+              <label className="block text-sm font-semibold text-text-light mb-2">Created At</label>
+              <p className="text-sm text-text-light">{new Date(expense.createdAt).toLocaleString()}</p>
+            </div>
+          )}
+
           {expense.createdAt && (
             <div>
               <label className="block text-sm font-semibold text-text-light mb-2">Created At</label>
@@ -202,6 +243,124 @@ export default function ExpenseDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Approval Metadata Card */}
+      {(expense.submittedAt || expense.approvedAt || expense.rejectedAt) && (
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <h2 className="text-xl font-serif font-bold text-green mb-6">Approval History</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Submitted */}
+            {expense.submittedAt && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-text-light mb-2">Submitted At</label>
+                  <p className="text-text-dark">{new Date(expense.submittedAt).toLocaleString()}</p>
+                </div>
+                {expense.submittedBy && (
+                  <div>
+                    <label className="block text-sm font-semibold text-text-light mb-2">Submitted By</label>
+                    <p className="text-text-dark">{expense.submittedBy}</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Approved */}
+            {expense.approvedAt && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-text-light mb-2">Approved At</label>
+                  <p className="text-text-dark">{new Date(expense.approvedAt).toLocaleString()}</p>
+                </div>
+                {expense.approvedBy && (
+                  <div>
+                    <label className="block text-sm font-semibold text-text-light mb-2">Approved By</label>
+                    <p className="text-text-dark">{expense.approvedBy}</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Rejected */}
+            {expense.rejectedAt && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-text-light mb-2">Rejected At</label>
+                  <p className="text-text-dark">{new Date(expense.rejectedAt).toLocaleString()}</p>
+                </div>
+                {expense.rejectedBy && (
+                  <div>
+                    <label className="block text-sm font-semibold text-text-light mb-2">Rejected By</label>
+                    <p className="text-text-dark">{expense.rejectedBy}</p>
+                  </div>
+                )}
+                {expense.rejectionReason && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-text-light mb-2">Rejection Reason</label>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <p className="text-red-700">{expense.rejectionReason}</p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Events Timeline */}
+      {sortedEvents.length > 0 && (
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <h2 className="text-xl font-serif font-bold text-green mb-6">Activity Timeline</h2>
+          <div className="space-y-4">
+            {sortedEvents.map((event, index) => (
+              <div key={event.id || index} className="flex gap-4 pb-4 border-b border-gray-100 last:border-0">
+                {/* Timeline dot */}
+                <div className="flex flex-col items-center">
+                  <div className={`w-3 h-3 rounded-full mt-1 ${
+                    event.type === 'CREATED' ? 'bg-gray-400' :
+                    event.type === 'SUBMITTED' ? 'bg-blue-500' :
+                    event.type === 'APPROVED' ? 'bg-green' :
+                    event.type === 'REJECTED' ? 'bg-red-500' :
+                    event.type === 'UPDATED' ? 'bg-yellow' :
+                    'bg-gray-400'
+                  }`}></div>
+                  {index < sortedEvents.length - 1 && (
+                    <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
+                  )}
+                </div>
+
+                {/* Event content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-semibold text-text-dark">{event.description}</p>
+                      <p className="text-sm text-text-light mt-1">
+                        by {event.performedBy}
+                      </p>
+                    </div>
+                    <span className="text-xs text-text-light whitespace-nowrap">
+                      {new Date(event.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  {/* Event metadata */}
+                  {event.metadata && Object.keys(event.metadata).length > 0 && (
+                    <div className="mt-2 bg-gray-50 rounded p-3 text-sm">
+                      {Object.entries(event.metadata).map(([key, value]) => (
+                        <div key={key} className="flex gap-2">
+                          <span className="font-medium text-text-light">{key}:</span>
+                          <span className="text-text-dark">{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-4">

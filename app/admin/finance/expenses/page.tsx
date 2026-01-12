@@ -12,7 +12,7 @@ interface Expense {
   amount: number
   date: string
   addedBy: string
-  status: string
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 }
 
 interface PaginationMeta {
@@ -33,6 +33,7 @@ interface ExpensesResponse {
 export default function ExpensesPage() {
   const router = useRouter()
   const [filter, setFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,6 +64,14 @@ export default function ExpensesPage() {
   // Delete expense state
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null)
 
+  // Workflow action states
+  const [submittingExpenseId, setSubmittingExpenseId] = useState<string | null>(null)
+  const [approvingExpenseId, setApprovingExpenseId] = useState<string | null>(null)
+  const [rejectingExpenseId, setRejectingExpenseId] = useState<string | null>(null)
+
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
   // Categories from API
   interface Category {
     id: string
@@ -70,6 +79,12 @@ export default function ExpensesPage() {
   }
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
+
+  // Toast notification helper
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 4000) // Auto-dismiss after 4 seconds
+  }
 
   // Fetch categories from backend
   useEffect(() => {
@@ -132,6 +147,10 @@ export default function ExpensesPage() {
             params.append('categoryId', category.id)
           }
         }
+        
+        if (statusFilter !== 'all') {
+          params.append('status', statusFilter)
+        }
 
         const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, {
           method: 'GET',
@@ -188,12 +207,12 @@ export default function ExpensesPage() {
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [page, searchQuery, filter])
+  }, [page, searchQuery, filter, statusFilter])
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1)
-  }, [searchQuery, filter])
+  }, [searchQuery, filter, statusFilter])
 
   // Debug: Log expenses state changes
   useEffect(() => {
@@ -361,7 +380,14 @@ export default function ExpensesPage() {
       setPendingCount(pending)
     } catch (err: any) {
       console.error('Failed to add expense:', err)
-      setFormError(err.message || 'Failed to add expense. Please try again.')
+      const statusCode = err.statusCode || err.status
+      if (statusCode === 409) {
+        setFormError('Cannot modify: Expense is in a protected state')
+      } else if (statusCode === 403) {
+        setFormError('You do not have permission to perform this action')
+      } else {
+        setFormError(err.message || 'Failed to save expense. Please try again.')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -443,9 +469,150 @@ export default function ExpensesPage() {
       }
     } catch (err: any) {
       console.error('Failed to delete expense:', err)
-      alert(`Failed to delete expense: ${err.message || 'Please try again.'}`)
+      const statusCode = err.statusCode || err.status
+      if (statusCode === 409) {
+        showToast('Cannot delete: Expense has already been submitted or approved', 'error')
+      } else if (statusCode === 403) {
+        showToast('You do not have permission to delete this expense', 'error')
+      } else {
+        showToast(err.message || 'Failed to delete expense', 'error')
+      }
     } finally {
       setDeletingExpenseId(null)
+    }
+  }
+
+  const handleSubmitForApproval = async (expenseId: string) => {
+    if (!window.confirm('Are you sure you want to submit this expense for approval?')) {
+      return
+    }
+
+    try {
+      setSubmittingExpenseId(expenseId)
+      await apiClient(`/finance/expenses/${expenseId}/submit`, {
+        method: 'POST',
+      })
+      
+      showToast('Expense submitted for approval successfully', 'success')
+      
+      // Refetch expenses
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      params.append('limit', '10')
+      if (searchQuery.trim()) params.append('search', searchQuery.trim())
+      if (filter !== 'all') {
+        const category = categories.find(cat => cat.name === filter)
+        if (category) params.append('categoryId', category.id)
+      }
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      
+      const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, { method: 'GET' })
+      let expensesData = Array.isArray(response) ? response : (response.data?.expenses || response.expenses || [])
+      setExpenses(expensesData)
+    } catch (err: any) {
+      const statusCode = err.statusCode || err.status
+      if (statusCode === 409) {
+        showToast('Cannot submit: Expense is already submitted or in a different state', 'error')
+      } else if (statusCode === 403) {
+        showToast('You do not have permission to submit this expense', 'error')
+      } else {
+        showToast(err.message || 'Failed to submit expense', 'error')
+      }
+    } finally {
+      setSubmittingExpenseId(null)
+    }
+  }
+
+  const handleApproveExpense = async (expenseId: string) => {
+    if (!window.confirm('Are you sure you want to approve this expense?')) {
+      return
+    }
+
+    const comment = window.prompt('Add an optional comment (or leave blank):')
+    
+    try {
+      setApprovingExpenseId(expenseId)
+      
+      const payload = comment?.trim() ? { comment: comment.trim() } : {}
+      
+      await apiClient(`/finance/expenses/${expenseId}/approve`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      
+      showToast('Expense approved successfully', 'success')
+      
+      // Refetch expenses
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      params.append('limit', '10')
+      if (searchQuery.trim()) params.append('search', searchQuery.trim())
+      if (filter !== 'all') {
+        const category = categories.find(cat => cat.name === filter)
+        if (category) params.append('categoryId', category.id)
+      }
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      
+      const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, { method: 'GET' })
+      let expensesData = Array.isArray(response) ? response : (response.data?.expenses || response.expenses || [])
+      setExpenses(expensesData)
+    } catch (err: any) {
+      const statusCode = err.statusCode || err.status
+      if (statusCode === 409) {
+        showToast('Cannot approve: Expense is not in submitted state', 'error')
+      } else if (statusCode === 403) {
+        showToast('You do not have permission to approve expenses', 'error')
+      } else {
+        showToast(err.message || 'Failed to approve expense', 'error')
+      }
+    } finally {
+      setApprovingExpenseId(null)
+    }
+  }
+
+  const handleRejectExpense = async (expenseId: string) => {
+    const reason = window.prompt('Please provide a reason for rejection (required):')
+    
+    if (!reason || !reason.trim()) {
+      showToast('Rejection reason is required', 'error')
+      return
+    }
+    
+    try {
+      setRejectingExpenseId(expenseId)
+      
+      await apiClient(`/finance/expenses/${expenseId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason.trim() })
+      })
+      
+      showToast('Expense rejected', 'success')
+      
+      // Refetch expenses
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      params.append('limit', '10')
+      if (searchQuery.trim()) params.append('search', searchQuery.trim())
+      if (filter !== 'all') {
+        const category = categories.find(cat => cat.name === filter)
+        if (category) params.append('categoryId', category.id)
+      }
+      if (statusFilter !== 'all') params.append('status', statusFilter)
+      
+      const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, { method: 'GET' })
+      let expensesData = Array.isArray(response) ? response : (response.data?.expenses || response.expenses || [])
+      setExpenses(expensesData)
+    } catch (err: any) {
+      const statusCode = err.statusCode || err.status
+      if (statusCode === 409) {
+        showToast('Cannot reject: Expense is not in submitted state', 'error')
+      } else if (statusCode === 403) {
+        showToast('You do not have permission to reject expenses', 'error')
+      } else {
+        showToast(err.message || 'Failed to reject expense', 'error')
+      }
+    } finally {
+      setRejectingExpenseId(null)
     }
   }
 
@@ -490,6 +657,29 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in ${
+          toast.type === 'success' ? 'bg-green text-white' : 'bg-red-500 text-white'
+        }`}>
+          {toast.type === 'success' ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+          <span className="font-medium">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-2 hover:opacity-80">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -524,7 +714,75 @@ export default function ExpensesPage() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
+        {/* Status Filters */}
+        <div>
+          <label className="block text-sm font-semibold text-text-dark mb-2">Status Filter</label>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                statusFilter === 'all'
+                  ? 'bg-green text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setStatusFilter('DRAFT')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                statusFilter === 'DRAFT'
+                  ? 'bg-gray-500 text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              Draft
+            </button>
+            <button
+              onClick={() => setStatusFilter('SUBMITTED')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                statusFilter === 'SUBMITTED'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              Submitted
+            </button>
+            <button
+              onClick={() => setStatusFilter('APPROVED')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                statusFilter === 'APPROVED'
+                  ? 'bg-green text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              Approved
+            </button>
+            <button
+              onClick={() => setStatusFilter('REJECTED')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                statusFilter === 'REJECTED'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              Rejected
+            </button>
+            <button
+              onClick={() => setStatusFilter('CANCELLED')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                statusFilter === 'CANCELLED'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              Cancelled
+            </button>
+          </div>
+        </div>
+
+        {/* Category Filters and Search */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -551,7 +809,7 @@ export default function ExpensesPage() {
                   : 'bg-cream text-text-dark hover:bg-yellow/20'
               }`}
             >
-              All
+              All Categories
             </button>
             {categories.map((category) => (
               <button
@@ -599,7 +857,7 @@ export default function ExpensesPage() {
                     <td className="py-4 px-6">
                       <span className="font-medium text-yellow">{expense.id}</span>
                     </td>
-                    <td className="py-4 px-6 text-text-dark">{expense.title || 'N/A'}</td>
+                    <td className="py-4 px-6 text-text-dark">{expense.title}</td>
                     <td className="py-4 px-6">
                       <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cream text-text-dark">
                         {typeof expense.category === 'string' ? expense.category : (expense.category?.name || 'N/A')}
@@ -609,16 +867,23 @@ export default function ExpensesPage() {
                     <td className="py-4 px-6 text-text-light text-sm">{expense.date || 'N/A'}</td>
                     <td className="py-4 px-6 text-text-dark">{expense.addedBy || 'N/A'}</td>
                     <td className="py-4 px-6">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                        expense.status === 'approved' 
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase ${
+                        expense.status === 'DRAFT' 
+                          ? 'bg-gray-200 text-gray-700' 
+                          : expense.status === 'SUBMITTED'
+                          ? 'bg-blue-100 text-blue-700'
+                          : expense.status === 'APPROVED' 
                           ? 'bg-green/10 text-green' 
-                          : 'bg-yellow/10 text-yellow'
+                          : expense.status === 'REJECTED'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-orange-100 text-orange-700'
                       }`}>
                         {expense.status}
                       </span>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
+                        {/* View - Available for all statuses */}
                         <button 
                           onClick={() => router.push(`/admin/finance/expenses/${expense.id}`)}
                           className="p-2 text-green hover:bg-cream rounded-lg transition-smooth"
@@ -629,35 +894,101 @@ export default function ExpensesPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </button>
-                        <button 
-                          onClick={() => handleOpenEditModal(expense)}
-                          className="p-2 text-yellow hover:bg-cream rounded-lg transition-smooth"
-                          title="Edit"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteExpense(expense)}
-                          disabled={deletingExpenseId === expense.id}
-                          className={`p-2 rounded-lg transition-smooth ${
-                            deletingExpenseId === expense.id
-                              ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-red-500 hover:bg-cream'
-                          }`}
-                          title="Delete"
-                        >
-                          {deletingExpenseId === expense.id ? (
-                            <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+
+                        {/* Edit - Available for DRAFT and REJECTED */}
+                        {(expense.status === 'DRAFT' || expense.status === 'REJECTED') && (
+                          <button 
+                            onClick={() => handleOpenEditModal(expense)}
+                            className="p-2 text-yellow hover:bg-cream rounded-lg transition-smooth"
+                            title="Edit"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                          ) : (
+                          </button>
+                        )}
+
+                        {/* Delete - Available for DRAFT only */}
+                        {expense.status === 'DRAFT' && (
+                          <button 
+                            onClick={() => handleDeleteExpense(expense)}
+                            disabled={deletingExpenseId === expense.id}
+                            className={`p-2 rounded-lg transition-smooth ${
+                              deletingExpenseId === expense.id
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-red-500 hover:bg-cream'
+                            }`}
+                            title="Delete"
+                          >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
-                          )}
-                        </button>
+                          </button>
+                        )}
+
+                        {/* Submit - Available for DRAFT only */}
+                        {expense.status === 'DRAFT' && (
+                          <button 
+                            onClick={() => handleSubmitForApproval(expense.id)}
+                            disabled={submittingExpenseId === expense.id}
+                            className={`px-3 py-1 text-xs font-semibold text-white rounded-lg transition-smooth ${
+                              submittingExpenseId === expense.id
+                                ? 'bg-blue-300 cursor-not-allowed'
+                                : 'bg-blue-500 hover:bg-blue-600'
+                            }`}
+                            title="Submit for Approval"
+                          >
+                            {submittingExpenseId === expense.id ? 'Submitting...' : 'Submit'}
+                          </button>
+                        )}
+
+                        {/* Resubmit - Available for REJECTED only */}
+                        {expense.status === 'REJECTED' && (
+                          <button 
+                            onClick={() => handleSubmitForApproval(expense.id)}
+                            disabled={submittingExpenseId === expense.id}
+                            className={`px-3 py-1 text-xs font-semibold text-white rounded-lg transition-smooth ${
+                              submittingExpenseId === expense.id
+                                ? 'bg-blue-300 cursor-not-allowed'
+                                : 'bg-blue-500 hover:bg-blue-600'
+                            }`}
+                            title="Resubmit for Approval"
+                          >
+                            {submittingExpenseId === expense.id ? 'Submitting...' : 'Resubmit'}
+                          </button>
+                        )}
+
+                        {/* Approve - Available for SUBMITTED only */}
+                        {expense.status === 'SUBMITTED' && (
+                          <button 
+                            onClick={() => handleApproveExpense(expense.id)}
+                            disabled={approvingExpenseId === expense.id}
+                            className={`px-3 py-1 text-xs font-semibold text-white rounded-lg transition-smooth ${
+                              approvingExpenseId === expense.id
+                                ? 'bg-green/50 cursor-not-allowed'
+                                : 'bg-green hover:bg-green/90'
+                            }`}
+                            title="Approve Expense"
+                          >
+                            {approvingExpenseId === expense.id ? 'Approving...' : 'Approve'}
+                          </button>
+                        )}
+
+                        {/* Reject - Available for SUBMITTED only */}
+                        {expense.status === 'SUBMITTED' && (
+                          <button 
+                            onClick={() => handleRejectExpense(expense.id)}
+                            disabled={rejectingExpenseId === expense.id}
+                            className={`px-3 py-1 text-xs font-semibold text-white rounded-lg transition-smooth ${
+                              rejectingExpenseId === expense.id
+                                ? 'bg-red-300 cursor-not-allowed'
+                                : 'bg-red-500 hover:bg-red-600'
+                            }`}
+                            title="Reject Expense"
+                          >
+                            {rejectingExpenseId === expense.id ? 'Rejecting...' : 'Reject'}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
