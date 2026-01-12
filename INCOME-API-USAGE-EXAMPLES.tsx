@@ -42,11 +42,14 @@ export function handleFormSubmit(formAmount: string) {
   const amountInCents = displayToCents(formAmount) // "123.45" → 12345
   
   const payload: IncomePayload = {
-    title: 'Booking Payment',
+    source: 'BOOKING', // BOOKING | MANUAL | OTHER
+    status: 'CONFIRMED', // DRAFT | CONFIRMED | CANCELLED
     amount: amountInCents, // ✅ Send as cents (integer)
-    date: '2026-01-15',
-    category: 'booking',
-    status: 'SUBMITTED',
+    currency: 'PKR', // PKR | USD | EUR | GBP
+    dateReceived: '2026-01-15', // ISO date string
+    reference: 'INV-12345',
+    notes: 'Booking payment received',
+    bookingId: 'uuid-here', // Required when source is BOOKING
   }
   
   return createIncome(payload)
@@ -66,9 +69,9 @@ export function displayIncomeAmount(income: Income) {
 // ❌ WRONG: Do NOT send decimal strings to backend
 export function incorrectUsage(formAmount: string) {
   const payload = {
-    title: 'Payment',
+    source: 'MANUAL',
     amount: parseFloat(formAmount), // ❌ WRONG: 123.45 (decimal)
-    date: '2026-01-15',
+    dateReceived: '2026-01-15',
   }
   // Backend expects integer cents, not decimal!
 }
@@ -132,11 +135,12 @@ export async function fetchIncomeSummary() {
 
 // Example 3: Create new income (form submission)
 export async function handleCreateIncome(formData: {
-  title: string
+  source: string // BOOKING | MANUAL | OTHER
   amount: string // User input as string: "123.45"
-  date: string
-  category: string
-  description: string
+  currency: string // PKR | USD | EUR | GBP
+  dateReceived: string
+  notes: string
+  bookingId?: string
 }) {
   try {
     // Validate input
@@ -148,12 +152,13 @@ export async function handleCreateIncome(formData: {
     const amountInCents = displayToCents(formData.amount)
     
     const payload: IncomePayload = {
-      title: formData.title,
-      amount: amountInCents, // ✅ Send as cents
-      date: formData.date,
-      category: formData.category,
-      description: formData.description,
+      source: formData.source,
       status: 'DRAFT',
+      amount: amountInCents, // ✅ Send as cents
+      currency: formData.currency,
+      dateReceived: formData.dateReceived,
+      notes: formData.notes,
+      bookingId: formData.bookingId,
     }
     
     const response = await createIncome(payload)
@@ -169,14 +174,15 @@ export async function handleCreateIncome(formData: {
 // Example 4: Update existing income
 export async function handleUpdateIncome(
   incomeId: string,
-  formData: { amount: string; description: string }
+  formData: { amount: string; notes: string; currency: string }
 ) {
   try {
     const amountInCents = displayToCents(formData.amount)
     
     const response = await updateIncome(incomeId, {
       amount: amountInCents,
-      description: formData.description,
+      currency: formData.currency,
+      notes: formData.notes,
     })
     
     return response.data
