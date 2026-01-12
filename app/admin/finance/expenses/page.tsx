@@ -41,6 +41,7 @@ export default function ExpensesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
@@ -145,17 +146,8 @@ export default function ExpensesPage() {
           params.append('search', searchQuery.trim())
         }
         
-        if (filter !== 'all') {
-          // Find category by name to get its ID
-          const category = categories.find(cat => cat.name === filter)
-          if (category) {
-            params.append('categoryId', category.id)
-          }
-        }
-        
-        if (statusFilter !== 'all') {
-          params.append('status', statusFilter)
-        }
+        // Note: We don't send category or status filters to API
+        // We'll do client-side filtering for better UX and accurate counts
 
         const response = await apiClient<any>(`/finance/expenses?${params.toString()}`, {
           method: 'GET',
@@ -201,7 +193,45 @@ export default function ExpensesPage() {
         console.log('[Expenses] Parsed expensesData:', expensesData)
         console.log('[Expenses] Parsed paginationData:', paginationData)
 
-        setExpenses(expensesData)
+        // Store all expenses (unfiltered)
+        setAllExpenses(expensesData)
+        
+        // Apply client-side filtering
+        let filteredExpenses: Expense[] = expensesData
+        
+        // Filter by status
+        if (statusFilter !== 'all') {
+          filteredExpenses = filteredExpenses.filter((exp: Expense) => 
+            (exp.status || 'DRAFT') === statusFilter
+          )
+        }
+        
+        // Filter by category
+        if (filter !== 'all') {
+          filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+            const expCategoryName = typeof exp.category === 'string' 
+              ? exp.category 
+              : exp.category?.name || ''
+            return expCategoryName === filter
+          })
+        }
+        
+        // Filter by search query (client-side)
+        if (searchQuery.trim()) {
+          const query = searchQuery.trim().toLowerCase()
+          filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+            const title = (exp.title || '').toLowerCase()
+            const id = (exp.id || '').toLowerCase()
+            const categoryName = typeof exp.category === 'string' 
+              ? exp.category.toLowerCase()
+              : (exp.category?.name || '').toLowerCase()
+            return title.includes(query) || id.includes(query) || categoryName.includes(query)
+          })
+        }
+        
+        console.log('[Expenses] Filtered expenses:', filteredExpenses.length, 'of', expensesData.length)
+        
+        setExpenses(filteredExpenses)
         setPagination(paginationData)
         setTotalExpenses(totalAmount)
         setApprovedCount(approved)
@@ -220,13 +250,58 @@ export default function ExpensesPage() {
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [page, searchQuery, filter, statusFilter])
-
-  // Reset to page 1 when filters change
+  }, [page, searchQuery])
+  
+  // Apply client-side filtering when filters change
   useEffect(() => {
-    setPage(1)
-  }, [searchQuery, filter, statusFilter])
+    if (allExpenses.length === 0) return
+    
+    let filteredExpenses: Expense[] = allExpenses
+    
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filteredExpenses = filteredExpenses.filter((exp: Expense) => 
+        (exp.status || 'DRAFT') === statusFilter
+      )
+    }
+    
+    // Filter by category
+    if (filter !== 'all') {
+      filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+        const expCategoryName = typeof exp.category === 'string' 
+          ? exp.category 
+          : exp.category?.name || ''
+        return expCategoryName === filter
+      })
+    }
+    
+    // Filter by search query (already applied in API call, but reapply for consistency)
+    if (searchQuery.trim()) {
+      const query = searchQuery.trim().toLowerCase()
+      filteredExpenses = filteredExpenses.filter((exp: Expense) => {
+        const title = (exp.title || '').toLowerCase()
+        const id = (exp.id || '').toLowerCase()
+        const categoryName = typeof exp.category === 'string' 
+          ? exp.category.toLowerCase()
+          : (exp.category?.name || '').toLowerCase()
+        return title.includes(query) || id.includes(query) || categoryName.includes(query)
+      })
+    }
+    
+    console.log('[Expenses] Client-side filter applied:', filteredExpenses.length, 'of', allExpenses.length)
+    setExpenses(filteredExpenses)
+  }, [statusFilter, filter, searchQuery, allExpenses])
 
+  // Calculate status counts for badges
+  const statusCounts = {
+    all: allExpenses.length,
+    DRAFT: allExpenses.filter((exp: Expense) => (exp.status || 'DRAFT') === 'DRAFT').length,
+    SUBMITTED: allExpenses.filter((exp: Expense) => exp.status === 'SUBMITTED').length,
+    APPROVED: allExpenses.filter((exp: Expense) => exp.status === 'APPROVED').length,
+    REJECTED: allExpenses.filter((exp: Expense) => exp.status === 'REJECTED').length,
+    CANCELLED: allExpenses.filter((exp: Expense) => exp.status === 'CANCELLED').length,
+  }
+  
   // Debug: Log expenses state changes
   useEffect(() => {
     console.log('[Expenses] Expenses state updated:', expenses)
@@ -740,7 +815,7 @@ export default function ExpensesPage() {
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
               }`}
             >
-              All
+              All ({statusCounts.all})
             </button>
             <button
               onClick={() => setStatusFilter('DRAFT')}
@@ -750,7 +825,7 @@ export default function ExpensesPage() {
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
               }`}
             >
-              Draft
+              Draft ({statusCounts.DRAFT})
             </button>
             <button
               onClick={() => setStatusFilter('SUBMITTED')}
@@ -760,7 +835,7 @@ export default function ExpensesPage() {
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
               }`}
             >
-              Submitted
+              Submitted ({statusCounts.SUBMITTED})
             </button>
             <button
               onClick={() => setStatusFilter('APPROVED')}
@@ -770,7 +845,7 @@ export default function ExpensesPage() {
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
               }`}
             >
-              Approved
+              Approved ({statusCounts.APPROVED})
             </button>
             <button
               onClick={() => setStatusFilter('REJECTED')}
@@ -780,7 +855,7 @@ export default function ExpensesPage() {
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
               }`}
             >
-              Rejected
+              Rejected ({statusCounts.REJECTED})
             </button>
             <button
               onClick={() => setStatusFilter('CANCELLED')}
@@ -790,7 +865,7 @@ export default function ExpensesPage() {
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
               }`}
             >
-              Cancelled
+              Cancelled ({statusCounts.CANCELLED})
             </button>
           </div>
         </div>
