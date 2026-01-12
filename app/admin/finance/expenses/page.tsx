@@ -11,8 +11,13 @@ interface Expense {
   category: string | { id: string; name: string }
   amount: number
   date: string
-  addedBy: string
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  addedBy?: string
+  createdBy?: {
+    id?: string
+    name?: string
+    email?: string
+  }
+  status?: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 }
 
 interface PaginationMeta {
@@ -168,8 +173,16 @@ export default function ExpensesPage() {
         if (Array.isArray(response)) {
           // Response is directly an array
           expensesData = response
-        } else if (response.data) {
+        } else if (response.success && response.data) {
           // Backend returns { success: true, data: {...} }
+          const data = response.data
+          expensesData = Array.isArray(data) ? data : (data.expenses || [])
+          paginationData = data.pagination || paginationData
+          totalAmount = data.totalAmount || 0
+          approved = data.approvedCount || 0
+          pending = data.pendingCount || 0
+        } else if (response.data) {
+          // Backend returns { data: {...} } without success flag
           const data = response.data
           expensesData = Array.isArray(data) ? data : (data.expenses || [])
           paginationData = data.pagination || paginationData
@@ -865,10 +878,10 @@ export default function ExpensesPage() {
                     </td>
                     <td className="py-4 px-6 font-semibold text-red-500">PKR {(expense.amount || 0).toLocaleString()}</td>
                     <td className="py-4 px-6 text-text-light text-sm">{expense.date || 'N/A'}</td>
-                    <td className="py-4 px-6 text-text-dark">{expense.addedBy || 'N/A'}</td>
+                    <td className="py-4 px-6 text-text-dark">{expense.createdBy?.name || expense.createdBy?.email || '—'}</td>
                     <td className="py-4 px-6">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase ${
-                        expense.status === 'DRAFT' 
+                        (expense.status || 'DRAFT') === 'DRAFT' 
                           ? 'bg-gray-200 text-gray-700' 
                           : expense.status === 'SUBMITTED'
                           ? 'bg-blue-100 text-blue-700'
@@ -878,7 +891,7 @@ export default function ExpensesPage() {
                           ? 'bg-red-100 text-red-700'
                           : 'bg-orange-100 text-orange-700'
                       }`}>
-                        {expense.status}
+                        {expense.status || 'DRAFT'}
                       </span>
                     </td>
                     <td className="py-4 px-6">
@@ -896,7 +909,7 @@ export default function ExpensesPage() {
                         </button>
 
                         {/* Edit - Available for DRAFT and REJECTED */}
-                        {(expense.status === 'DRAFT' || expense.status === 'REJECTED') && (
+                        {((expense.status || 'DRAFT') === 'DRAFT' || expense.status === 'REJECTED') && (
                           <button 
                             onClick={() => handleOpenEditModal(expense)}
                             className="p-2 text-yellow hover:bg-cream rounded-lg transition-smooth"
@@ -909,7 +922,7 @@ export default function ExpensesPage() {
                         )}
 
                         {/* Delete - Available for DRAFT only */}
-                        {expense.status === 'DRAFT' && (
+                        {(expense.status || 'DRAFT') === 'DRAFT' && (
                           <button 
                             onClick={() => handleDeleteExpense(expense)}
                             disabled={deletingExpenseId === expense.id}
@@ -927,7 +940,7 @@ export default function ExpensesPage() {
                         )}
 
                         {/* Submit - Available for DRAFT only */}
-                        {expense.status === 'DRAFT' && (
+                        {(expense.status || 'DRAFT') === 'DRAFT' && (
                           <button 
                             onClick={() => handleSubmitForApproval(expense.id)}
                             disabled={submittingExpenseId === expense.id}

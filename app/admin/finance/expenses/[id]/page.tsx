@@ -43,17 +43,26 @@ interface Expense {
 export default function ExpenseDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const expenseId = params.id as string
+  const expenseId = params?.id as string | undefined
 
   const [expense, setExpense] = useState<Expense | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchExpense = async () => {
+      // Guard against undefined id
+      if (!expenseId) {
+        setError('Invalid expense ID')
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
         setError(null)
+        setErrorCode(null)
 
         const response = await apiClient<any>(`/finance/expenses/${expenseId}`, {
           method: 'GET',
@@ -61,28 +70,47 @@ export default function ExpenseDetailPage() {
 
         console.log('[Expense Detail] API response:', response)
 
-        // Handle different response structures
+        // Handle different response structures safely
         let expenseData = null
-        if (response.data) {
+        if (response?.success && response?.data) {
+          // Format: { success: true, data: {...} }
           expenseData = response.data
-        } else if (response.expense) {
+        } else if (response?.data) {
+          // Format: { data: {...} }
+          expenseData = response.data
+        } else if (response?.expense) {
+          // Format: { expense: {...} }
           expenseData = response.expense
-        } else {
+        } else if (response && typeof response === 'object' && response.id) {
+          // Format: direct expense object
           expenseData = response
+        }
+
+        if (!expenseData || !expenseData.id) {
+          throw new Error('Invalid expense data received from server')
         }
 
         setExpense(expenseData)
       } catch (err: any) {
         console.error('[Expense Detail] Failed to fetch:', err)
-        setError(err.message || 'Failed to load expense details')
+        const statusCode = err.statusCode || err.status || err.response?.status
+        setErrorCode(statusCode)
+        
+        if (statusCode === 401) {
+          setError('Authentication required. Please log in again.')
+        } else if (statusCode === 403) {
+          setError('You do not have permission to view this expense.')
+        } else if (statusCode === 404) {
+          setError('Expense not found. It may have been deleted.')
+        } else {
+          setError(err.message || 'Failed to load expense details')
+        }
       } finally {
         setLoading(false)
       }
     }
 
-    if (expenseId) {
-      fetchExpense()
-    }
+    fetchExpense()
   }, [expenseId])
 
   // Loading state
@@ -109,29 +137,52 @@ export default function ExpenseDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <h3 className="font-semibold text-red-800">Failed to load expense</h3>
+              <h3 className="font-semibold text-red-800">
+                {errorCode === 404 ? 'Expense Not Found' : 
+                 errorCode === 403 ? 'Access Denied' :
+                 errorCode === 401 ? 'Authentication Required' :
+                 'Failed to load expense'}
+              </h3>
               <p className="text-red-600 text-sm mt-1">{error || 'Expense not found'}</p>
             </div>
           </div>
-          <button 
-            onClick={() => router.push('/admin/finance/expenses')}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-smooth"
-          >
-            Back to Expenses
-          </button>
+          <div className="flex gap-3 mt-4">
+            <button 
+              onClick={() => router.push('/admin/finance/expenses')}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-smooth"
+            >
+              Back to Expenses
+            </button>
+            {errorCode === 401 && (
+              <button 
+                onClick={() => router.push('/admin/login')}
+                className="px-4 py-2 bg-green text-white rounded-lg hover:bg-green/90 transition-smooth"
+              >
+                Go to Login
+              </button>
+            )}
+          </div>
         </div>
       </div>
     )
   }
 
-  // Get category name
-  const categoryName = typeof expense.category === 'string' 
-    ? expense.category 
-    : expense.category?.name || 'N/A'
+  // Get category name safely with null checks
+  const categoryName = expense?.category 
+    ? (typeof expense.category === 'string' 
+        ? expense.category 
+        : expense.category?.name || 'Uncategorized')
+    : 'Uncategorized'
   
-  // Sort events by timestamp (newest first)
-  const sortedEvents = expense.events 
-    ? [...expense.events].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  // Sort events by timestamp (newest first) with safe array handling
+  const sortedEvents = (expense?.events && Array.isArray(expense.events))
+    ? [...expense.events].sort((a, b) => {
+        try {
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        } catch {
+          return 0
+        }
+      })
     : []
 
   return (
@@ -245,18 +296,18 @@ export default function ExpenseDetailPage() {
       </div>
 
       {/* Approval Metadata Card */}
-      {(expense.submittedAt || expense.approvedAt || expense.rejectedAt) && (
+      {(expense?.submittedAt || expense?.approvedAt || expense?.rejectedAt) && (
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-xl font-serif font-bold text-green mb-6">Approval History</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Submitted */}
-            {expense.submittedAt && (
+            {expense?.submittedAt && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-text-light mb-2">Submitted At</label>
                   <p className="text-text-dark">{new Date(expense.submittedAt).toLocaleString()}</p>
                 </div>
-                {expense.submittedBy && (
+                {expense?.submittedBy && (
                   <div>
                     <label className="block text-sm font-semibold text-text-light mb-2">Submitted By</label>
                     <p className="text-text-dark">{expense.submittedBy}</p>
@@ -266,13 +317,13 @@ export default function ExpenseDetailPage() {
             )}
 
             {/* Approved */}
-            {expense.approvedAt && (
+            {expense?.approvedAt && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-text-light mb-2">Approved At</label>
                   <p className="text-text-dark">{new Date(expense.approvedAt).toLocaleString()}</p>
                 </div>
-                {expense.approvedBy && (
+                {expense?.approvedBy && (
                   <div>
                     <label className="block text-sm font-semibold text-text-light mb-2">Approved By</label>
                     <p className="text-text-dark">{expense.approvedBy}</p>
@@ -282,19 +333,19 @@ export default function ExpenseDetailPage() {
             )}
 
             {/* Rejected */}
-            {expense.rejectedAt && (
+            {expense?.rejectedAt && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-text-light mb-2">Rejected At</label>
                   <p className="text-text-dark">{new Date(expense.rejectedAt).toLocaleString()}</p>
                 </div>
-                {expense.rejectedBy && (
+                {expense?.rejectedBy && (
                   <div>
                     <label className="block text-sm font-semibold text-text-light mb-2">Rejected By</label>
                     <p className="text-text-dark">{expense.rejectedBy}</p>
                   </div>
                 )}
-                {expense.rejectionReason && (
+                {expense?.rejectionReason && (
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-text-light mb-2">Rejection Reason</label>
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
