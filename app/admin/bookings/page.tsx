@@ -235,6 +235,15 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null)
+
+  // Toast notification helper
+  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 4000) // Auto-dismiss after 4 seconds
+  }
+
   /* ---------------- FETCH ADMIN BOOKINGS ---------------- */
   useEffect(() => {
     const fetchBookings = async () => {
@@ -280,6 +289,12 @@ export default function BookingsPage() {
       return
     }
 
+    // Store old status to check if it changed
+    const oldBooking = bookings.find(b => b.id === bookingId)
+    if (!oldBooking || oldBooking.status === newStatus) {
+      return // No change, don't show toast
+    }
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/bookings/${bookingId}/status`,
@@ -303,7 +318,15 @@ export default function BookingsPage() {
           b.id === bookingId ? { ...b, status: newStatus } : b
         )
       )
+
+      // Show appropriate toast based on status change
+      if (oldBooking.status === 'PENDING' && newStatus === 'CONFIRMED') {
+        showToast('Booking approved successfully', 'success')
+      } else if (newStatus === 'CANCELLED') {
+        showToast('Booking cancelled successfully', 'warning')
+      }
     } catch (err) {
+      // Don't show toast on error, keep existing alert for now
       alert('Could not update booking status')
     }
   }
@@ -335,6 +358,35 @@ export default function BookingsPage() {
   /* ---------------- UI ---------------- */
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in ${
+          toast.type === 'success' ? 'bg-green text-white' : 
+          toast.type === 'warning' ? 'bg-orange-500 text-white' :
+          'bg-red-500 text-white'
+        }`}>
+          {toast.type === 'success' ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : toast.type === 'warning' ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+          <span className="font-medium">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-2 hover:opacity-80">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="font-serif text-3xl font-bold text-green">
