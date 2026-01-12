@@ -76,6 +76,12 @@ export default function NewIncomePage() {
           message: 'Please fix the validation errors',
           type: 'error',
         })
+      } else if (error.status === 400 && error.message?.includes('booking')) {
+        setToast({
+          message: 'Invalid Booking UUID. Please select a booking from the dropdown or paste the full UUID.',
+          type: 'error',
+        })
+        setErrors({ bookingId: error.message })
       } else if (error.status === 401) {
         setToast({
           message: 'Please log in to create income records',

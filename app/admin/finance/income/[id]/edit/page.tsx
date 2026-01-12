@@ -93,7 +93,16 @@ export default function EditIncomePage() {
       setTimeout(() => { router.push(`/admin/finance/income/${incomeId}`) }, 500)
     } catch (error: any) {
       console.error('Failed to update income:', error)
-      setToast({ message: error.message || 'Failed to update income record', type: 'error' })
+      
+      if (error.status === 400 && error.message?.includes('booking')) {
+        setToast({
+          message: 'Invalid Booking UUID. Please select a booking from the dropdown or paste the full UUID.',
+          type: 'error',
+        })
+        setErrors({ bookingId: error.message })
+      } else {
+        setToast({ message: error.message || 'Failed to update income record', type: 'error' })
+      }
     } finally {
       setIsSubmitting(false)
     }

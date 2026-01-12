@@ -2,6 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { displayToCents, centsToDisplay, isValidCurrencyInput, sanitizeCurrencyInput } from '@/src/utils/currency'
+import { apiClient } from '@/src/services/apiClient'
+
+interface BookingOption {
+  id: string
+  displayLabel: string
+  checkInDate: string
+  checkOutDate: string
+}
+
+// UUID v4 validation regex
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 interface IncomeFormData {
   source: string
@@ -65,11 +76,51 @@ export default function IncomeForm({
     initialData?.source === 'BOOKING' || !!initialData?.bookingId
   )
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [bookings, setBookings] = useState<BookingOption[]>([])
+  const [loadingBookings, setLoadingBookings] = useState(false)
+  const [useBookingSelector, setUseBookingSelector] = useState(true)
 
-  // Update showBookingField when source changes
+  // Fetch bookings when source is BOOKING
   useEffect(() => {
+    const fetchBookings = async () => {
+      if (formData.source === 'BOOKING' && bookings.length === 0) {
+        setLoadingBookings(true)
+        try {
+          const response = await apiClient<any>('/bookings?limit=100&status=CONFIRMED,PENDING')
+          const bookingsList = response?.data || response?.bookings || []
+          
+          const options: BookingOption[] = bookingsList.map((booking: any) => {
+            const customerName = booking.customerName || booking.customer?.name || 'Unknown'
+            const checkIn = booking.checkInDate ? new Date(booking.checkInDate).toLocaleDateString() : 'N/A'
+            const bookingCode = booking.bookingCode || booking.id?.substring(0, 8)
+            
+            return {
+              id: booking.id,
+              displayLabel: `${bookingCode} - ${customerName} (${checkIn})`,
+              checkInDate: booking.checkInDate,
+              checkOutDate: booking.checkOutDate,
+            }
+          })
+          
+          setBookings(options)
+        } catch (error) {
+          console.error('Failed to fetch bookings:', error)
+          // Fallback to manual input
+          setUseBookingSelector(false)
+        } finally {
+          setLoadingBookings(false)
+        }
+      }
+    }
+
     if (formData.source === 'BOOKING') {
       setShowBookingField(true)
+      fetchBookings()
+    } else {
+      // Clear bookingId when source changes from BOOKING
+      if (formData.bookingId && formData.source !== 'BOOKING') {
+        setFormData(prev => ({ ...prev, bookingId: '' }))
+      }
     }
   }, [formData.source])
 
@@ -123,8 +174,12 @@ export default function IncomeForm({
       errors.dateReceived = 'Date is required'
     }
 
-    if (formData.source === 'BOOKING' && !formData.bookingId.trim()) {
-      errors.bookingId = 'Booking ID is required when source is Booking'
+    if (formData.source === 'BOOKING') {
+      if (!formData.bookingId.trim()) {
+        errors.bookingId = 'Booking ID is required when source is Booking'
+      } else if (!UUID_V4_REGEX.test(formData.bookingId.trim())) {
+        errors.bookingId = 'Please enter a valid Booking UUID (36 characters with hyphens)'
+      }
     }
 
     setFieldErrors(errors)
@@ -147,7 +202,8 @@ export default function IncomeForm({
         dateReceived: formData.dateReceived,
         reference: formData.reference.trim() || undefined,
         notes: formData.notes.trim() || undefined,
-        bookingId: showBookingField && formData.bookingId.trim() ? formData.bookingId.trim() : undefined,
+        // Only include bookingId when source is BOOKING and it's a valid UUID
+        bookingId: formData.source === 'BOOKING' && formData.bookingId.trim() ? formData.bookingId.trim() : undefined,
       }
 
       await onSubmit(payload)
@@ -301,39 +357,97 @@ export default function IncomeForm({
       {showBookingField && (
         <div>
           <label className="block text-sm font-semibold text-text-dark mb-2">
-            Booking ID {formData.source === 'BOOKING' && <span className="text-red-500">*</span>}
+            Booking {formData.source === 'BOOKING' && <span className="text-red-500">*</span>}
           </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              name="bookingId"
-              value={formData.bookingId}
-              onChange={handleChange}
-              placeholder="Enter booking ID"
-              disabled={isSubmitting}
-              className={`flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                fieldErrors.bookingId ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-green-600'
-              }`}
-            />
-            {formData.source !== 'BOOKING' && (
+          
+          {/* Booking Selector Dropdown */}
+          {formData.source === 'BOOKING' && useBookingSelector && bookings.length > 0 && (
+            <div className="space-y-2">
+              <select
+                name="bookingId"
+                value={formData.bookingId}
+                onChange={handleChange}
+                disabled={isSubmitting || loadingBookings}
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                  fieldErrors.bookingId ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-green-600'
+                }`}
+              >
+                <option value="">Select a booking...</option>
+                {bookings.map((booking) => (
+                  <option key={booking.id} value={booking.id}>
+                    {booking.displayLabel}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
-                onClick={() => {
-                  setShowBookingField(false)
-                  setFormData(prev => ({ ...prev, bookingId: '' }))
-                }}
-                disabled={isSubmitting}
-                className="p-3 text-red-500 hover:bg-red-50 rounded-lg transition-smooth disabled:opacity-50"
-                title="Remove booking link"
+                onClick={() => setUseBookingSelector(false)}
+                className="text-sm text-green hover:text-green-dark font-medium"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                Or enter Booking UUID manually
               </button>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Manual Booking UUID Input (fallback or when source !== BOOKING) */}
+          {(!useBookingSelector || formData.source !== 'BOOKING' || bookings.length === 0) && (
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  name="bookingId"
+                  value={formData.bookingId}
+                  onChange={handleChange}
+                  placeholder="Paste full Booking UUID (e.g., 550e8400-e29b-41d4-a716-446655440000)"
+                  disabled={isSubmitting}
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                    fieldErrors.bookingId ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-green-600'
+                  }`}
+                />
+                {formData.source === 'BOOKING' && (
+                  <p className="text-xs text-text-light mt-1">
+                    UUID must be 36 characters with hyphens (e.g., xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx)
+                  </p>
+                )}
+              </div>
+              {formData.source !== 'BOOKING' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBookingField(false)
+                    setFormData(prev => ({ ...prev, bookingId: '' }))
+                  }}
+                  disabled={isSubmitting}
+                  className="p-3 text-red-500 hover:bg-red-50 rounded-lg transition-smooth disabled:opacity-50"
+                  title="Remove booking link"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Loading state */}
+          {loadingBookings && (
+            <p className="text-sm text-text-light mt-1">Loading bookings...</p>
+          )}
+
+          {/* Error message */}
           {fieldErrors.bookingId && (
             <p className="text-red-500 text-sm mt-1">{fieldErrors.bookingId}</p>
+          )}
+
+          {/* Switch back to selector */}
+          {formData.source === 'BOOKING' && !useBookingSelector && bookings.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setUseBookingSelector(true)}
+              className="text-sm text-green hover:text-green-dark font-medium mt-2"
+            >
+              ← Back to booking selector
+            </button>
           )}
         </div>
       )}
