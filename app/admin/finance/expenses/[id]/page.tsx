@@ -8,7 +8,8 @@ interface Event {
   id: string
   type: string
   description: string
-  performedBy: string
+  performedBy: string | { name?: string; email?: string }
+  byUser?: { name?: string; email?: string }
   timestamp: string
   metadata?: any
 }
@@ -22,18 +23,18 @@ interface Expense {
   description?: string
   status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
   
-  // Audit fields
-  createdBy?: string
+  // Audit fields - can be objects with name/email
+  createdBy?: string | { id?: string; name?: string; email?: string }
   createdAt?: string
   updatedAt?: string
   
-  // Approval metadata
+  // Approval metadata - can be objects with name/email
   submittedAt?: string
-  submittedBy?: string
+  submittedBy?: string | { id?: string; name?: string; email?: string }
   approvedAt?: string
-  approvedBy?: string
+  approvedBy?: string | { id?: string; name?: string; email?: string }
   rejectedAt?: string
-  rejectedBy?: string
+  rejectedBy?: string | { id?: string; name?: string; email?: string }
   rejectionReason?: string
   
   // Events timeline
@@ -185,6 +186,19 @@ export default function ExpenseDetailPage() {
       })
     : []
 
+  // Helper to safely extract user label from string or object
+  const getUserLabel = (user: string | { name?: string; email?: string } | undefined | null): string => {
+    if (!user) return '—'
+    if (typeof user === 'string') return user
+    return user.name || user.email || '—'
+  }
+
+  // Extract safe labels for rendering
+  const createdByLabel = getUserLabel(expense?.createdBy)
+  const submittedByLabel = getUserLabel(expense?.submittedBy)
+  const approvedByLabel = getUserLabel(expense?.approvedBy)
+  const rejectedByLabel = getUserLabel(expense?.rejectedBy)
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -260,7 +274,7 @@ export default function ExpenseDetailPage() {
           {/* Created By */}
           <div>
             <label className="block text-sm font-semibold text-text-light mb-2">Created By</label>
-            <p className="text-lg text-text-dark">{expense.createdBy || 'N/A'}</p>
+            <p className="text-lg text-text-dark">{createdByLabel}</p>
           </div>
 
           {/* Description */}
@@ -310,7 +324,7 @@ export default function ExpenseDetailPage() {
                 {expense?.submittedBy && (
                   <div>
                     <label className="block text-sm font-semibold text-text-light mb-2">Submitted By</label>
-                    <p className="text-text-dark">{expense.submittedBy}</p>
+                    <p className="text-text-dark">{submittedByLabel}</p>
                   </div>
                 )}
               </>
@@ -326,7 +340,7 @@ export default function ExpenseDetailPage() {
                 {expense?.approvedBy && (
                   <div>
                     <label className="block text-sm font-semibold text-text-light mb-2">Approved By</label>
-                    <p className="text-text-dark">{expense.approvedBy}</p>
+                    <p className="text-text-dark">{approvedByLabel}</p>
                   </div>
                 )}
               </>
@@ -342,7 +356,7 @@ export default function ExpenseDetailPage() {
                 {expense?.rejectedBy && (
                   <div>
                     <label className="block text-sm font-semibold text-text-light mb-2">Rejected By</label>
-                    <p className="text-text-dark">{expense.rejectedBy}</p>
+                    <p className="text-text-dark">{rejectedByLabel}</p>
                   </div>
                 )}
                 {expense?.rejectionReason && (
@@ -387,7 +401,7 @@ export default function ExpenseDetailPage() {
                     <div className="flex-1">
                       <p className="font-semibold text-text-dark">{event.description}</p>
                       <p className="text-sm text-text-light mt-1">
-                        by {event.performedBy}
+                        by {getUserLabel(event.byUser || event.performedBy)}
                       </p>
                     </div>
                     <span className="text-xs text-text-light whitespace-nowrap">
