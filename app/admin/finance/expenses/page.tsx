@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { apiClient } from '@/src/services/apiClient'
 
 interface Expense {
   id: string
-  name: string
+  title: string
   category: string | { id: string; name: string }
   amount: number
   date: string
@@ -30,6 +31,7 @@ interface ExpensesResponse {
 }
 
 export default function ExpensesPage() {
+  const router = useRouter()
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -231,7 +233,7 @@ export default function ExpensesPage() {
     const category = categories.find(cat => cat.name === categoryName)
     
     setFormData({
-      title: expense.name,
+      title: expense.title,
       amount: expense.amount.toString(),
       category: category?.id || '', // Use category ID, not name
       description: ''
@@ -367,7 +369,7 @@ export default function ExpensesPage() {
 
   const handleDeleteExpense = async (expense: Expense) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete this expense?\n\n${expense.name} - PKR ${expense.amount.toLocaleString()}`
+      `Are you sure you want to delete this expense?\n\n${expense.title} - PKR ${expense.amount.toLocaleString()}`
     )
 
     if (!confirmed) {
@@ -597,7 +599,7 @@ export default function ExpensesPage() {
                     <td className="py-4 px-6">
                       <span className="font-medium text-yellow">{expense.id}</span>
                     </td>
-                    <td className="py-4 px-6 text-text-dark">{expense.name || 'N/A'}</td>
+                    <td className="py-4 px-6 text-text-dark">{expense.title || 'N/A'}</td>
                     <td className="py-4 px-6">
                       <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cream text-text-dark">
                         {typeof expense.category === 'string' ? expense.category : (expense.category?.name || 'N/A')}
@@ -618,6 +620,7 @@ export default function ExpensesPage() {
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
                         <button 
+                          onClick={() => router.push(`/admin/finance/expenses/${expense.id}`)}
                           className="p-2 text-green hover:bg-cream rounded-lg transition-smooth"
                           title="View"
                         >
