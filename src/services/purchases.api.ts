@@ -149,9 +149,48 @@ export async function fetchPurchases(params?: {
   const query = queryParams.toString()
   const endpoint = query ? `/finance/purchases?${query}` : '/finance/purchases'
 
-  return apiClient<PurchaseListResponse>(endpoint, {
+  const response = await apiClient<any>(endpoint, {
     method: 'GET',
   })
+
+  // Normalize response structure based on backend format
+  let items: Purchase[] = []
+  let pagination = { page: 1, limit: 10, total: 0, totalPages: 0 }
+  let totalAmount = 0
+  
+  if (response.success) {
+    // Backend can return data as array or as object with purchases key
+    if (Array.isArray(response.data)) {
+      items = response.data
+    } else if (response.data?.purchases) {
+      items = response.data.purchases
+    } else if (response.data?.items) {
+      items = response.data.items
+    }
+    
+    // Pagination can be at root or in data
+    if (response.pagination) {
+      pagination = response.pagination
+    } else if (response.data?.pagination) {
+      pagination = response.data.pagination
+    }
+    
+    // Total amount can be at root or in data
+    if (response.totalAmount !== undefined) {
+      totalAmount = response.totalAmount
+    } else if (response.data?.totalAmount !== undefined) {
+      totalAmount = response.data.totalAmount
+    }
+  }
+
+  return {
+    success: response.success,
+    data: {
+      purchases: items,
+      pagination,
+      totalAmount
+    }
+  }
 }
 
 /**
@@ -176,9 +215,37 @@ export async function fetchPurchasesSummary(params?: {
   const query = queryParams.toString()
   const endpoint = query ? `/finance/purchases/summary?${query}` : '/finance/purchases/summary'
 
-  return apiClient<PurchaseSummaryResponse>(endpoint, {
+  const response = await apiClient<any>(endpoint, {
     method: 'GET',
   })
+
+  // Normalize summary response structure
+  let summaryData: any = {}
+  
+  if (response.success) {
+    // Summary can be directly in data or nested
+    if (response.data) {
+      summaryData = response.data
+    }
+    
+    // Normalize totalPurchases field (might be totalAmount, totalAmountCents, etc.)
+    if (summaryData.totalPurchases === undefined) {
+      summaryData.totalPurchases = summaryData.totalAmount || 
+                                    summaryData.totalAmountCents || 
+                                    summaryData.totalAmountInCents || 
+                                    0
+    }
+    
+    // Ensure totalCount exists
+    if (summaryData.totalCount === undefined) {
+      summaryData.totalCount = summaryData.count || 0
+    }
+  }
+
+  return {
+    success: response.success,
+    data: summaryData
+  }
 }
 
 /**

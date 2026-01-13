@@ -90,7 +90,14 @@ export default function PurchasesPage() {
         
         const response = await fetchPurchasesSummary(params)
         
+        console.log('[Purchases] Summary response:', response)
+        
         if (response.success && response.data) {
+          console.log('[Purchases] Summary data:', { 
+            totalPurchases: response.data.totalPurchases,
+            totalCount: response.data.totalCount,
+            byStatus: response.data.byStatus 
+          })
           setSummary(response.data)
         }
       } catch (err: any) {
@@ -123,7 +130,7 @@ export default function PurchasesPage() {
 
         console.log('[Purchases] GET /finance/purchases response:', response)
         
-        // Handle response structure
+        // Handle response structure - now normalized by API client
         let purchasesData: Purchase[] = []
         let paginationData = { page: 1, limit: 10, total: 0, totalPages: 0 }
         
@@ -131,6 +138,12 @@ export default function PurchasesPage() {
           purchasesData = response.data.purchases || []
           paginationData = response.data.pagination || paginationData
         }
+
+        console.log('[Purchases] normalized', { 
+          itemsLen: purchasesData.length, 
+          first: purchasesData[0], 
+          pagination: paginationData 
+        })
 
         setPurchases(purchasesData)
         setPagination(paginationData)
