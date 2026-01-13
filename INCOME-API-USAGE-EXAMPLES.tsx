@@ -260,11 +260,18 @@ export function CurrencyInputExample() {
 
 // Example: Display income in table
 export function IncomeTableRow({ income }: { income: Income }) {
+  // Generate derived title based on source
+  const title = income.source === 'BOOKING' 
+    ? 'Booking Income' 
+    : income.source === 'MANUAL' 
+    ? 'Manual Income' 
+    : 'Other Income'
+    
   return (
     <tr>
-      <td>{income.title}</td>
+      <td>{title}</td>
       <td>{formatCurrency(income.amount)}</td> {/* PKR 123.45 */}
-      <td>{income.date}</td>
+      <td>{income.dateReceived || income.createdAt}</td>
       <td>{income.status}</td>
     </tr>
   )
