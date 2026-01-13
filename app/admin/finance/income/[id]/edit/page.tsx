@@ -8,13 +8,19 @@ import { getIncomeById, updateIncome } from '@/src/services/income.api'
 
 interface Income {
   id: string
-  title: string
-  amount: number
-  date: string
-  category?: string | { id: string; name: string }
-  description?: string
+  source: string // BOOKING | MANUAL | OTHER
+  status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
+  amount: number // In cents
+  currency: string // PKR | USD | EUR | GBP
+  dateReceived?: string // ISO date string (YYYY-MM-DD)
   reference?: string
-  status?: string
+  notes?: string
+  bookingId?: string
+  booking?: {
+    id: string
+    bookingCode: string
+    customerName?: string
+  }
 }
 
 export default function EditIncomePage() {
@@ -175,14 +181,14 @@ export default function EditIncomePage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <IncomeForm
             initialData={{
-              source: typeof income.category === 'string' ? income.category.toUpperCase() : 'MANUAL',
+              source: income.source || 'MANUAL',
               status: income.status || 'DRAFT',
               amount: income.amount,
-              currency: 'PKR',
-              date: income.date,
-              reference: income.reference,
-              notes: income.description,
-              bookingId: undefined
+              currency: income.currency || 'PKR',
+              date: income.dateReceived || '',
+              reference: income.reference || '',
+              notes: income.notes || '',
+              bookingId: income.bookingId || undefined
             }}
             onSubmit={handleSubmit}
             onCancel={handleCancel}

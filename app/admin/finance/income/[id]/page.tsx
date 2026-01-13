@@ -18,17 +18,20 @@ interface Event {
 
 interface Income {
   id: string
-  title?: string
-  category?: string | { id: string; name: string }
+  source: string // BOOKING | MANUAL | OTHER
+  status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
   amount: number // In cents
-  currency?: string
-  date: string
-  description?: string
-  notes?: string
+  currency: string // PKR | USD | EUR | GBP
+  dateReceived?: string // ISO date string (YYYY-MM-DD)
   reference?: string
-  source?: string
+  notes?: string
   bookingId?: string
-  status?: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CONFIRMED'
+  booking?: {
+    id: string
+    bookingCode: string
+    customerName?: string
+    glampsiteName?: string
+  }
   
   // Audit fields
   createdBy?: string | { id?: string; name?: string; email?: string }
@@ -57,6 +60,32 @@ function getUserLabel(user: any): string {
   if (user.name) return user.name
   if (user.email) return user.email
   return '—'
+}
+
+// Helper to generate derived title
+function getDerivedTitle(income: Income): string {
+  let title = ''
+  
+  // Generate title based on source
+  if (income.source === 'BOOKING') {
+    title = 'Booking Income'
+  } else if (income.source === 'MANUAL') {
+    title = 'Manual Income'
+  } else {
+    title = 'Other Income'
+  }
+  
+  // Append reference or booking info if available
+  if (income.booking?.bookingCode) {
+    title += ` — ${income.booking.bookingCode}`
+    if (income.booking.customerName) {
+      title += ` (${income.booking.customerName})`
+    }
+  } else if (income.reference) {
+    title += ` — ${income.reference}`
+  }
+  
+  return title
 }
 
 export default function IncomeDetailPage() {
@@ -252,13 +281,6 @@ export default function IncomeDetailPage() {
     )
   }
 
-  // Get category name safely
-  const categoryName = income?.category 
-    ? (typeof income.category === 'string' 
-        ? income.category 
-        : income.category?.name || 'Uncategorized')
-    : 'Uncategorized'
-
   // Sort events by timestamp (newest first)
   const sortedEvents = (income?.events && Array.isArray(income.events))
     ? [...income.events].sort((a, b) => {
@@ -413,17 +435,19 @@ export default function IncomeDetailPage() {
           </div>
 
           {/* Title */}
-          {income.title && (
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-text-light mb-2">Title</label>
-              <p className="text-lg text-text-dark">{income.title}</p>
-            </div>
-          )}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-text-light mb-2">Title</label>
+            <p className="text-lg text-text-dark">{getDerivedTitle(income)}</p>
+          </div>
 
           {/* Amount */}
           <div>
             <label className="block text-sm font-semibold text-text-light mb-2">Amount</label>
-            <p className="text-3xl font-bold text-green">{formatCurrency(income.amount)}</p>
+            <p className="text-3xl font-bold text-green">
+              {income.currency && income.currency !== 'PKR' 
+                ? `${income.currency} ${(income.amount / 100).toFixed(2)}`
+                : formatCurrency(income.amount)}
+            </p>
           </div>
 
           {/* Currency */}
@@ -448,14 +472,16 @@ export default function IncomeDetailPage() {
           <div>
             <label className="block text-sm font-semibold text-text-light mb-2">Date Received</label>
             <p className="text-lg text-text-dark">
-              {income.date ? new Date(income.date).toLocaleDateString() : '—'}
+              {income.dateReceived ? new Date(income.dateReceived).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              }) : (income.createdAt ? new Date(income.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              }) : '—')}
             </p>
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-semibold text-text-light mb-2">Category</label>
-            <p className="text-lg text-text-dark">{categoryName}</p>
           </div>
 
           {/* Reference */}
@@ -477,16 +503,18 @@ export default function IncomeDetailPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                View Booking #{income.bookingId}
+                {income.booking?.bookingCode 
+                  ? `View Booking #${income.booking.bookingCode}`
+                  : `View Booking #${income.bookingId.substring(0, 8)}`}
               </Link>
             </div>
           )}
 
           {/* Description/Notes */}
-          {(income.description || income.notes) && (
+          {income.notes && (
             <div className="md:col-span-2 pt-4 border-t border-gray-200">
               <label className="block text-sm font-semibold text-text-light mb-2">Notes</label>
-              <p className="text-text-dark whitespace-pre-wrap">{income.description || income.notes}</p>
+              <p className="text-text-dark whitespace-pre-wrap">{income.notes}</p>
             </div>
           )}
         </div>

@@ -11,12 +11,22 @@ import { apiClient } from './apiClient'
 
 export interface Income {
   id: string
-  title: string
-  category?: string | { id: string; name: string }
+  source: string // BOOKING | MANUAL | OTHER
+  status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
   amount: number // Amount in cents (integer)
-  date: string // ISO date string (YYYY-MM-DD)
-  description?: string
+  currency: string // PKR | USD | EUR | GBP
+  dateReceived?: string // ISO date string (YYYY-MM-DD)
   reference?: string
+  notes?: string
+  bookingId?: string
+  booking?: {
+    id: string
+    bookingCode: string
+    customerName?: string
+    glampsiteName?: string
+    checkInDate?: string
+    checkOutDate?: string
+  }
   createdBy?: {
     id?: string
     name?: string
@@ -38,7 +48,6 @@ export interface Income {
     email?: string
   }
   rejectionReason?: string
-  status?: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
   createdAt?: string
   updatedAt?: string
 }
@@ -72,10 +81,20 @@ export interface IncomeSummaryResponse {
   success: boolean
   data: {
     totalIncome: number // In cents
-    approvedIncome: number // In cents
-    pendingIncome: number // In cents
-    draftIncome: number // In cents
-    rejectedIncome: number // In cents
+    totalCount: number
+    byStatus?: {
+      DRAFT?: number
+      CONFIRMED?: number
+      CANCELLED?: number
+      SUBMITTED?: number
+    }
+    // Legacy fields for backward compatibility
+    confirmedIncome?: number
+    draftIncome?: number
+    cancelledIncome?: number
+    approvedIncome?: number // In cents
+    pendingIncome?: number // In cents
+    rejectedIncome?: number // In cents
   }
 }
 

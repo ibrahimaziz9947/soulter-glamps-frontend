@@ -8,22 +8,27 @@ import { formatCurrency } from '@/src/utils/currency'
 
 interface Income {
   id: string
-  title: string
-  source?: string
-  category?: string | { id: string; name: string }
+  source: string // BOOKING | MANUAL | OTHER
+  status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
   amount: number // In cents
-  date: string
-  description?: string
+  currency: string // PKR | USD | EUR | GBP
+  dateReceived?: string // ISO date string (YYYY-MM-DD)
   reference?: string
+  notes?: string
   bookingId?: string
-  currency?: string
+  booking?: {
+    id: string
+    bookingCode: string
+    customerName?: string
+    glampsiteName?: string
+  }
   createdBy?: {
     id?: string
     name?: string
     email?: string
   }
-  status?: 'DRAFT' | 'CONFIRMED' | 'CANCELLED' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
   createdAt?: string
+  updatedAt?: string
 }
 
 interface PaginationMeta {
@@ -35,10 +40,17 @@ interface PaginationMeta {
 
 interface IncomeSummary {
   totalIncome: number // In cents
-  confirmedIncome: number
-  draftIncome: number
-  cancelledIncome: number
-  count: number
+  totalCount: number
+  byStatus?: {
+    DRAFT?: number
+    CONFIRMED?: number
+    CANCELLED?: number
+    SUBMITTED?: number
+  }
+  confirmedIncome?: number
+  draftIncome?: number
+  cancelledIncome?: number
+  count?: number
 }
 
 export default function IncomePage() {
@@ -223,12 +235,69 @@ export default function IncomePage() {
     }
   }
 
-  // Calculate status counts
+  // Calculate status counts from summary or pagination
   const statusCounts = {
-    all: pagination.total,
-    DRAFT: summary?.draftIncome || 0,
-    CONFIRMED: summary?.confirmedIncome || 0,
-    CANCELLED: summary?.cancelledIncome || 0,
+    all: summary?.totalCount || pagination.total || 0,
+    DRAFT: summary?.byStatus?.DRAFT || summary?.draftIncome || 0,
+    CONFIRMED: summary?.byStatus?.CONFIRMED || summary?.confirmedIncome || 0,
+    CANCELLED: summary?.byStatus?.CANCELLED || summary?.cancelledIncome || 0,
+  }
+
+  // Helper function to generate derived title
+  const getDerivedTitle = (inc: Income): string => {
+    let title = ''
+    
+    // Generate title based on source
+    if (inc.source === 'BOOKING') {
+      title = 'Booking Income'
+    } else if (inc.source === 'MANUAL') {
+      title = 'Manual Income'
+    } else {
+      title = 'Other Income'
+    }
+    
+    // Append reference or booking info if available
+    if (inc.booking?.bookingCode) {
+      title += ` — ${inc.booking.bookingCode}`
+      if (inc.booking.customerName) {
+        title += ` (${inc.booking.customerName})`
+      }
+    } else if (inc.reference) {
+      // Truncate long references
+      const ref = inc.reference.length > 30 ? inc.reference.substring(0, 30) + '...' : inc.reference
+      title += ` — ${ref}`
+    }
+    
+    return title
+  }
+
+  // Helper function to format date
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return 'N/A'
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      })
+    } catch {
+      return 'N/A'
+    }
+  }
+
+  // Helper function to format reference display
+  const formatReference = (inc: Income): string => {
+    if (inc.source === 'BOOKING') {
+      if (inc.booking?.bookingCode) {
+        return `Booking: ${inc.booking.bookingCode}`
+      } else if (inc.bookingId) {
+        // Show shortened UUID
+        return `Booking: ${inc.bookingId.substring(0, 8)}...`
+      }
+      return 'Booking'
+    }
+    return inc.reference || '—'
   }
 
   return (
@@ -266,7 +335,7 @@ export default function IncomePage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-semibold text-text-dark mb-4">Confirm Delete</h3>
             <p className="text-text-light mb-6">
-              Are you sure you want to delete income record <strong>{incomeToDelete.title}</strong>? This action cannot be undone.
+              Are you sure you want to delete income record <strong>{getDerivedTitle(incomeToDelete)}</strong>? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -320,19 +389,19 @@ export default function IncomePage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Confirmed</p>
             <p className="font-serif text-2xl font-bold text-green">
-              {summary.confirmedIncome}
+              {summary.byStatus?.CONFIRMED || summary.confirmedIncome || 0}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Draft</p>
             <p className="font-serif text-2xl font-bold text-gray-600">
-              {summary.draftIncome}
+              {summary.byStatus?.DRAFT || summary.draftIncome || 0}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Records</p>
             <p className="font-serif text-2xl font-bold text-green">
-              {summary.count || pagination.total}
+              {summary.totalCount || summary.count || pagination.total}
             </p>
           </div>
         </div>
@@ -544,10 +613,10 @@ export default function IncomePage() {
                 income.map((inc) => (
                   <tr key={inc.id} className="border-b border-gray-100 hover:bg-cream/50 transition-smooth">
                     <td className="py-4 px-6 text-text-dark text-sm">
-                      {inc.date || 'N/A'}
+                      {formatDate(inc.dateReceived || inc.createdAt)}
                     </td>
                     <td className="py-4 px-6 text-text-dark font-medium">
-                      {inc.title}
+                      {getDerivedTitle(inc)}
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
@@ -561,13 +630,15 @@ export default function IncomePage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 font-semibold text-green">
-                      {formatCurrency(inc.amount)}
+                      {inc.currency && inc.currency !== 'PKR' 
+                        ? `${inc.currency} ${(inc.amount / 100).toFixed(2)}`
+                        : formatCurrency(inc.amount)}
                     </td>
-                    <td className="py-4 px-6 text-text-light text-sm">
+                    <td className="py-4 px-6 text-text-light text-sm uppercase">
                       {inc.currency || 'PKR'}
                     </td>
                     <td className="py-4 px-6 text-text-light text-sm">
-                      {inc.reference || inc.bookingId || '—'}
+                      {formatReference(inc)}
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase ${
