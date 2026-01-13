@@ -1,0 +1,280 @@
+/**
+ * Purchases API Service
+ * Handles all purchase-related API calls
+ */
+
+import { apiClient } from './apiClient'
+
+/* =========================
+   TYPES
+========================= */
+
+export interface Purchase {
+  id: string
+  vendor: string
+  category: string
+  status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED | APPROVED | REJECTED
+  amount: number // Amount in cents (integer)
+  currency: string // PKR | USD | EUR | GBP
+  purchaseDate?: string // ISO date string (YYYY-MM-DD)
+  reference?: string
+  notes?: string
+  items?: Array<{
+    name: string
+    quantity: number
+    unitPrice: number // in cents
+    total: number // in cents
+  }>
+  createdBy?: {
+    id?: string
+    name?: string
+    email?: string
+  }
+  submittedBy?: {
+    id?: string
+    name?: string
+    email?: string
+  }
+  approvedBy?: {
+    id?: string
+    name?: string
+    email?: string
+  }
+  rejectedBy?: {
+    id?: string
+    name?: string
+    email?: string
+  }
+  rejectionReason?: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
+}
+
+export interface PurchasePayload {
+  vendor: string
+  category: string
+  status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
+  amount: number // Amount in cents (integer)
+  currency: string // PKR | USD | EUR | GBP
+  purchaseDate: string // ISO date string (YYYY-MM-DD)
+  reference?: string
+  notes?: string
+  items?: Array<{
+    name: string
+    quantity: number
+    unitPrice: number // in cents
+    total: number // in cents
+  }>
+}
+
+export interface PurchaseListResponse {
+  success: boolean
+  data: {
+    purchases: Purchase[]
+    pagination: {
+      page: number
+      limit: number
+      total: number
+      totalPages: number
+    }
+    totalAmount: number // Total in cents
+  }
+}
+
+export interface PurchaseSummaryResponse {
+  success: boolean
+  data: {
+    totalPurchases: number // In cents
+    totalCount: number
+    byStatus?: {
+      DRAFT?: number
+      CONFIRMED?: number
+      CANCELLED?: number
+      SUBMITTED?: number
+      APPROVED?: number
+      REJECTED?: number
+    }
+    byCategory?: {
+      [key: string]: number // Amount in cents per category
+    }
+    // Legacy fields for backward compatibility
+    confirmedPurchases?: number
+    draftPurchases?: number
+    cancelledPurchases?: number
+    approvedPurchases?: number // In cents
+    pendingPurchases?: number // In cents
+    rejectedPurchases?: number // In cents
+  }
+}
+
+export interface PurchaseDetailResponse {
+  success: boolean
+  data: Purchase
+}
+
+/* =========================
+   API FUNCTIONS
+========================= */
+
+/**
+ * Get list of purchase records with pagination and filters
+ */
+export async function fetchPurchases(params?: {
+  page?: number
+  limit?: number
+  status?: string
+  category?: string
+  vendor?: string
+  search?: string
+  startDate?: string
+  endDate?: string
+  dateFrom?: string
+  dateTo?: string
+}): Promise<PurchaseListResponse> {
+  const queryParams = new URLSearchParams()
+
+  if (params?.page) queryParams.append('page', String(params.page))
+  if (params?.limit) queryParams.append('limit', String(params.limit))
+  if (params?.status) queryParams.append('status', params.status)
+  if (params?.category) queryParams.append('category', params.category)
+  if (params?.vendor) queryParams.append('vendor', params.vendor)
+  if (params?.search) queryParams.append('search', params.search)
+  // Support both date param formats for flexibility
+  if (params?.startDate) queryParams.append('startDate', params.startDate)
+  if (params?.endDate) queryParams.append('endDate', params.endDate)
+  if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom)
+  if (params?.dateTo) queryParams.append('dateTo', params.dateTo)
+
+  const query = queryParams.toString()
+  const endpoint = query ? `/finance/purchases?${query}` : '/finance/purchases'
+
+  return apiClient<PurchaseListResponse>(endpoint, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Get purchase summary/statistics
+ */
+export async function fetchPurchasesSummary(params?: {
+  startDate?: string
+  endDate?: string
+  dateFrom?: string
+  dateTo?: string
+  category?: string
+}): Promise<PurchaseSummaryResponse> {
+  const queryParams = new URLSearchParams()
+
+  // Support both date param formats for flexibility
+  if (params?.startDate) queryParams.append('startDate', params.startDate)
+  if (params?.endDate) queryParams.append('endDate', params.endDate)
+  if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom)
+  if (params?.dateTo) queryParams.append('dateTo', params.dateTo)
+  if (params?.category) queryParams.append('category', params.category)
+
+  const query = queryParams.toString()
+  const endpoint = query ? `/finance/purchases/summary?${query}` : '/finance/purchases/summary'
+
+  return apiClient<PurchaseSummaryResponse>(endpoint, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Get single purchase record by ID
+ */
+export async function fetchPurchaseById(id: string): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>(`/finance/purchases/${id}`, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Create new purchase record
+ */
+export async function createPurchase(payload: PurchasePayload): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>('/finance/purchases', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Update existing purchase record
+ */
+export async function updatePurchase(
+  id: string,
+  payload: Partial<PurchasePayload>
+): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>(`/finance/purchases/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Delete purchase record (soft delete)
+ */
+export async function deletePurchase(id: string): Promise<{ success: boolean; message: string }> {
+  return apiClient(`/finance/purchases/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+/**
+ * Restore soft-deleted purchase record
+ */
+export async function restorePurchase(id: string): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>(`/finance/purchases/${id}/restore`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * Submit purchase for approval
+ */
+export async function submitPurchase(id: string): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>(`/finance/purchases/${id}/submit`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * Approve purchase record
+ */
+export async function approvePurchase(
+  id: string,
+  comment?: string
+): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>(`/finance/purchases/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({ comment }),
+  })
+}
+
+/**
+ * Reject purchase record
+ */
+export async function rejectPurchase(
+  id: string,
+  reason: string
+): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>(`/finance/purchases/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  })
+}
+
+/**
+ * Cancel purchase record
+ */
+export async function cancelPurchase(
+  id: string,
+  reason?: string
+): Promise<PurchaseDetailResponse> {
+  return apiClient<PurchaseDetailResponse>(`/finance/purchases/${id}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  })
+}
