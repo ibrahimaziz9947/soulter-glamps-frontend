@@ -235,12 +235,15 @@ export default function IncomePage() {
     }
   }
 
-  // Calculate status counts from summary or pagination
+  // Calculate status counts from summary or pagination - ensure all values are numbers
+  const summaryData: any = summary ?? {}
+  const byStatus = summaryData.byStatus ?? {}
+  
   const statusCounts = {
-    all: summary?.totalCount || pagination.total || 0,
-    DRAFT: summary?.byStatus?.DRAFT || summary?.draftIncome || 0,
-    CONFIRMED: summary?.byStatus?.CONFIRMED || summary?.confirmedIncome || 0,
-    CANCELLED: summary?.byStatus?.CANCELLED || summary?.cancelledIncome || 0,
+    all: Number(summaryData.totalCount ?? summaryData.count ?? pagination.total ?? 0),
+    DRAFT: Number(byStatus.DRAFT ?? summaryData.draftIncome ?? 0),
+    CONFIRMED: Number(byStatus.CONFIRMED ?? summaryData.confirmedIncome ?? 0),
+    CANCELLED: Number(byStatus.CANCELLED ?? summaryData.cancelledIncome ?? 0),
   }
 
   // Helper function to generate derived title
@@ -383,25 +386,25 @@ export default function IncomePage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Income</p>
             <p className="font-serif text-3xl font-bold text-green">
-              {formatCurrency(summary.totalIncome)}
+              {formatCurrency(Number(summaryData.totalIncome ?? 0))}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Confirmed</p>
             <p className="font-serif text-2xl font-bold text-green">
-              {summary.byStatus?.CONFIRMED || summary.confirmedIncome || 0}
+              {statusCounts.CONFIRMED}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Draft</p>
             <p className="font-serif text-2xl font-bold text-gray-600">
-              {summary.byStatus?.DRAFT || summary.draftIncome || 0}
+              {statusCounts.DRAFT}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Records</p>
             <p className="font-serif text-2xl font-bold text-green">
-              {summary.totalCount || summary.count || pagination.total}
+              {statusCounts.all}
             </p>
           </div>
         </div>
@@ -631,8 +634,8 @@ export default function IncomePage() {
                     </td>
                     <td className="py-4 px-6 font-semibold text-green">
                       {inc.currency && inc.currency !== 'PKR' 
-                        ? `${inc.currency} ${(inc.amount / 100).toFixed(2)}`
-                        : formatCurrency(inc.amount)}
+                        ? `${inc.currency} ${(Number(inc.amount || 0) / 100).toFixed(2)}`
+                        : formatCurrency(Number(inc.amount || 0))}
                     </td>
                     <td className="py-4 px-6 text-text-light text-sm uppercase">
                       {inc.currency || 'PKR'}
