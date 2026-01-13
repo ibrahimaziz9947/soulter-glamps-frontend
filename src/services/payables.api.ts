@@ -336,8 +336,7 @@ export async function fetchPayablesSummary(params?: {
 
 /**
  * Record payment for a purchase
- * V1: Mock implementation with success message
- * V2: Will call actual payment API endpoint
+ * Calls backend endpoint to persist payment
  */
 export async function payPurchase(
   purchaseId: string,
@@ -350,11 +349,9 @@ export async function payPurchase(
   }
 ): Promise<PaymentResponse> {
   try {
-    // V1: Mock implementation - just return success
-    // V2: Uncomment below to call actual API
-    /*
-    const payload: PaymentPayload = {
-      purchaseId,
+    console.log('[Payables API] Recording payment:', { purchaseId, amountCents })
+    
+    const payload = {
       amountCents,
       paymentDate: paymentDetails?.paymentDate || new Date().toISOString().split('T')[0],
       paymentMethod: paymentDetails?.paymentMethod || 'BANK_TRANSFER',
@@ -362,37 +359,23 @@ export async function payPurchase(
       notes: paymentDetails?.notes
     }
 
-    const response = await apiClient<any>('/finance/payments', {
+    const response = await apiClient<any>(`/finance/payables/${purchaseId}/pay`, {
       method: 'POST',
       body: JSON.stringify(payload)
     })
 
+    console.log('[Payables API] Payment response:', response)
+
     return {
       success: response.success,
       data: {
-        paymentId: response.data?.id || response.data?.paymentId,
+        paymentId: response.data?.id || response.data?.paymentId || `PAY-${Date.now()}`,
         purchaseId: response.data?.purchaseId || purchaseId,
         amountPaid: response.data?.amountPaid || amountCents,
         remainingBalance: response.data?.remainingBalance || 0,
         status: response.data?.status || 'PAID'
       },
       message: response.message || 'Payment recorded successfully'
-    }
-    */
-
-    // V1 Mock Response
-    console.log('[Payables API] Mock payment:', { purchaseId, amountCents, paymentDetails })
-    
-    return {
-      success: true,
-      data: {
-        paymentId: `PAY-${Date.now()}`,
-        purchaseId,
-        amountPaid: amountCents,
-        remainingBalance: 0,
-        status: 'PAID'
-      },
-      message: 'Payment recorded successfully (V1 Mock)'
     }
   } catch (error: any) {
     console.error('[Payables API] Error recording payment:', error)
