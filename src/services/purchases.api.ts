@@ -49,6 +49,11 @@ export interface Purchase {
   createdAt?: string
   updatedAt?: string
   deletedAt?: string | null
+  // Payment tracking fields
+  paymentStatus?: 'UNPAID' | 'PARTIAL' | 'PAID'
+  paidAmountCents?: number
+  totalAmountCents?: number
+  outstandingAmountCents?: number
 }
 
 export interface PurchasePayload {

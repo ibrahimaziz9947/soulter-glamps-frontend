@@ -91,21 +91,24 @@ export interface PaymentResponse {
 
 /**
  * Compute payable from purchase record
- * V1: Assumes no payment tracking, all confirmed purchases are unpaid
- * V2: Will query actual payment records from backend
+ * Reads payment tracking fields from backend if available
  */
 function computePayableFromPurchase(purchase: Purchase): Payable {
-  const total = purchase.amount || 0
-  const paid = 0 // V1: No payment tracking yet
-  const outstanding = total - paid
+  // Support multiple field name variations from backend
+  const total = purchase.totalAmountCents ?? purchase.amount ?? 0
+  const paid = purchase.paidAmountCents ?? 0
+  const outstanding = Math.max(0, total - paid)
   
   // Calculate due date (30 days from purchase date by default)
   const purchaseDate = new Date(purchase.purchaseDate || purchase.createdAt || new Date())
   const dueDate = new Date(purchaseDate)
   dueDate.setDate(dueDate.getDate() + 30)
   
+  // Use paymentStatus from backend if available, otherwise compute
   let status: 'PAID' | 'PARTIAL' | 'UNPAID'
-  if (paid === 0) {
+  if (purchase.paymentStatus) {
+    status = purchase.paymentStatus
+  } else if (paid === 0) {
     status = 'UNPAID'
   } else if (paid < total) {
     status = 'PARTIAL'
