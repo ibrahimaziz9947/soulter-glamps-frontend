@@ -235,15 +235,27 @@ export default function IncomePage() {
     }
   }
 
-  // Calculate status counts from summary or pagination - ensure all values are numbers
+  // Safe number conversion - prevents NaN in UI
+  const safeNum = (value: any): number => {
+    const num = Number(value)
+    return Number.isFinite(num) ? num : 0
+  }
+
+  // Calculate status counts from summary or pagination - ensure all values are safe numbers
   const summaryData: any = summary ?? {}
   const byStatus = summaryData.byStatus ?? {}
   
+  // Debug: Log summary structure once to verify API response format
+  if (summary && !sessionStorage.getItem('income-summary-logged')) {
+    console.log('[Income Summary Debug]', { summary, summaryData, byStatus })
+    sessionStorage.setItem('income-summary-logged', 'true')
+  }
+  
   const statusCounts = {
-    all: Number(summaryData.totalCount ?? summaryData.count ?? pagination.total ?? 0),
-    DRAFT: Number(byStatus.DRAFT ?? summaryData.draftIncome ?? 0),
-    CONFIRMED: Number(byStatus.CONFIRMED ?? summaryData.confirmedIncome ?? 0),
-    CANCELLED: Number(byStatus.CANCELLED ?? summaryData.cancelledIncome ?? 0),
+    all: safeNum(summaryData.totalCount ?? summaryData.count ?? pagination.total),
+    DRAFT: safeNum(byStatus.DRAFT ?? summaryData.draftIncome),
+    CONFIRMED: safeNum(byStatus.CONFIRMED ?? summaryData.confirmedIncome),
+    CANCELLED: safeNum(byStatus.CANCELLED ?? summaryData.cancelledIncome),
   }
 
   // Helper function to generate derived title
