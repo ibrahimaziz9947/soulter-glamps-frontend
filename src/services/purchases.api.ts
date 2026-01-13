@@ -11,7 +11,7 @@ import { apiClient } from './apiClient'
 
 export interface Purchase {
   id: string
-  vendor: string
+  vendorName: string
   category: string
   status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED | APPROVED | REJECTED
   amount: number // Amount in cents (integer)
@@ -52,7 +52,7 @@ export interface Purchase {
 }
 
 export interface PurchasePayload {
-  vendor: string
+  vendorName: string
   category: string
   status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
   amount: number // Amount in cents (integer)

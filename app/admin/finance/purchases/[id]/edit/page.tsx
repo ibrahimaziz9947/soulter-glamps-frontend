@@ -8,7 +8,7 @@ import { displayToCents, centsToDisplay, isValidCurrencyInput, sanitizeCurrencyI
 
 interface Purchase {
   id: string
-  vendor: string
+  vendorName: string
   category: string
   status: string
   amount: number // In cents
@@ -19,7 +19,7 @@ interface Purchase {
 }
 
 interface PurchaseFormData {
-  vendor: string
+  vendorName: string
   purchaseDate: string
   amount: string // Display value (decimal string)
   currency: string
@@ -41,7 +41,7 @@ export default function EditPurchasePage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   
   const [formData, setFormData] = useState<PurchaseFormData>({
-    vendor: '',
+    vendorName: '',
     purchaseDate: new Date().toISOString().split('T')[0],
     amount: '',
     currency: 'PKR',
@@ -61,7 +61,7 @@ export default function EditPurchasePage() {
         
         // Prefill form with existing data - convert amount from cents to decimal
         setFormData({
-          vendor: purchaseData.vendor || '',
+          vendorName: purchaseData.vendorName || '',
           purchaseDate: purchaseData.purchaseDate || new Date().toISOString().split('T')[0],
           amount: centsToDisplay(purchaseData.amount), // Convert cents to decimal display
           currency: purchaseData.currency || 'PKR',
@@ -121,8 +121,8 @@ export default function EditPurchasePage() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {}
 
-    if (!formData.vendor.trim()) {
-      errors.vendor = 'Vendor name is required'
+    if (!formData.vendorName.trim()) {
+      errors.vendorName = 'Vendor name is required'
     }
 
     if (!formData.amount || !isValidCurrencyInput(formData.amount)) {
@@ -162,7 +162,7 @@ export default function EditPurchasePage() {
 
     try {
       const apiPayload = {
-        vendor: formData.vendor.trim(),
+        vendorName: formData.vendorName.trim(),
         purchaseDate: formData.purchaseDate,
         amount: displayToCents(formData.amount), // Convert to cents
         currency: formData.currency.trim(),
@@ -172,7 +172,8 @@ export default function EditPurchasePage() {
         notes: formData.notes?.trim() || undefined,
       }
 
-      console.log('[Purchase Edit Submit Payload]', apiPayload)
+      console.log('[Purchase Edit] Payload keys:', Object.keys(apiPayload))
+      console.log('[Purchase Edit] Full Payload:', apiPayload)
 
       await updatePurchase(purchaseId, apiPayload)
       
@@ -312,25 +313,25 @@ export default function EditPurchasePage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Vendor Name */}
             <div>
-              <label htmlFor="vendor" className="block text-sm font-semibold text-text-dark mb-2">
+              <label htmlFor="vendorName" className="block text-sm font-semibold text-text-dark mb-2">
                 Vendor Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                id="vendor"
-                name="vendor"
-                value={formData.vendor}
+                id="vendorName"
+                name="vendorName"
+                value={formData.vendorName}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-smooth ${
-                  fieldErrors.vendor
+                  fieldErrors.vendorName
                     ? 'border-red-500 focus:border-red-600'
                     : 'border-gray-300 focus:border-green-600'
                 }`}
                 placeholder="Enter vendor name"
                 disabled={isSubmitting}
               />
-              {fieldErrors.vendor && (
-                <p className="mt-1 text-sm text-red-600">{fieldErrors.vendor}</p>
+              {fieldErrors.vendorName && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.vendorName}</p>
               )}
             </div>
 

@@ -8,7 +8,7 @@ import { formatCurrency } from '@/src/utils/currency'
 
 interface Purchase {
   id: string
-  vendor: string
+  vendorName: string
   category: string
   status: string
   amount: number // In cents
@@ -280,7 +280,7 @@ export default function PurchaseDetailPage() {
           <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold text-text-dark mb-4">Confirm Delete</h3>
             <p className="text-text-light mb-6">
-              Are you sure you want to delete this purchase record from <strong>{purchase.vendor}</strong>? This action can be undone if a restore endpoint is available.
+              Are you sure you want to delete this purchase record from <strong>{purchase.vendorName}</strong>? This action can be undone if a restore endpoint is available.
             </p>
             <div className="flex gap-3">
               <button
@@ -349,7 +349,7 @@ export default function PurchaseDetailPage() {
         <div className="bg-cream px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-text-dark">{purchase.vendor}</h2>
+              <h2 className="text-2xl font-bold text-text-dark">{purchase.vendorName}</h2>
               <p className="text-text-light text-sm mt-1">Purchase ID: {purchase.id}</p>
             </div>
             <div>

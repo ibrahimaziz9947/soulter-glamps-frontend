@@ -8,7 +8,7 @@ import { formatCurrency } from '@/src/utils/currency'
 
 interface Purchase {
   id: string
-  vendor: string
+  vendorName: string
   category: string
   status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
   amount: number // In cents
@@ -270,7 +270,7 @@ export default function PurchasesPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-semibold text-text-dark mb-4">Confirm Delete</h3>
             <p className="text-text-light mb-6">
-              Are you sure you want to delete purchase from <strong>{purchaseToDelete.vendor}</strong> ({formatCurrency(safeNum(purchaseToDelete.amount))})? This action cannot be undone.
+              Are you sure you want to delete purchase from <strong>{purchaseToDelete.vendorName}</strong> ({formatCurrency(safeNum(purchaseToDelete.amount))})? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -546,7 +546,7 @@ export default function PurchasesPage() {
                         {formatDate(purchase.purchaseDate || purchase.createdAt)}
                       </td>
                       <td className="py-4 px-6 text-text-dark font-medium">
-                        {purchase.vendor || 'N/A'}
+                        {purchase.vendorName || 'N/A'}
                       </td>
                       <td className="py-4 px-6 font-semibold text-green">
                         {purchase.currency && purchase.currency !== 'PKR' 
