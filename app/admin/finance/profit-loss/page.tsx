@@ -40,6 +40,11 @@ export default function ProfitLossPage() {
     expensesByCategory: [],
     purchasesByVendor: []
   })
+  const [debugCounts, setDebugCounts] = useState<{
+    income?: number
+    expenses?: number
+    purchases?: number
+  }>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
@@ -78,8 +83,9 @@ export default function ProfitLossPage() {
       
       const requestUrl = `/finance/profit-loss?${params.toString()}`
       
-      // TEMP DEBUG: Log the request URL
+      // TEMP DEBUG: Log the request URL with all params
       console.log('[P&L DEBUG] Request URL:', requestUrl)
+      console.log('[P&L DEBUG] Expense Mode:', expenseMode)
       
       // Call unified profit-loss endpoint
       const response = await apiClient<any>(requestUrl, {
@@ -95,6 +101,7 @@ export default function ProfitLossPage() {
       // TEMP DEBUG: Log extracted data structure
       console.log('[P&L DEBUG] Extracted data:', data)
       console.log('[P&L DEBUG] Summary from response:', data?.summary)
+      console.log('[P&L DEBUG] Debug Counts from response:', data?.debugCounts)
       
       // Calculate totals with NaN guards - READ FROM data.summary.xxxCents
       const totalIncome = Number.isFinite(Number(data?.summary?.totalIncomeCents ?? 0)) ? Number(data.summary.totalIncomeCents ?? 0) : 0
@@ -173,6 +180,22 @@ export default function ProfitLossPage() {
         expensesByCategory,
         purchasesByVendor
       })
+      
+      // Extract debug counts if available
+      if (data?.debugCounts) {
+        setDebugCounts({
+          income: data.debugCounts.income || 0,
+          expenses: data.debugCounts.expenses || 0,
+          purchases: data.debugCounts.purchases || 0
+        })
+      } else {
+        // Fallback to breakdown counts
+        setDebugCounts({
+          income: incomeBySource.length,
+          expenses: expensesByCategory.length,
+          purchases: purchasesByVendor.length
+        })
+      }
       
       // Set last updated timestamp
       setLastUpdated(new Date().toLocaleString('en-US', {
@@ -281,22 +304,32 @@ export default function ProfitLossPage() {
           <label className="block text-sm font-semibold text-text-dark mb-2">Expense Mode</label>
           <div className="flex gap-2 flex-wrap">
             <button
-              onClick={() => setExpenseMode('approvedOnly')}
+              onClick={() => {
+                setExpenseMode('approvedOnly')
+                // Trigger refetch after state update
+                setTimeout(() => fetchProfitLoss(), 50)
+              }}
+              disabled={loading}
               className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
                 expenseMode === 'approvedOnly'
                   ? 'bg-green text-white'
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
-              }`}
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               Approved Only
             </button>
             <button
-              onClick={() => setExpenseMode('includeSubmitted')}
+              onClick={() => {
+                setExpenseMode('includeSubmitted')
+                // Trigger refetch after state update
+                setTimeout(() => fetchProfitLoss(), 50)
+              }}
+              disabled={loading}
               className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
                 expenseMode === 'includeSubmitted'
                   ? 'bg-green text-white'
                   : 'bg-gray-100 text-text-dark hover:bg-gray-200'
-              }`}
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               Include Submitted
             </button>
@@ -383,9 +416,19 @@ export default function ProfitLossPage() {
               <p className="font-serif text-3xl font-bold text-orange-600">
                 {formatCurrency(safeNum(summary.totalExpenses))}
               </p>
-              <p className="text-xs text-gray-500 mt-2">
-                Counting: {expenseMode === 'approvedOnly' ? 'Approved only' : 'Submitted + Approved'}
-              </p>
+              <div className="mt-2 space-y-1">
+                <p className="text-xs text-gray-600">
+                  Counting: {expenseMode === 'approvedOnly' ? 'Approved only' : 'Submitted + Approved'}
+                </p>
+                <p className="text-xs text-gray-600">
+                  Matched: {debugCounts.expenses ?? 0} expense{(debugCounts.expenses ?? 0) !== 1 ? 's' : ''}
+                </p>
+                {summary.totalExpenses === 0 && (
+                  <p className="text-xs text-orange-600 italic mt-1">
+                    No expenses matched filters. Check date range and status.
+                  </p>
+                )}
+              </div>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Total Purchases (Costs)</p>
