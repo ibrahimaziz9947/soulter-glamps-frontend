@@ -91,15 +91,16 @@ export default function ProfitLossPage() {
       
       // TEMP DEBUG: Log extracted data structure
       console.log('[P&L DEBUG] Extracted data:', data)
+      console.log('[P&L DEBUG] Summary from response:', data?.summary)
       
-      // Calculate totals with NaN guards
-      const totalIncome = Number.isFinite(Number(data?.totalIncome ?? 0)) ? Number(data.totalIncome ?? 0) : 0
-      const totalExpenses = Number.isFinite(Number(data?.totalExpenses ?? 0)) ? Number(data.totalExpenses ?? 0) : 0
-      const totalPurchases = Number.isFinite(Number(data?.totalPurchases ?? 0)) ? Number(data.totalPurchases ?? 0) : 0
-      const netProfit = Number.isFinite(Number(data?.netProfit ?? 0)) ? Number(data.netProfit ?? 0) : totalIncome - totalExpenses - totalPurchases
+      // Calculate totals with NaN guards - READ FROM data.summary.xxxCents
+      const totalIncome = Number.isFinite(Number(data?.summary?.totalIncomeCents ?? 0)) ? Number(data.summary.totalIncomeCents ?? 0) : 0
+      const totalExpenses = Number.isFinite(Number(data?.summary?.totalExpensesCents ?? 0)) ? Number(data.summary.totalExpensesCents ?? 0) : 0
+      const totalPurchases = Number.isFinite(Number(data?.summary?.totalPurchasesCents ?? 0)) ? Number(data.summary.totalPurchasesCents ?? 0) : 0
+      const netProfit = Number.isFinite(Number(data?.summary?.netProfitCents ?? 0)) ? Number(data.summary.netProfitCents ?? 0) : totalIncome - totalExpenses - totalPurchases
       
-      // TEMP DEBUG: Log computed totals
-      console.log('[P&L DEBUG] Computed Totals:', {
+      // TEMP DEBUG: Log computed totals (these are in CENTS)
+      console.log('[P&L DEBUG] Computed Totals (in cents):', {
         totalIncome,
         totalExpenses,
         totalPurchases,
@@ -519,7 +520,10 @@ export default function ProfitLossPage() {
       {!loading && !error && summary && 
        summary.totalIncome === 0 && 
        summary.totalExpenses === 0 && 
-       summary.totalPurchases === 0 && (
+       summary.totalPurchases === 0 && 
+       breakdowns.incomeBySource.length === 0 &&
+       breakdowns.expensesByCategory.length === 0 &&
+       breakdowns.purchasesByVendor.length === 0 && (
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
             <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
