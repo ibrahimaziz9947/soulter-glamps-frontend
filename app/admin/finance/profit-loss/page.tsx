@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
-import { fetchPurchasesSummary } from '@/src/services/purchases.api'
 
 interface ProfitLossSummary {
   totalIncome: number // In cents
@@ -59,62 +58,53 @@ export default function ProfitLossPage() {
     setError(null)
     
     try {
-      // Fetch income summary
-      const incomeParams = new URLSearchParams()
-      if (dateFrom && dateFrom.trim()) incomeParams.append('startDate', dateFrom.trim())
-      if (dateTo && dateTo.trim()) incomeParams.append('endDate', dateTo.trim())
+      // Build query params for unified profit-loss endpoint
+      const params = new URLSearchParams()
+      params.append('includeBreakdown', 'true')
       
-      const incomeResponse = await apiClient<any>(`/finance/income/summary?${incomeParams.toString()}`, {
+      if (dateFrom && dateFrom.trim()) {
+        params.append('from', dateFrom.trim())
+      }
+      if (dateTo && dateTo.trim()) {
+        params.append('to', dateTo.trim())
+      }
+      // Only include currency if user explicitly selected one (not "All")
+      if (currencyFilter && currencyFilter.trim()) {
+        params.append('currency', currencyFilter.trim())
+      }
+      
+      const requestUrl = `/finance/profit-loss?${params.toString()}`
+      
+      // TEMP DEBUG: Log the request URL
+      console.log('[P&L DEBUG] Request URL:', requestUrl)
+      
+      // Call unified profit-loss endpoint
+      const response = await apiClient<any>(requestUrl, {
         method: 'GET',
       })
       
-      // Fetch purchases summary
-      const purchasesParams: any = {}
-      if (dateFrom && dateFrom.trim()) purchasesParams.dateFrom = dateFrom.trim()
-      if (dateTo && dateTo.trim()) purchasesParams.dateTo = dateTo.trim()
+      // TEMP DEBUG: Log full response payload
+      console.log('[P&L DEBUG] Full Response:', JSON.stringify(response, null, 2))
       
-      const purchasesResponse = await fetchPurchasesSummary(purchasesParams)
+      // Extract data from response
+      const data = response.success ? response.data : response
       
-      // Fetch payables summary (expenses)
-      const payablesParams = new URLSearchParams()
-      if (dateFrom && dateFrom.trim()) payablesParams.append('startDate', dateFrom.trim())
-      if (dateTo && dateTo.trim()) payablesParams.append('endDate', dateTo.trim())
-      
-      const payablesResponse = await apiClient<any>(`/finance/payables/summary?${payablesParams.toString()}`, {
-        method: 'GET',
-      })
+      // TEMP DEBUG: Log extracted data structure
+      console.log('[P&L DEBUG] Extracted data:', data)
       
       // Calculate totals with NaN guards
-      let totalIncome = 0
-      let totalExpenses = 0
-      let totalPurchases = 0
+      const totalIncome = Number.isFinite(Number(data?.totalIncome ?? 0)) ? Number(data.totalIncome ?? 0) : 0
+      const totalExpenses = Number.isFinite(Number(data?.totalExpenses ?? 0)) ? Number(data.totalExpenses ?? 0) : 0
+      const totalPurchases = Number.isFinite(Number(data?.totalPurchases ?? 0)) ? Number(data.totalPurchases ?? 0) : 0
+      const netProfit = Number.isFinite(Number(data?.netProfit ?? 0)) ? Number(data.netProfit ?? 0) : totalIncome - totalExpenses - totalPurchases
       
-      // Extract income total with NaN guard
-      if (incomeResponse.success && incomeResponse.data) {
-        const val = Number(incomeResponse.data.totalIncome ?? 0)
-        totalIncome = Number.isFinite(val) ? val : 0
-      } else if (incomeResponse.totalIncome !== undefined) {
-        const val = Number(incomeResponse.totalIncome ?? 0)
-        totalIncome = Number.isFinite(val) ? val : 0
-      }
-      
-      // Extract purchases total (costs) with NaN guard
-      if (purchasesResponse.success && purchasesResponse.data) {
-        const val = Number(purchasesResponse.data.totalPurchases ?? 0)
-        totalPurchases = Number.isFinite(val) ? val : 0
-      }
-      
-      // Extract payables total (expenses) with NaN guard
-      if (payablesResponse.success && payablesResponse.data) {
-        const val = Number(payablesResponse.data.totalPayables ?? 0)
-        totalExpenses = Number.isFinite(val) ? val : 0
-      } else if (payablesResponse.totalPayables !== undefined) {
-        const val = Number(payablesResponse.totalPayables ?? 0)
-        totalExpenses = Number.isFinite(val) ? val : 0
-      }
-      
-      // Calculate net profit (can be negative)
-      const netProfit = totalIncome - totalExpenses - totalPurchases
+      // TEMP DEBUG: Log computed totals
+      console.log('[P&L DEBUG] Computed Totals:', {
+        totalIncome,
+        totalExpenses,
+        totalPurchases,
+        netProfit
+      })
       
       setSummary({
         totalIncome,
@@ -128,35 +118,51 @@ export default function ProfitLossPage() {
       const expensesByCategory: BreakdownItem[] = []
       const purchasesByVendor: BreakdownItem[] = []
       
-      // Process income by source
-      const incomeData = incomeResponse.success ? incomeResponse.data : incomeResponse
-      if (incomeData?.bySource) {
-        Object.entries(incomeData.bySource).forEach(([source, total]: [string, any]) => {
-          if (typeof total === 'number' && total > 0) {
-            incomeBySource.push({ name: source, count: 1, total })
+      // Process income breakdown
+      if (data?.breakdown?.incomeBySource && Array.isArray(data.breakdown.incomeBySource)) {
+        data.breakdown.incomeBySource.forEach((item: any) => {
+          if (item && typeof item.total === 'number' && item.total > 0) {
+            incomeBySource.push({
+              name: item.source || item.name || 'Unknown',
+              count: item.count || 1,
+              total: item.total
+            })
           }
         })
       }
       
-      // Process expenses by category
-      const payablesData = payablesResponse.success ? payablesResponse.data : payablesResponse
-      if (payablesData?.byCategory) {
-        Object.entries(payablesData.byCategory).forEach(([category, total]: [string, any]) => {
-          if (typeof total === 'number' && total > 0) {
-            expensesByCategory.push({ name: category, count: 1, total })
+      // Process expenses breakdown
+      if (data?.breakdown?.expensesByCategory && Array.isArray(data.breakdown.expensesByCategory)) {
+        data.breakdown.expensesByCategory.forEach((item: any) => {
+          if (item && typeof item.total === 'number' && item.total > 0) {
+            expensesByCategory.push({
+              name: item.category || item.name || 'Unknown',
+              count: item.count || 1,
+              total: item.total
+            })
           }
         })
       }
       
-      // Process purchases by vendor (or category)
-      const purchasesData = purchasesResponse.success ? purchasesResponse.data : purchasesResponse
-      if ((purchasesData as any)?.byCategory) {
-        Object.entries((purchasesData as any).byCategory).forEach(([vendor, total]: [string, any]) => {
-          if (typeof total === 'number' && total > 0) {
-            purchasesByVendor.push({ name: vendor, count: 1, total })
+      // Process purchases breakdown
+      if (data?.breakdown?.purchasesByCategory && Array.isArray(data.breakdown.purchasesByCategory)) {
+        data.breakdown.purchasesByCategory.forEach((item: any) => {
+          if (item && typeof item.total === 'number' && item.total > 0) {
+            purchasesByVendor.push({
+              name: item.category || item.name || 'Unknown',
+              count: item.count || 1,
+              total: item.total
+            })
           }
         })
       }
+      
+      // TEMP DEBUG: Log breakdowns
+      console.log('[P&L DEBUG] Breakdowns:', {
+        incomeBySource,
+        expensesByCategory,
+        purchasesByVendor
+      })
       
       setBreakdowns({
         incomeBySource,
@@ -175,7 +181,7 @@ export default function ProfitLossPage() {
       }))
       
     } catch (err: any) {
-      console.error('[Profit & Loss] Failed to fetch data:', err)
+      console.error('[P&L DEBUG] Failed to fetch data:', err)
       const errorMessage = err.message || 'Failed to load profit & loss data'
       setError(errorMessage)
       showToast(errorMessage, 'error')
