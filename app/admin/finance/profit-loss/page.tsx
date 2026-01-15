@@ -31,6 +31,7 @@ export default function ProfitLossPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [currencyFilter, setCurrencyFilter] = useState('')
+  const [expenseMode, setExpenseMode] = useState<'approvedOnly' | 'includeSubmitted'>('approvedOnly')
   
   // Data
   const [summary, setSummary] = useState<ProfitLossSummary | null>(null)
@@ -72,6 +73,8 @@ export default function ProfitLossPage() {
       if (currencyFilter && currencyFilter.trim()) {
         params.append('currency', currencyFilter.trim())
       }
+      // Include expense mode filter
+      params.append('expenseMode', expenseMode)
       
       const requestUrl = `/finance/profit-loss?${params.toString()}`
       
@@ -206,6 +209,7 @@ export default function ProfitLossPage() {
     setDateFrom('')
     setDateTo('')
     setCurrencyFilter('')
+    setExpenseMode('approvedOnly')
     // Trigger fetch after resetting
     setTimeout(() => {
       fetchProfitLoss()
@@ -271,6 +275,39 @@ export default function ProfitLossPage() {
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-lg font-semibold text-text-dark mb-4">Filters</h2>
+        
+        {/* Expense Mode Toggle */}
+        <div className="mb-4 pb-4 border-b border-gray-200">
+          <label className="block text-sm font-semibold text-text-dark mb-2">Expense Mode</label>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setExpenseMode('approvedOnly')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                expenseMode === 'approvedOnly'
+                  ? 'bg-green text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              Approved Only
+            </button>
+            <button
+              onClick={() => setExpenseMode('includeSubmitted')}
+              className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                expenseMode === 'includeSubmitted'
+                  ? 'bg-green text-white'
+                  : 'bg-gray-100 text-text-dark hover:bg-gray-200'
+              }`}
+            >
+              Include Submitted
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {expenseMode === 'approvedOnly' 
+              ? 'Only counting expenses with Approved status'
+              : 'Counting expenses with Submitted or Approved status'}
+          </p>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-semibold text-text-dark mb-2">From Date</label>
@@ -345,6 +382,9 @@ export default function ProfitLossPage() {
               <p className="text-text-light text-sm mb-2">Total Expenses</p>
               <p className="font-serif text-3xl font-bold text-orange-600">
                 {formatCurrency(safeNum(summary.totalExpenses))}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Counting: {expenseMode === 'approvedOnly' ? 'Approved only' : 'Submitted + Approved'}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
