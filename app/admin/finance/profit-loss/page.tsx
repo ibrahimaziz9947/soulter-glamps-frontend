@@ -11,7 +11,6 @@ interface ProfitLossSummary {
   totalExpenses: number // In cents (from payables)
   totalPurchases: number // In cents (costs)
   netProfit: number // In cents (income - expenses - purchases)
-  currency?: string
 }
 
 interface BreakdownItem {
@@ -32,7 +31,7 @@ export default function ProfitLossPage() {
   // Filters
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [currencyFilter, setCurrencyFilter] = useState('PKR')
+  const [currencyFilter, setCurrencyFilter] = useState('')
   
   // Data
   const [summary, setSummary] = useState<ProfitLossSummary | null>(null)
@@ -121,8 +120,7 @@ export default function ProfitLossPage() {
         totalIncome,
         totalExpenses,
         totalPurchases,
-        netProfit,
-        currency: currencyFilter
+        netProfit
       })
       
       // Extract breakdowns
@@ -200,7 +198,7 @@ export default function ProfitLossPage() {
   const handleResetFilters = () => {
     setDateFrom('')
     setDateTo('')
-    setCurrencyFilter('PKR')
+    setCurrencyFilter('')
     // Trigger fetch after resetting
     setTimeout(() => {
       fetchProfitLoss()
@@ -292,6 +290,7 @@ export default function ProfitLossPage() {
               onChange={e => setCurrencyFilter(e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-600 focus:outline-none"
             >
+              <option value="">All Currencies</option>
               <option value="PKR">PKR</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
