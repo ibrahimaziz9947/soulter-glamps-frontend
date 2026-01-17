@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
@@ -26,6 +26,9 @@ interface Breakdowns {
 
 export default function ProfitLossPage() {
   const router = useRouter()
+  
+  // Request sequencing to prevent race conditions
+  const reqSeqRef = useRef(0)
   
   // Filters
   const [dateFrom, setDateFrom] = useState('')
@@ -63,45 +66,79 @@ export default function ProfitLossPage() {
     setLoading(true)
     setError(null)
     
+    // Increment request ID for sequencing
+    const currentReqId = ++reqSeqRef.current
+    
     try {
-      // Build query params for unified profit-loss endpoint
+      // LOG: Trace input values before building params
+      console.log('[P&L TRACE] Input values:', {
+        dateFrom,
+        dateTo,
+        currencyFilter,
+        expenseMode,
+        requestId: currentReqId
+      })
+      
+      // Build query params - ONLY include non-empty values
       const params = new URLSearchParams()
       params.append('includeBreakdown', 'true')
       
-      if (dateFrom && dateFrom.trim()) {
+      // Only add 'from' if dateFrom is truthy and looks like valid date
+      if (dateFrom && dateFrom.trim() && dateFrom.length >= 10) {
         params.append('from', dateFrom.trim())
       }
-      if (dateTo && dateTo.trim()) {
+      
+      // Only add 'to' if dateTo is truthy and looks like valid date
+      if (dateTo && dateTo.trim() && dateTo.length >= 10) {
         params.append('to', dateTo.trim())
       }
+      
       // Only include currency if user explicitly selected one (not "All")
       if (currencyFilter && currencyFilter.trim()) {
         params.append('currency', currencyFilter.trim())
       }
-      // Include expense mode filter
-      params.append('expenseMode', expenseMode)
+      
+      // Always include expense mode (it has a default value)
+      if (expenseMode) {
+        params.append('expenseMode', expenseMode)
+      }
       
       const requestUrl = `/finance/profit-loss?${params.toString()}`
       
-      // TEMP DEBUG: Log the request URL with all params
-      console.log('[P&L DEBUG] Request URL:', requestUrl)
-      console.log('[P&L DEBUG] Expense Mode:', expenseMode)
+      // LOG: Final request URL
+      console.log('[P&L TRACE] Request URL:', requestUrl)
+      console.log('[P&L TRACE] Request ID:', currentReqId)
       
       // Call unified profit-loss endpoint
       const response = await apiClient<any>(requestUrl, {
         method: 'GET',
       })
       
-      // TEMP DEBUG: Log full response payload
-      console.log('[P&L DEBUG] Full Response:', JSON.stringify(response, null, 2))
+      // Check if this request is still the latest one
+      if (currentReqId !== reqSeqRef.current) {
+        console.log('[P&L TRACE] Discarding stale response. Current:', currentReqId, 'Latest:', reqSeqRef.current)
+        return // Discard this response, a newer request is in flight or completed
+      }
+      
+      // LOG: Response details
+      console.log('[P&L TRACE] Response received:', {
+        requestId: currentReqId,
+        success: response.success,
+        hasData: !!response.data
+      })
       
       // Extract data from response
       const data = response.success ? response.data : response
       
-      // TEMP DEBUG: Log extracted data structure
-      console.log('[P&L DEBUG] Extracted data:', data)
-      console.log('[P&L DEBUG] Summary from response:', data?.summary)
-      console.log('[P&L DEBUG] Debug Counts from response:', data?.debugCounts)
+      // LOG: Key values from API response
+      console.log('[P&L TRACE] API Response:', {
+        expenseModeSent: expenseMode,
+        totalExpensesCentsFromAPI: data?.summary?.totalExpensesCents,
+        totalIncomeCentsFromAPI: data?.summary?.totalIncomeCents,
+        totalPurchasesCentsFromAPI: data?.summary?.totalPurchasesCents,
+        debugCountsFromAPI: data?.debugCounts,
+        requestId: currentReqId
+      })
       
       // Calculate totals with NaN guards - READ FROM data.summary.xxxCents
       const totalIncome = Number.isFinite(Number(data?.summary?.totalIncomeCents ?? 0)) ? Number(data.summary.totalIncomeCents ?? 0) : 0
@@ -197,6 +234,16 @@ export default function ProfitLossPage() {
         })
       }
       
+      // LOG: Final state values being set
+      console.log('[P&L TRACE] Setting state:', {
+        totalIncome,
+        totalExpenses,
+        totalPurchases,
+        netProfit,
+        debugCounts: data?.debugCounts,
+        requestId: currentReqId
+      })
+      
       // Set last updated timestamp
       setLastUpdated(new Date().toLocaleString('en-US', {
         month: 'short',
@@ -208,7 +255,11 @@ export default function ProfitLossPage() {
       }))
       
     } catch (err: any) {
-      console.error('[P&L DEBUG] Failed to fetch data:', err)
+      console.error('[P&L TRACE] Request failed:', {
+        requestId: currentReqId,
+        error: err.message,
+        expenseMode
+      })
       const errorMessage = err.message || 'Failed to load profit & loss data'
       setError(errorMessage)
       showToast(errorMessage, 'error')
