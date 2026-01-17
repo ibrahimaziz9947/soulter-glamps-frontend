@@ -1,33 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getGlamps, type Glamp } from '@/src/services/glamps.api'
+import { createBooking } from '@/src/services/bookings.api'
 
 export default function AddBookingPage() {
   const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [glamps, setGlamps] = useState<Glamp[]>([])
+  const [loadingGlamps, setLoadingGlamps] = useState(true)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  
   const [formData, setFormData] = useState({
-    glampType: '',
+    glampId: '',
     checkIn: '',
     checkOut: '',
-    adults: 2,
-    children: 0,
+    guests: 2,
     guestName: '',
     guestEmail: '',
     guestPhone: '',
     specialRequests: '',
     addOns: [] as string[],
-    paymentStatus: 'pending',
   })
 
-  const glampTypes = [
-    { id: 1, name: 'Luxury Safari Tent', price: 250 },
-    { id: 2, name: 'Geodesic Dome', price: 300 },
-    { id: 3, name: 'Treehouse Suite', price: 350 },
-    { id: 4, name: 'Woodland Cabin', price: 200 },
-    { id: 5, name: 'Riverside Yurt', price: 180 },
-    { id: 6, name: 'Mountain View Pod', price: 220 },
-  ]
+  // Fetch glamps on mount
+  useEffect(() => {
+    const fetchGlamps = async () => {
+      try {
+        setLoadingGlamps(true)
+        const response = await getGlamps()
+        setGlamps(response.data || [])
+        console.log('[Add Booking] Glamps loaded:', response.data?.length || 0)
+      } catch (error: any) {
+        console.error('[Add Booking] Failed to load glamps:', error)
+        setToast({ message: 'Failed to load accommodations', type: 'error' })
+      } finally {
+        setLoadingGlamps(false)
+      }
+    }
+
+    fetchGlamps()
+  }, [])
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   const addOnsOptions = [
     { id: 'breakfast', name: 'Daily Breakfast', price: 25 },
@@ -53,14 +76,14 @@ export default function AddBookingPage() {
   }
 
   const calculateTotal = () => {
-    if (!formData.checkIn || !formData.checkOut || !formData.glampType) return 0
+    if (!formData.checkIn || !formData.checkOut || !formData.glampId) return 0
     
     const checkIn = new Date(formData.checkIn)
     const checkOut = new Date(formData.checkOut)
     const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
     
-    const selectedGlamp = glampTypes.find(g => g.name === formData.glampType)
-    const basePrice = selectedGlamp ? selectedGlamp.price * nights : 0
+    const selectedGlamp = glamps.find(g => (g._id || g.id) === formData.glampId)
+    const basePrice = selectedGlamp ? selectedGlamp.pricePerNight * nights : 0
     
     const addOnsTotal = formData.addOns.reduce((sum, addOnId) => {
       const addOn = addOnsOptions.find(a => a.id === addOnId)
@@ -70,19 +93,88 @@ export default function AddBookingPage() {
     return basePrice + addOnsTotal
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, this would send to an API
-    alert('Booking created successfully!')
-    router.push('/admin/bookings')
+    
+    // Validation
+    if (!formData.glampId) {
+      setToast({ message: 'Please select an accommodation', type: 'error' })
+      return
+    }
+    if (!formData.checkIn || !formData.checkOut) {
+      setToast({ message: 'Please select check-in and check-out dates', type: 'error' })
+      return
+    }
+    if (!formData.guestName || !formData.guestEmail || !formData.guestPhone) {
+      setToast({ message: 'Please fill in all guest information', type: 'error' })
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      
+      const payload = {
+        glampId: formData.glampId,
+        checkInDate: formData.checkIn,
+        checkOutDate: formData.checkOut,
+        guests: formData.guests,
+        customerName: formData.guestName,
+        customerEmail: formData.guestEmail,
+        customerPhone: formData.guestPhone,
+        specialRequests: formData.specialRequests || undefined,
+        addOns: formData.addOns.length > 0 ? formData.addOns : undefined,
+      }
+
+      console.log('[Add Booking] Submitting:', payload)
+
+      const response = await createBooking(payload)
+
+      setToast({ message: 'Booking created successfully!', type: 'success' })
+      
+      setTimeout(() => {
+        router.push('/admin/bookings')
+      }, 500)
+    } catch (error: any) {
+      console.error('[Add Booking] Failed:', error)
+      setToast({ 
+        message: error.message || 'Failed to create booking', 
+        type: 'error' 
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const nights = formData.checkIn && formData.checkOut 
     ? Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 0
 
+  const selectedGlamp = glamps.find(g => (g._id || g.id) === formData.glampId)
+
   return (
     <div className="space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in ${
+          toast.type === 'success' ? 'bg-green text-white' : 'bg-red-500 text-white'
+        }`}>
+          {toast.type === 'success' ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+          <span className="font-medium">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-2 hover:opacity-80">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -111,20 +203,27 @@ export default function AddBookingPage() {
                 <label className="block text-sm font-semibold text-text-dark mb-2">
                   Glamp Type *
                 </label>
-                <select
-                  name="glampType"
-                  value={formData.glampType}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
-                >
-                  <option value="">Select accommodation...</option>
-                  {glampTypes.map(glamp => (
-                    <option key={glamp.id} value={glamp.name}>
-                      {glamp.name} - ${glamp.price}/night
-                    </option>
-                  ))}
-                </select>
+                {loadingGlamps ? (
+                  <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-text-light">
+                    Loading accommodations...
+                  </div>
+                ) : (
+                  <select
+                    name="glampId"
+                    value={formData.glampId}
+                    onChange={handleChange}
+                    required
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  >
+                    <option value="">Select accommodation...</option>
+                    {glamps.map(glamp => (
+                      <option key={glamp._id || glamp.id} value={glamp._id || glamp.id}>
+                        {glamp.name} - PKR {glamp.pricePerNight}/night
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div>
@@ -137,8 +236,9 @@ export default function AddBookingPage() {
                   value={formData.checkIn}
                   onChange={handleChange}
                   required
+                  disabled={isSubmitting}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50"
                 />
               </div>
 
@@ -152,38 +252,26 @@ export default function AddBookingPage() {
                   value={formData.checkOut}
                   onChange={handleChange}
                   required
+                  disabled={isSubmitting}
                   min={formData.checkIn || new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50"
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-text-dark mb-2">
-                  Adults
+                  Number of Guests *
                 </label>
                 <input
                   type="number"
-                  name="adults"
-                  value={formData.adults}
+                  name="guests"
+                  value={formData.guests}
                   onChange={handleChange}
                   min="1"
-                  max="6"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-text-dark mb-2">
-                  Children
-                </label>
-                <input
-                  type="number"
-                  name="children"
-                  value={formData.children}
-                  onChange={handleChange}
-                  min="0"
-                  max="4"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                  max="10"
+                  required
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50"
                 />
               </div>
             </div>
@@ -204,8 +292,9 @@ export default function AddBookingPage() {
                   value={formData.guestName}
                   onChange={handleChange}
                   required
+                  disabled={isSubmitting}
                   placeholder="John Doe"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50"
                 />
               </div>
 
@@ -219,8 +308,9 @@ export default function AddBookingPage() {
                   value={formData.guestEmail}
                   onChange={handleChange}
                   required
+                  disabled={isSubmitting}
                   placeholder="john@email.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50"
                 />
               </div>
 
@@ -234,8 +324,9 @@ export default function AddBookingPage() {
                   value={formData.guestPhone}
                   onChange={handleChange}
                   required
-                  placeholder="+1 234 567 8900"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                  disabled={isSubmitting}
+                  placeholder="+92 300 1234567"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50"
                 />
               </div>
 
@@ -248,8 +339,9 @@ export default function AddBookingPage() {
                   value={formData.specialRequests}
                   onChange={handleChange}
                   rows={4}
+                  disabled={isSubmitting}
                   placeholder="Any special requirements or requests..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent resize-none disabled:bg-gray-50"
                 />
               </div>
             </div>
@@ -267,46 +359,19 @@ export default function AddBookingPage() {
                     formData.addOns.includes(addOn.id)
                       ? 'border-yellow bg-yellow/10'
                       : 'border-gray-200 hover:border-yellow/50'
-                  }`}
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <input
                     type="checkbox"
                     checked={formData.addOns.includes(addOn.id)}
-                    onChange={() => handleAddOnToggle(addOn.id)}
+                    onChange={() => !isSubmitting && handleAddOnToggle(addOn.id)}
+                    disabled={isSubmitting}
                     className="w-5 h-5 text-yellow focus:ring-yellow rounded"
                   />
                   <div className="flex-1">
                     <p className="font-medium text-text-dark">{addOn.name}</p>
-                    <p className="text-sm text-green font-semibold">${addOn.price}</p>
+                    <p className="text-sm text-green font-semibold">PKR {addOn.price}</p>
                   </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Payment Status */}
-          <div className="bg-white rounded-lg shadow-lg p-6 animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <h2 className="font-serif text-2xl font-bold text-green mb-6">Payment Status</h2>
-            
-            <div className="flex gap-4">
-              {['pending', 'partial', 'paid'].map(status => (
-                <label
-                  key={status}
-                  className={`flex-1 flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-smooth capitalize ${
-                    formData.paymentStatus === status
-                      ? 'border-yellow bg-yellow/10'
-                      : 'border-gray-200 hover:border-yellow/50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentStatus"
-                    value={status}
-                    checked={formData.paymentStatus === status}
-                    onChange={handleChange}
-                    className="w-5 h-5 text-yellow focus:ring-yellow"
-                  />
-                  <span className="font-medium text-text-dark">{status}</span>
                 </label>
               ))}
             </div>
@@ -319,10 +384,10 @@ export default function AddBookingPage() {
             <h2 className="font-serif text-2xl font-bold text-green mb-6">Booking Summary</h2>
             
             <div className="space-y-4">
-              {formData.glampType && (
+              {selectedGlamp && (
                 <div className="pb-4 border-b border-gray-200">
                   <p className="text-sm text-text-light mb-1">Accommodation</p>
-                  <p className="font-medium text-text-dark">{formData.glampType}</p>
+                  <p className="font-medium text-text-dark">{selectedGlamp.name}</p>
                 </div>
               )}
 
@@ -331,17 +396,14 @@ export default function AddBookingPage() {
                   <p className="text-sm text-text-light mb-1">Duration</p>
                   <p className="font-medium text-text-dark">{nights} {nights === 1 ? 'night' : 'nights'}</p>
                   <p className="text-sm text-text-light mt-1">
-                    {formData.checkIn} to {formData.checkOut}
+                    {new Date(formData.checkIn).toLocaleDateString()} to {new Date(formData.checkOut).toLocaleDateString()}
                   </p>
                 </div>
               )}
 
               <div className="pb-4 border-b border-gray-200">
                 <p className="text-sm text-text-light mb-1">Guests</p>
-                <p className="font-medium text-text-dark">
-                  {formData.adults} {formData.adults === 1 ? 'Adult' : 'Adults'}
-                  {formData.children > 0 && `, ${formData.children} ${formData.children === 1 ? 'Child' : 'Children'}`}
-                </p>
+                <p className="font-medium text-text-dark">{formData.guests} {formData.guests === 1 ? 'Guest' : 'Guests'}</p>
               </div>
 
               {formData.addOns.length > 0 && (
@@ -352,7 +414,7 @@ export default function AddBookingPage() {
                     return (
                       <div key={addOnId} className="flex justify-between text-sm mb-1">
                         <span className="text-text-dark">{addOn?.name}</span>
-                        <span className="text-green font-medium">${addOn?.price}</span>
+                        <span className="text-green font-medium">PKR {addOn?.price}</span>
                       </div>
                     )
                   })}
@@ -362,7 +424,7 @@ export default function AddBookingPage() {
               <div className="pt-4">
                 <div className="flex justify-between items-center">
                   <span className="font-serif text-xl font-bold text-text-dark">Total</span>
-                  <span className="font-serif text-3xl font-bold text-green">${calculateTotal()}</span>
+                  <span className="font-serif text-3xl font-bold text-green">PKR {calculateTotal()}</span>
                 </div>
               </div>
             </div>
@@ -370,13 +432,16 @@ export default function AddBookingPage() {
             <div className="mt-6 space-y-3">
               <button
                 type="submit"
-                className="w-full bg-yellow text-green px-6 py-3 rounded-lg font-semibold hover:bg-yellow-light transition-smooth"
+                disabled={isSubmitting || loadingGlamps}
+                className="w-full bg-yellow text-green px-6 py-3 rounded-lg font-semibold hover:bg-yellow-light transition-smooth disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
               >
-                Create Booking
+                {isSubmitting ? 'Creating Booking...' : 'Create Booking'}
               </button>
               <Link
                 href="/admin/bookings"
-                className="block w-full text-center border-2 border-gray-300 text-text-dark px-6 py-3 rounded-lg font-semibold hover:bg-cream transition-smooth"
+                className={`block w-full text-center border-2 border-gray-300 text-text-dark px-6 py-3 rounded-lg font-semibold hover:bg-cream transition-smooth ${
+                  isSubmitting ? 'pointer-events-none opacity-50' : ''
+                }`}
               >
                 Cancel
               </Link>

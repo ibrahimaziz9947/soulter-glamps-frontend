@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { fetchDashboardSummary, type DashboardSummary } from "@/src/services/dashboard.api";
+import { formatCurrency } from "@/src/utils/currency";
 import { getAuthToken } from "../../../src/lib/auth";
 
 type Booking = {
@@ -20,18 +22,46 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
-  /* -------------------- STATIC STATS (UNCHANGED) -------------------- */
-  const stats = [
-    { name: "Total Bookings", value: "127", change: "+12%" },
-    { name: "Revenue", value: "$45,231", change: "+18%" },
-    { name: "Occupancy Rate", value: "78%", change: "+5%" },
-    { name: "Active Staff", value: "24", change: "+2" },
-  ];
+  /* -------------------- SUMMARY STATE (KPIs) -------------------- */
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   /* -------------------- BOOKINGS STATE -------------------- */
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [bookingError, setBookingError] = useState<string | null>(null);
+
+  /* -------------------- FETCH SUMMARY (LAST 30 DAYS) -------------------- */
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        setLoadingSummary(true);
+        setSummaryError(null);
+
+        // Calculate last 30 days range
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+
+        const from = thirtyDaysAgo.toISOString().split('T')[0];
+        const to = today.toISOString().split('T')[0];
+
+        console.log('[Dashboard] Fetching summary:', { from, to });
+
+        const data = await fetchDashboardSummary({ from, to });
+        setSummary(data);
+        console.log('[Dashboard] Summary loaded:', data);
+      } catch (err: any) {
+        console.error('[Dashboard] Failed to load summary:', err);
+        setSummaryError(err.message || 'Failed to load dashboard summary');
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
+    fetchSummary();
+  }, []);
 
   /* -------------------- FETCH BOOKINGS (CLIENT ONLY) -------------------- */
   useEffect(() => {
@@ -97,21 +127,54 @@ function DashboardContent() {
       </div>
 
       {/* Stats */}
+      {summaryError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800 font-semibold">Failed to load KPIs</p>
+          <p className="text-red-600 text-sm mt-1">{summaryError}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <div
-            key={stat.name}
-            className="bg-white rounded-lg shadow-lg p-6"
-          >
-            <div className="flex justify-between mb-2">
-              <h3 className="text-2xl font-bold text-green">{stat.value}</h3>
-              <span className="text-sm text-green bg-green/10 px-3 py-1 rounded-full">
-                {stat.change}
-              </span>
+        {loadingSummary ? (
+          /* Loading Skeletons */
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-lg shadow-lg p-6 animate-pulse"
+            >
+              <div className="h-8 bg-gray-200 rounded mb-2 w-24"></div>
+              <div className="h-4 bg-gray-200 rounded w-32"></div>
             </div>
-            <p className="text-sm text-text-light">{stat.name}</p>
-          </div>
-        ))}
+          ))
+        ) : summary ? (
+          /* KPI Cards */
+          <>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-2xl font-bold text-green mb-2">
+                {summary.totalBookings}
+              </h3>
+              <p className="text-sm text-text-light">Total Bookings</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-2xl font-bold text-green mb-2">
+                {formatCurrency(summary.revenueCents)}
+              </h3>
+              <p className="text-sm text-text-light">Revenue</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-2xl font-bold text-green mb-2">
+                {summary.occupancyRatePercent}%
+              </h3>
+              <p className="text-sm text-text-light">Occupancy Rate</p>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-2xl font-bold text-green mb-2">
+                {summary.activeStaff}
+              </h3>
+              <p className="text-sm text-text-light">Active Staff</p>
+            </div>
+          </>
+        ) : null}
       </div>
 
       {/* Main Grid */}

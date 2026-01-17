@@ -4,20 +4,40 @@
  */
 
 import { api } from './apiClient'
+import { apiClient } from './apiClient'
 
 // Types
 export interface Glamp {
   _id: string
   id?: string // Frontend might map _id to id
   name: string
+  category?: string
   description: string
   capacity: number
+  bedrooms?: number
+  bathrooms?: number
+  area?: string
   pricePerNight: number
   amenities: string[]
   images: string[]
   availability: boolean
+  status?: string
   createdAt: string
   updatedAt: string
+}
+
+export interface CreateGlampPayload {
+  name: string
+  category: string
+  description: string
+  price: number
+  capacity: number
+  bedrooms: number
+  bathrooms: number
+  area?: string
+  amenities: string[]
+  images?: string[]
+  status?: 'available' | 'unavailable' | 'maintenance'
 }
 
 export interface GlampsResponse {
@@ -29,6 +49,8 @@ export interface GlampsResponse {
 export interface GlampResponse {
   success: boolean
   data: Glamp
+  message?: string
+  error?: string
 }
 
 /**
@@ -43,4 +65,26 @@ export async function getGlamps(): Promise<GlampsResponse> {
  */
 export async function getGlampById(id: string): Promise<GlampResponse> {
   return api.get<GlampResponse>(`/glamps/${id}`)
+}
+
+/**
+ * Create a new glamp
+ */
+export async function createGlamp(
+  payload: CreateGlampPayload
+): Promise<GlampResponse> {
+  console.log('[Glamps API] Creating glamp:', payload.name)
+
+  try {
+    const response = await apiClient<GlampResponse>('/admin/glamps', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+
+    console.log('[Glamps API] Glamp created successfully')
+    return response
+  } catch (error: any) {
+    console.error('[Glamps API] Failed to create glamp:', error)
+    throw error
+  }
 }
