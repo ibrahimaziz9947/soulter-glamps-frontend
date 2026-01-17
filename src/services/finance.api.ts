@@ -10,12 +10,14 @@ import { apiClient } from './apiClient'
 ========================= */
 
 export interface FinanceDashboardData {
-  totalIncomeCents: number
-  totalExpensesCents: number
-  netProfitCents: number
-  pendingPayablesCents: number
-  netCashFlowCents?: number // Or cashOnHandCents
-  inventoryValueCents: number
+  kpis: {
+    totalIncomeCents: number
+    totalExpensesCents: number
+    netProfitCents: number
+    pendingPayablesCents: number
+    netCashFlowCents?: number
+    inventoryValueCents: number
+  }
   recentTransactions: DashboardTransaction[]
 }
 
@@ -27,6 +29,7 @@ export interface DashboardTransaction {
   amountCents: number
   currency: string
   status?: string
+  direction: 'INFLOW' | 'OUTFLOW'
 }
 
 export interface FinanceDashboardResponse {

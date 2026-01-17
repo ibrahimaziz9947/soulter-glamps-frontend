@@ -61,10 +61,12 @@ export default function FinanceDashboard() {
       
       // Success logging
       console.log('[Dashboard] ✓ Data received successfully:', {
-        totalIncome: data.totalIncomeCents,
-        totalExpenses: data.totalExpensesCents,
-        netProfit: data.netProfitCents,
-        pendingPayables: data.pendingPayablesCents,
+        totalIncome: data.kpis.totalIncomeCents,
+        totalExpenses: data.kpis.totalExpensesCents,
+        netProfit: data.kpis.netProfitCents,
+        pendingPayables: data.kpis.pendingPayablesCents,
+        netCashFlow: data.kpis.netCashFlowCents,
+        inventoryValue: data.kpis.inventoryValueCents,
         transactionCount: data.recentTransactions.length
       })
       
@@ -137,37 +139,37 @@ export default function FinanceDashboard() {
   const summaryCards = dashboardData ? [
     { 
       label: 'Total Income', 
-      value: formatCurrency(dashboardData.totalIncomeCents), 
+      value: formatCurrency(dashboardData.kpis.totalIncomeCents), 
       icon: '💰', 
       color: 'bg-green' 
     },
     { 
       label: 'Total Expenses', 
-      value: formatCurrency(dashboardData.totalExpensesCents), 
+      value: formatCurrency(dashboardData.kpis.totalExpensesCents), 
       icon: '💸', 
       color: 'bg-red-500' 
     },
     { 
       label: 'Net Profit', 
-      value: formatCurrency(dashboardData.netProfitCents), 
+      value: formatCurrency(dashboardData.kpis.netProfitCents), 
       icon: '📈', 
       color: 'bg-yellow' 
     },
     { 
       label: 'Pending Payables', 
-      value: formatCurrency(dashboardData.pendingPayablesCents), 
+      value: formatCurrency(dashboardData.kpis.pendingPayablesCents), 
       icon: '⏰', 
       color: 'bg-orange-500' 
     },
     { 
       label: 'Net Cash Flow', 
-      value: formatCurrency(dashboardData.netCashFlowCents || 0), 
+      value: formatCurrency(dashboardData.kpis.netCashFlowCents ?? 0), 
       icon: '💵', 
       color: 'bg-blue-500' 
     },
     { 
       label: 'Inventory Value', 
-      value: formatCurrency(dashboardData.inventoryValueCents || 0), 
+      value: formatCurrency(dashboardData.kpis.inventoryValueCents ?? 0), 
       icon: '📦', 
       color: 'bg-purple-500' 
     },
@@ -388,7 +390,7 @@ export default function FinanceDashboard() {
               </thead>
               <tbody>
                 {dashboardData.recentTransactions.map((transaction) => {
-                  const isInflow = transaction.type === 'income'
+                  const isInflow = transaction.direction === 'INFLOW'
                   const formattedDate = transaction.date 
                     ? new Date(transaction.date).toLocaleDateString('en-US', {
                         month: 'short',
@@ -396,6 +398,11 @@ export default function FinanceDashboard() {
                         year: 'numeric'
                       })
                     : 'N/A'
+                  
+                  // Amount display logic
+                  const displayAmount = transaction.direction === 'OUTFLOW' 
+                    ? Math.abs(transaction.amountCents)
+                    : transaction.amountCents
                   
                   return (
                     <tr key={transaction.id} className="border-b border-gray-100 hover:bg-green-50/30 transition-colors">
@@ -442,14 +449,14 @@ export default function FinanceDashboard() {
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {isInflow ? 'INFLOW' : 'OUTFLOW'}
+                          {transaction.direction}
                         </span>
                       </td>
                       <td className={`py-4 px-6 text-sm font-bold text-right whitespace-nowrap ${
                         isInflow ? 'text-green' : 'text-red-600'
                       }`}>
-                        {isInflow ? '+' : '−'}
-                        {formatTransactionCurrency(transaction.amountCents, transaction.currency || 'PKR')}
+                        {transaction.direction === 'OUTFLOW' ? '−' : ''}
+                        {formatTransactionCurrency(displayAmount, transaction.currency || 'PKR')}
                       </td>
                     </tr>
                   )
