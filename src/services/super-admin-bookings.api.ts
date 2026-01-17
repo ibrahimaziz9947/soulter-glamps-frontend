@@ -36,8 +36,27 @@ export interface SuperAdminBooking {
 
 export interface SuperAdminBookingsResponse {
   success: boolean
-  data?: SuperAdminBooking[]
-  count?: number
+  data?: {
+    items: SuperAdminBooking[]
+    meta: {
+      page: number
+      limit: number
+      total: number
+      totalPages: number
+    }
+    range: {
+      from: string
+      to: string
+    }
+    aggregates: {
+      totalBookings: number
+      confirmedCount: number
+      pendingCount: number
+      cancelledCount: number
+      completedCount: number
+      revenueCents: number
+    }
+  }
   error?: string
   message?: string
 }
@@ -64,9 +83,21 @@ export async function getSuperAdminBookings(params?: {
   agentId?: string
   from?: string
   to?: string
+  page?: number
   limit?: number
-  offset?: number
-}): Promise<SuperAdminBooking[]> {
+}): Promise<{
+  items: SuperAdminBooking[]
+  meta: { page: number; limit: number; total: number; totalPages: number }
+  range: { from: string; to: string }
+  aggregates: {
+    totalBookings: number
+    confirmedCount: number
+    pendingCount: number
+    cancelledCount: number
+    completedCount: number
+    revenueCents: number
+  }
+}> {
   const queryParams = new URLSearchParams()
   
   // Add optional filter params
@@ -89,11 +120,11 @@ export async function getSuperAdminBookings(params?: {
   }
   
   // Add pagination params
+  if (params?.page && params.page > 0) {
+    queryParams.append('page', params.page.toString())
+  }
   if (params?.limit && params.limit > 0) {
     queryParams.append('limit', params.limit.toString())
-  }
-  if (params?.offset && params.offset >= 0) {
-    queryParams.append('offset', params.offset.toString())
   }
   
   const queryString = queryParams.toString()
@@ -109,6 +140,26 @@ export async function getSuperAdminBookings(params?: {
   
   if (!response.data) {
     throw new Error('Super Admin Bookings API returned no data')
+  }
+  
+  // Handle both old array format and new structured format for backward compatibility
+  if (Array.isArray(response.data)) {
+    // Legacy format - convert to new format
+    return {
+      items: response.data,
+      meta: { page: 1, limit: response.data.length, total: response.data.length, totalPages: 1 },
+      range: { from: params?.from || '', to: params?.to || '' },
+      aggregates: {
+        totalBookings: response.data.length,
+        confirmedCount: response.data.filter((b: SuperAdminBooking) => b.status === 'CONFIRMED').length,
+        pendingCount: response.data.filter((b: SuperAdminBooking) => b.status === 'PENDING').length,
+        cancelledCount: response.data.filter((b: SuperAdminBooking) => b.status === 'CANCELLED').length,
+        completedCount: response.data.filter((b: SuperAdminBooking) => b.status === 'COMPLETED').length,
+        revenueCents: response.data
+          .filter((b: SuperAdminBooking) => b.status === 'CONFIRMED')
+          .reduce((sum: number, b: SuperAdminBooking) => sum + (b.totalAmountCents || 0), 0)
+      }
+    }
   }
   
   return response.data

@@ -13,16 +13,31 @@ export default function SuperAdminBookingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<any>(null)
+  
+  // Aggregates from API
+  const [aggregates, setAggregates] = useState({
+    totalBookings: 0,
+    confirmedCount: 0,
+    pendingCount: 0,
+    cancelledCount: 0,
+    completedCount: 0,
+    revenueCents: 0
+  })
+  
+  // Pagination metadata
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0
+  })
   
   // Filters
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(0)
-  const itemsPerPage = 10
   
   // Helper to calculate last 30 days
   const getLast30Days = (): { from: string; to: string } => {
@@ -35,22 +50,51 @@ export default function SuperAdminBookingsPage() {
   }
   
   // Fetch bookings
-  const loadBookings = async (from?: string, to?: string, status?: string) => {
+  const loadBookings = async (from?: string, to?: string, status?: string, page: number = 1) => {
     try {
       setLoading(true)
       setError(null)
       
-      const params: any = {}
+      const params: any = {
+        page,
+        limit: 10
+      }
       if (from) params.from = from
       if (to) params.to = to
       if (status && status !== 'all') params.status = status.toUpperCase()
       
-      const data = await getSuperAdminBookings(params)
+      // Debug logging (dev only)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Super Admin Bookings] Request params:', params)
+        console.log('[Super Admin Bookings] Full URL:', `/api/super-admin/bookings?${new URLSearchParams(params).toString()}`)
+      }
       
-      // Ensure data is always an array
-      setBookings(Array.isArray(data) ? data : [])
+      const response = await getSuperAdminBookings(params)
+      
+      // Debug logging (dev only)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Super Admin Bookings] Response:', response)
+        setDebugInfo({
+          requestParams: params,
+          requestUrl: `/api/super-admin/bookings?${new URLSearchParams(params).toString()}`,
+          responseItemsCount: response.items?.length || 0,
+          responseAggregates: response.aggregates,
+          responseMeta: response.meta
+        })
+      }
+      
+      // Set data from structured response
+      setBookings(Array.isArray(response.items) ? response.items : [])
+      setAggregates(response.aggregates || {
+        totalBookings: 0,
+        confirmedCount: 0,
+        pendingCount: 0,
+        cancelledCount: 0,
+        completedCount: 0,
+        revenueCents: 0
+      })
+      setPagination(response.meta || { page: 1, limit: 10, total: 0, totalPages: 0 })
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-      setCurrentPage(0) // Reset to first page on new data
     } catch (err: any) {
       let errorMessage = 'Failed to load bookings'
       if (err.message) {
@@ -76,50 +120,32 @@ export default function SuperAdminBookingsPage() {
     const { from, to } = getLast30Days()
     setDateFrom(from)
     setDateTo(to)
-    loadBookings(from, to, statusFilter)
+    loadBookings(from, to, statusFilter, 1)
   }, [])
   
   // Handle filter apply
   const handleApplyFilters = () => {
-    loadBookings(dateFrom, dateTo, statusFilter)
+    loadBookings(dateFrom, dateTo, statusFilter, 1)
   }
   
   // Handle retry
   const handleRetry = () => {
-    loadBookings(dateFrom, dateTo, statusFilter)
+    loadBookings(dateFrom, dateTo, statusFilter, pagination.page)
+  }
+  
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    loadBookings(dateFrom, dateTo, statusFilter, newPage)
   }
   
   // Filter by search query (client-side) with defensive checks
   const filteredBookings = Array.isArray(bookings) ? bookings.filter(booking => {
     const matchesSearch = !searchQuery.trim() || 
       booking.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.id.toLowerCase().includes(searchQuery.toLowerCase())
+      booking.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.customerEmail?.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesSearch
   }) : []
-  
-  // Calculate stats from filtered bookings with defensive checks
-  const totalBookings = filteredBookings.length
-  const confirmedBookings = filteredBookings.filter(b => b.status === 'CONFIRMED').length
-  const pendingBookings = filteredBookings.filter(b => b.status === 'PENDING').length
-  const cancelledBookings = filteredBookings.filter(b => b.status === 'CANCELLED').length
-  const totalRevenue = filteredBookings
-    .filter(b => b.status === 'CONFIRMED')
-    .reduce((sum, b) => sum + (b.totalAmountCents || 0), 0)
-  
-  // Pagination
-  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage)
-  const paginatedBookings = filteredBookings.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
-  )
-  
-  const handlePreviousPage = () => {
-    if (currentPage > 0) setCurrentPage(currentPage - 1)
-  }
-  
-  const handleNextPage = () => {
-    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1)
-  }
   
   // Navigate to booking detail
   const handleRowClick = (bookingId: string) => {
@@ -155,28 +181,59 @@ export default function SuperAdminBookingsPage() {
         </div>
       </div>
 
+      {/* Debug Panel (dev only) */}
+      {process.env.NODE_ENV !== 'production' && debugInfo && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs font-mono">
+          <details>
+            <summary className="cursor-pointer font-semibold text-blue-800 mb-2">🔍 Debug Info (Click to expand)</summary>
+            <div className="space-y-2 mt-2">
+              <div>
+                <strong className="text-blue-900">Request URL:</strong>
+                <pre className="bg-white p-2 rounded mt-1 overflow-x-auto">{debugInfo.requestUrl}</pre>
+              </div>
+              <div>
+                <strong className="text-blue-900">Request Params:</strong>
+                <pre className="bg-white p-2 rounded mt-1">{JSON.stringify(debugInfo.requestParams, null, 2)}</pre>
+              </div>
+              <div>
+                <strong className="text-blue-900">Response Items Count:</strong>
+                <span className="bg-white p-2 rounded ml-2">{debugInfo.responseItemsCount}</span>
+              </div>
+              <div>
+                <strong className="text-blue-900">Response Aggregates:</strong>
+                <pre className="bg-white p-2 rounded mt-1">{JSON.stringify(debugInfo.responseAggregates, null, 2)}</pre>
+              </div>
+              <div>
+                <strong className="text-blue-900">Response Meta:</strong>
+                <pre className="bg-white p-2 rounded mt-1">{JSON.stringify(debugInfo.responseMeta, null, 2)}</pre>
+              </div>
+            </div>
+          </details>
+        </div>
+      )}
+
       {/* Stats Cards */}
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Bookings</p>
-            <p className="font-serif text-3xl font-bold text-green">{totalBookings}</p>
+            <p className="font-serif text-3xl font-bold text-green">{aggregates.totalBookings}</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Confirmed</p>
-            <p className="font-serif text-3xl font-bold text-green">{confirmedBookings}</p>
+            <p className="font-serif text-3xl font-bold text-green">{aggregates.confirmedCount}</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Pending</p>
-            <p className="font-serif text-3xl font-bold text-yellow">{pendingBookings}</p>
+            <p className="font-serif text-3xl font-bold text-yellow">{aggregates.pendingCount}</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Cancelled</p>
-            <p className="font-serif text-3xl font-bold text-red-500">{cancelledBookings}</p>
+            <p className="font-serif text-3xl font-bold text-red-500">{aggregates.cancelledCount}</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Revenue</p>
-            <p className="font-serif text-3xl font-bold text-green">{formatCurrency(totalRevenue)}</p>
+            <p className="font-serif text-3xl font-bold text-green">{formatCurrency(aggregates.revenueCents)}</p>
           </div>
         </div>
       )}
@@ -293,8 +350,8 @@ export default function SuperAdminBookingsPage() {
                     <td className="py-4 px-6"><div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div></td>
                   </tr>
                 ))
-              ) : paginatedBookings.length > 0 ? (
-                paginatedBookings.map((booking) => (
+              ) : filteredBookings.length > 0 ? (
+                filteredBookings.map((booking) => (
                   <tr 
                     key={booking.id} 
                     onClick={() => handleRowClick(booking.id)}
@@ -338,6 +395,9 @@ export default function SuperAdminBookingsPage() {
                     <div className="text-text-light">
                       <p className="text-lg mb-2">No bookings found</p>
                       <p className="text-sm">Try adjusting your filters or date range</p>
+                      {process.env.NODE_ENV !== 'production' && (
+                        <p className="text-xs mt-2 text-blue-600">Check console and debug panel above for API details</p>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -347,25 +407,25 @@ export default function SuperAdminBookingsPage() {
         </div>
         
         {/* Pagination */}
-        {!loading && !error && totalPages > 1 && (
+        {!loading && !error && pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
             <p className="text-sm text-text-light">
-              Showing {currentPage * itemsPerPage + 1} to {Math.min((currentPage + 1) * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} bookings
+              Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total bookings)
             </p>
             <div className="flex gap-2">
               <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 0}
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-cream transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <span className="px-4 py-2 text-sm text-text-dark">
-                Page {currentPage + 1} of {totalPages}
+                Page {pagination.page} of {pagination.totalPages}
               </span>
               <button
-                onClick={handleNextPage}
-                disabled={currentPage >= totalPages - 1}
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.totalPages}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-cream transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
