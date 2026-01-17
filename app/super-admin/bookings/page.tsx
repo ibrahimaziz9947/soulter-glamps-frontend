@@ -47,7 +47,8 @@ export default function SuperAdminBookingsPage() {
       
       const data = await getSuperAdminBookings(params)
       
-      setBookings(data)
+      // Ensure data is always an array
+      setBookings(Array.isArray(data) ? data : [])
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
       setCurrentPage(0) // Reset to first page on new data
     } catch (err: any) {
@@ -88,15 +89,15 @@ export default function SuperAdminBookingsPage() {
     loadBookings(dateFrom, dateTo, statusFilter)
   }
   
-  // Filter by search query (client-side)
-  const filteredBookings = bookings.filter(booking => {
+  // Filter by search query (client-side) with defensive checks
+  const filteredBookings = Array.isArray(bookings) ? bookings.filter(booking => {
     const matchesSearch = !searchQuery.trim() || 
       booking.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       booking.id.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesSearch
-  })
+  }) : []
   
-  // Calculate stats from filtered bookings
+  // Calculate stats from filtered bookings with defensive checks
   const totalBookings = filteredBookings.length
   const confirmedBookings = filteredBookings.filter(b => b.status === 'CONFIRMED').length
   const pendingBookings = filteredBookings.filter(b => b.status === 'PENDING').length
