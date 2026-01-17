@@ -62,21 +62,33 @@ export default function ProfitLossPage() {
   }
 
   // Fetch profit & loss summary
-  const fetchProfitLoss = async () => {
+  const fetchProfitLoss = async (overrides?: {
+    dateFrom?: string
+    dateTo?: string
+    currencyFilter?: string
+    expenseMode?: 'approvedOnly' | 'includeSubmitted'
+  }) => {
     setLoading(true)
     setError(null)
     
     // Increment request ID for sequencing
     const currentReqId = ++reqSeqRef.current
     
+    // Use overrides if provided, otherwise use current state
+    const effectiveDateFrom = overrides?.dateFrom ?? dateFrom
+    const effectiveDateTo = overrides?.dateTo ?? dateTo
+    const effectiveCurrency = overrides?.currencyFilter ?? currencyFilter
+    const effectiveExpenseMode = overrides?.expenseMode ?? expenseMode
+    
     try {
       // LOG: Trace input values before building params
       console.log('[P&L TRACE] Input values:', {
-        dateFrom,
-        dateTo,
-        currencyFilter,
-        expenseMode,
-        requestId: currentReqId
+        dateFrom: effectiveDateFrom,
+        dateTo: effectiveDateTo,
+        currencyFilter: effectiveCurrency,
+        expenseMode: effectiveExpenseMode,
+        requestId: currentReqId,
+        hasOverrides: !!overrides
       })
       
       // Build query params - ONLY include non-empty values
@@ -84,23 +96,23 @@ export default function ProfitLossPage() {
       params.append('includeBreakdown', 'true')
       
       // Only add 'from' if dateFrom is truthy and looks like valid date
-      if (dateFrom && dateFrom.trim() && dateFrom.length >= 10) {
-        params.append('from', dateFrom.trim())
+      if (effectiveDateFrom && effectiveDateFrom.trim() && effectiveDateFrom.length >= 10) {
+        params.append('from', effectiveDateFrom.trim())
       }
       
       // Only add 'to' if dateTo is truthy and looks like valid date
-      if (dateTo && dateTo.trim() && dateTo.length >= 10) {
-        params.append('to', dateTo.trim())
+      if (effectiveDateTo && effectiveDateTo.trim() && effectiveDateTo.length >= 10) {
+        params.append('to', effectiveDateTo.trim())
       }
       
       // Only include currency if user explicitly selected one (not "All")
-      if (currencyFilter && currencyFilter.trim()) {
-        params.append('currency', currencyFilter.trim())
+      if (effectiveCurrency && effectiveCurrency.trim()) {
+        params.append('currency', effectiveCurrency.trim())
       }
       
       // Always include expense mode (it has a default value)
-      if (expenseMode) {
-        params.append('expenseMode', expenseMode)
+      if (effectiveExpenseMode) {
+        params.append('expenseMode', effectiveExpenseMode)
       }
       
       const requestUrl = `/finance/profit-loss?${params.toString()}`
@@ -132,7 +144,7 @@ export default function ProfitLossPage() {
       
       // LOG: Key values from API response
       console.log('[P&L TRACE] API Response:', {
-        expenseModeSent: expenseMode,
+        expenseModeSent: effectiveExpenseMode,
         totalExpensesCentsFromAPI: data?.summary?.totalExpensesCents,
         totalIncomeCentsFromAPI: data?.summary?.totalIncomeCents,
         totalPurchasesCentsFromAPI: data?.summary?.totalPurchasesCents,
@@ -258,7 +270,7 @@ export default function ProfitLossPage() {
       console.error('[P&L TRACE] Request failed:', {
         requestId: currentReqId,
         error: err.message,
-        expenseMode
+        expenseMode: effectiveExpenseMode
       })
       const errorMessage = err.message || 'Failed to load profit & loss data'
       setError(errorMessage)
@@ -356,9 +368,10 @@ export default function ProfitLossPage() {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => {
-                setExpenseMode('approvedOnly')
-                // Trigger refetch after state update
-                setTimeout(() => fetchProfitLoss(), 50)
+                const newMode = 'approvedOnly'
+                setExpenseMode(newMode)
+                // Fetch immediately with new value to avoid stale state
+                fetchProfitLoss({ expenseMode: newMode })
               }}
               disabled={loading}
               className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
@@ -371,9 +384,10 @@ export default function ProfitLossPage() {
             </button>
             <button
               onClick={() => {
-                setExpenseMode('includeSubmitted')
-                // Trigger refetch after state update
-                setTimeout(() => fetchProfitLoss(), 50)
+                const newMode = 'includeSubmitted'
+                setExpenseMode(newMode)
+                // Fetch immediately with new value to avoid stale state
+                fetchProfitLoss({ expenseMode: newMode })
               }}
               disabled={loading}
               className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
