@@ -656,7 +656,10 @@ export default function ProfitLossPage() {
           <h3 className="text-xl font-semibold text-text-dark mb-2">Error Loading Data</h3>
           <p className="text-text-light mb-4">{error}</p>
           <button
-            onClick={fetchProfitLoss}
+            onClick={(e) => {
+              e.preventDefault()
+              fetchProfitLoss()
+            }}
             className="px-6 py-3 bg-green text-white rounded-lg font-semibold hover:bg-green-700 transition-smooth"
           >
             Try Again
