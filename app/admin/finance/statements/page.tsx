@@ -214,21 +214,39 @@ export default function StatementsPage() {
       console.log('[Statements TRACE] Response received:', {
         requestId: currentReqId,
         success: response.success,
-        hasData: !!response.data
+        hasData: !!response.data,
+        fullResponse: response
       })
       
-      // Extract data from response
-      const data = response.success ? response.data : response
+      // Extract data from response - handle both wrapped and unwrapped formats
+      let data: any
+      if (response.success && response.data) {
+        // Backend returns { success: true, data: { statements: [], summary: {}, pagination: {} } }
+        data = response.data
+      } else if (response.data && response.data.data) {
+        // Backend returns { data: { data: { statements: [], ... } } } (double wrapped)
+        data = response.data.data
+      } else if (response.data) {
+        // Backend returns { data: { statements: [], ... } }
+        data = response.data
+      } else {
+        // Backend returns { statements: [], summary: {}, pagination: {} } directly
+        data = response
+      }
       
-      console.log('[Statements TRACE] API Response:', {
-        itemCount: data?.statements?.length,
+      console.log('[Statements TRACE] Extracted data:', {
+        itemCount: data?.statements?.length || 0,
+        items: data?.items?.length || 0,
         summaryFromAPI: data?.summary,
+        paginationFromAPI: data?.pagination,
+        dataKeys: Object.keys(data || {}),
         requestId: currentReqId
       })
       
-      // Process statements
-      const statementsData: StatementItem[] = Array.isArray(data?.statements) 
-        ? data.statements.map((item: any) => ({
+      // Process statements - check both 'statements' and 'items' keys
+      const rawStatements = data?.statements || data?.items || []
+      const statementsData: StatementItem[] = Array.isArray(rawStatements) 
+        ? rawStatements.map((item: any) => ({
             id: item.id || item._id || Math.random().toString(),
             date: item.date || item.createdAt || '',
             type: item.type || 'income',
@@ -439,8 +457,13 @@ export default function StatementsPage() {
 
   // Export to CSV
   const exportToCSV = () => {
-    if (statements.length === 0) {
+    if (statements.length === 0 && totalItems === 0) {
       showToast('No data to export', 'warning')
+      return
+    }
+    
+    if (statements.length === 0 && totalItems > 0) {
+      showToast('Current page is empty. Try adjusting filters or page number.', 'warning')
       return
     }
 
@@ -533,8 +556,8 @@ export default function StatementsPage() {
         </div>
         <button
           onClick={exportToCSV}
-          disabled={loading || statements.length === 0}
-          className="inline-flex items-center justify-center gap-2 bg-yellow text-green px-6 py-3 rounded-lg font-semibold hover:bg-yellow-light transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading || (statements.length === 0 && totalItems === 0)}
+          className="inline-flex items-center justify-center gap-2 bg-green text-white px-6 py-3 rounded-lg font-semibold hover:bg-green/90 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
