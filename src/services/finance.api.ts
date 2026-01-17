@@ -31,7 +31,9 @@ export interface DashboardTransaction {
 
 export interface FinanceDashboardResponse {
   success: boolean
-  data: FinanceDashboardData
+  data?: FinanceDashboardData
+  error?: string
+  message?: string
 }
 
 /* =========================
@@ -51,18 +53,49 @@ export async function fetchFinanceDashboard(params?: {
 }): Promise<FinanceDashboardData> {
   const queryParams = new URLSearchParams()
   
-  if (params?.from) queryParams.append('from', params.from)
-  if (params?.to) queryParams.append('to', params.to)
-  if (params?.limit) queryParams.append('limit', params.limit.toString())
-  if (params?.currency) queryParams.append('currency', params.currency)
+  // Validate and add date params (must be YYYY-MM-DD format)
+  if (params?.from && params.from.trim() && params.from.length === 10) {
+    queryParams.append('from', params.from.trim())
+  }
+  if (params?.to && params.to.trim() && params.to.length === 10) {
+    queryParams.append('to', params.to.trim())
+  }
+  
+  // Always set limit with default of 10
+  const limit = params?.limit && params.limit > 0 ? params.limit : 10
+  queryParams.append('limit', limit.toString())
+  
+  // Only add currency if explicitly provided (not empty string)
+  if (params?.currency && params.currency.trim()) {
+    queryParams.append('currency', params.currency.trim())
+  }
   
   const queryString = queryParams.toString()
   const endpoint = `/finance/dashboard${queryString ? `?${queryString}` : ''}`
   
+  // Log request details for debugging
+  console.log('[Finance API] Dashboard request:', {
+    endpoint,
+    params: {
+      from: params?.from,
+      to: params?.to,
+      limit,
+      currency: params?.currency || 'not specified'
+    }
+  })
+  
   const response = await apiClient<FinanceDashboardResponse>(endpoint)
   
-  if (!response.success || !response.data) {
-    throw new Error('Invalid response from dashboard API')
+  // Check for explicit success:false in response
+  if (response.success === false) {
+    const errorMsg = response.error || response.message || 'Dashboard API returned success:false'
+    console.error('[Finance API] Dashboard error response:', response)
+    throw new Error(errorMsg)
+  }
+  
+  if (!response.data) {
+    console.error('[Finance API] Dashboard missing data:', response)
+    throw new Error('Dashboard API returned no data')
   }
   
   return response.data

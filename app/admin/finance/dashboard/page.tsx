@@ -36,31 +36,65 @@ export default function FinanceDashboard() {
       setLoading(true)
       setError(null)
       
-      // Debug logging (consistent with P&L page)
-      console.log('[Dashboard] Fetching data:', {
-        from,
-        to,
-        limit: 5
+      // Validate date range format (YYYY-MM-DD)
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (from && !dateRegex.test(from)) {
+        throw new Error(`Invalid 'from' date format: ${from}. Expected YYYY-MM-DD`)
+      }
+      if (to && !dateRegex.test(to)) {
+        throw new Error(`Invalid 'to' date format: ${to}. Expected YYYY-MM-DD`)
+      }
+      
+      // Comprehensive logging for debugging
+      console.log('[Dashboard] Request params:', {
+        from: from || 'not set',
+        to: to || 'not set',
+        limit: 10,
+        dateRange: from && to ? `${from} to ${to}` : 'no range specified'
       })
       
       const data = await fetchFinanceDashboard({
         from,
         to,
-        limit: 5 // Limit recent transactions to 5
+        limit: 10 // Use default of 10 for dashboard
       })
       
-      // Debug logging
-      console.log('[Dashboard] Data received:', {
+      // Success logging
+      console.log('[Dashboard] ✓ Data received successfully:', {
         totalIncome: data.totalIncomeCents,
         totalExpenses: data.totalExpensesCents,
         netProfit: data.netProfitCents,
+        pendingPayables: data.pendingPayablesCents,
         transactionCount: data.recentTransactions.length
       })
       
       setDashboardData(data)
     } catch (err: any) {
-      console.error('[Dashboard] Failed to load:', err)
-      setError(err.message || 'Failed to load dashboard data')
+      // Enhanced error logging
+      console.error('[Dashboard] ✗ Failed to load:', {
+        message: err.message,
+        status: err.status,
+        data: err.data,
+        stack: err.stack
+      })
+      
+      // Extract the most relevant error message
+      let errorMessage = 'Failed to load dashboard data'
+      
+      if (err.message) {
+        errorMessage = err.message
+      } else if (err.data?.message) {
+        errorMessage = err.data.message
+      } else if (err.data?.error) {
+        errorMessage = err.data.error
+      }
+      
+      // Add status code to error if available
+      if (err.status) {
+        errorMessage = `[${err.status}] ${errorMessage}`
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -179,17 +213,26 @@ export default function FinanceDashboard() {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
               <span className="text-2xl">⚠️</span>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-red-800">Error Loading Dashboard</h3>
                 <p className="text-red-600 text-sm mt-1">{error}</p>
+                {/* Development-only error details */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mt-2 p-2 bg-red-100 rounded text-xs font-mono text-red-700">
+                    <div className="font-semibold mb-1">Debug Info:</div>
+                    <div>Date Range: {dateFrom || 'not set'} → {dateTo || 'not set'}</div>
+                    <div>Active Filter: {activeFilter}</div>
+                    <div className="mt-1 text-red-600">Check browser console for full error details</div>
+                  </div>
+                )}
               </div>
             </div>
             <button
               onClick={handleRetry}
               disabled={loading}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ml-4 flex-shrink-0"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
