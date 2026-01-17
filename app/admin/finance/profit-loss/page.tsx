@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { formatCurrency, formatRawCurrency } from '@/src/utils/currency'
+import { formatCurrency } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
 
 interface ProfitLossSummary {
@@ -473,13 +473,13 @@ export default function ProfitLossPage() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Total Income</p>
               <p className="font-serif text-3xl font-bold text-green">
-                {formatRawCurrency(safeNum(summary.totalIncome))}
+                {formatCurrency(safeNum(summary.totalIncome))}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Total Expenses</p>
               <p className="font-serif text-3xl font-bold text-orange-600">
-                {formatRawCurrency(safeNum(summary.totalExpenses))}
+                {formatCurrency(safeNum(summary.totalExpenses))}
               </p>
               <div className="mt-2 space-y-1">
                 <p className="text-xs text-gray-600">
@@ -498,7 +498,7 @@ export default function ProfitLossPage() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Total Purchases (Costs)</p>
               <p className="font-serif text-3xl font-bold text-red-600">
-                {formatRawCurrency(safeNum(summary.totalPurchases))}
+                {formatCurrency(safeNum(summary.totalPurchases))}
               </p>
             </div>
             <div className={`bg-white rounded-lg shadow-lg p-6 ${
@@ -508,7 +508,7 @@ export default function ProfitLossPage() {
               <p className={`font-serif text-3xl font-bold ${
                 summary.netProfit >= 0 ? 'text-green' : 'text-red-600'
               }`}>
-                {formatRawCurrency(safeNum(summary.netProfit))}
+                {formatCurrency(safeNum(summary.netProfit))}
               </p>
             </div>
           </>
@@ -711,7 +711,7 @@ export default function ProfitLossPage() {
                 </div>
               </div>
               <p className="font-serif text-2xl font-bold text-green">
-                {formatRawCurrency(safeNum(summary.totalIncome))}
+                {formatCurrency(safeNum(summary.totalIncome))}
               </p>
             </div>
 
@@ -729,7 +729,7 @@ export default function ProfitLossPage() {
                 </div>
               </div>
               <p className="font-serif text-2xl font-bold text-orange-600">
-                {formatRawCurrency(safeNum(summary.totalExpenses))}
+                {formatCurrency(safeNum(summary.totalExpenses))}
               </p>
             </div>
 
@@ -747,7 +747,7 @@ export default function ProfitLossPage() {
                 </div>
               </div>
               <p className="font-serif text-2xl font-bold text-red-600">
-                {formatRawCurrency(safeNum(summary.totalPurchases))}
+                {formatCurrency(safeNum(summary.totalPurchases))}
               </p>
             </div>
 
@@ -773,7 +773,7 @@ export default function ProfitLossPage() {
               <p className={`font-serif text-3xl font-bold ${
                 summary.netProfit >= 0 ? 'text-green' : 'text-red-600'
               }`}>
-                {summary.netProfit >= 0 ? '+' : ''}{formatRawCurrency(safeNum(summary.netProfit))}
+                {summary.netProfit >= 0 ? '+' : ''}{formatCurrency(safeNum(summary.netProfit))}
               </p>
             </div>
           </div>
