@@ -102,6 +102,33 @@ export function formatCurrency(
 }
 
 /**
+ * Format raw amount (not in cents) as currency
+ * Use this when the API returns whole units (e.g., 61000 = PKR 61000, not PKR 610)
+ * @param amount - Amount in whole currency units
+ * @param includeCurrency - Whether to include "PKR" prefix
+ * @returns Formatted currency string
+ * 
+ * @example
+ * formatRawCurrency(61000) // "PKR 61,000.00"
+ * formatRawCurrency(123456.789) // "PKR 123,456.79"
+ */
+export function formatRawCurrency(
+  amount: number | null | undefined,
+  includeCurrency: boolean = true
+): string {
+  if (amount == null || isNaN(amount)) {
+    amount = 0
+  }
+  
+  const formatted = amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  
+  return includeCurrency ? `PKR ${formatted}` : formatted
+}
+
+/**
  * Format cents as compact currency (e.g., "1.2K", "3.5M")
  * @param amountCents - Amount in cents (integer)
  * @returns Compact formatted string
