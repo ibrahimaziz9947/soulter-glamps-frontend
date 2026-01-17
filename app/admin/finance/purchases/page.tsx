@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { fetchPurchases, fetchPurchasesSummary, deletePurchase } from '@/src/services/purchases.api'
@@ -221,15 +221,32 @@ export default function PurchasesPage() {
     return Number.isFinite(num) ? num : 0
   }
 
-  // Calculate status counts from summary or pagination - ensure all values are safe numbers
-  const summaryData: any = summary ?? {}
-  const byStatus = summaryData.byStatus ?? {}
+  // Compute summary stats from loaded purchases (single source of truth)
+  const computedSummary = useMemo(() => {
+    // Calculate totals from current loaded purchases array
+    const totalPurchasesCents = purchases.reduce((sum, item) => sum + safeNum(item.amount), 0)
+    
+    // Count by status
+    const confirmedCount = purchases.filter(item => item.status === 'CONFIRMED').length
+    const draftCount = purchases.filter(item => item.status === 'DRAFT' || !item.status).length
+    const cancelledCount = purchases.filter(item => item.status === 'CANCELLED').length
+    const submittedCount = purchases.filter(item => item.status === 'SUBMITTED').length
+    
+    return {
+      totalPurchases: totalPurchasesCents,
+      totalCount: pagination.total || purchases.length, // Use API total if available (for paginated data)
+      confirmedCount,
+      draftCount,
+      cancelledCount,
+      submittedCount
+    }
+  }, [purchases, pagination.total])
   
   const statusCounts = {
-    all: safeNum(summaryData.totalCount ?? pagination.total),
-    DRAFT: safeNum(byStatus.DRAFT ?? 0),
-    CONFIRMED: safeNum(byStatus.CONFIRMED ?? 0),
-    CANCELLED: safeNum(byStatus.CANCELLED ?? 0),
+    all: computedSummary.totalCount,
+    DRAFT: computedSummary.draftCount,
+    CONFIRMED: computedSummary.confirmedCount,
+    CANCELLED: computedSummary.cancelledCount,
   }
 
   // Helper function to format date
@@ -325,65 +342,35 @@ export default function PurchasesPage() {
         </Link>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {loading && !summary ? (
-          // Loading skeleton for summary cards
-          Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
-              <div className="h-8 bg-gray-200 rounded w-32"></div>
-            </div>
-          ))
-        ) : summary ? (
-          <>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Total Purchases</p>
-              <p className="font-serif text-3xl font-bold text-green">
-                {formatCurrency(safeNum(summaryData.totalPurchases))}
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Confirmed</p>
-              <p className="font-serif text-2xl font-bold text-green">
-                {statusCounts.CONFIRMED}
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Draft</p>
-              <p className="font-serif text-2xl font-bold text-gray-600">
-                {statusCounts.DRAFT}
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Total Records</p>
-              <p className="font-serif text-2xl font-bold text-green">
-                {statusCounts.all}
-              </p>
-            </div>
-          </>
-        ) : (
-          // Fallback when no summary
-          <>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Total Purchases</p>
-              <p className="font-serif text-3xl font-bold text-green">—</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Confirmed</p>
-              <p className="font-serif text-2xl font-bold text-green">0</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Draft</p>
-              <p className="font-serif text-2xl font-bold text-gray-600">0</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <p className="text-text-light text-sm mb-2">Total Records</p>
-              <p className="font-serif text-2xl font-bold text-green">0</p>
-            </div>
-          </>
-        )}
-      </div>
+      {/* Summary Cards - Computed from loaded data */}
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <p className="text-text-light text-sm mb-2">Total Purchases</p>
+            <p className="font-serif text-3xl font-bold text-green">
+              {formatCurrency(computedSummary.totalPurchases)}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <p className="text-text-light text-sm mb-2">Confirmed</p>
+            <p className="font-serif text-2xl font-bold text-green">
+              {statusCounts.CONFIRMED}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <p className="text-text-light text-sm mb-2">Draft</p>
+            <p className="font-serif text-2xl font-bold text-gray-600">
+              {statusCounts.DRAFT}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <p className="text-text-light text-sm mb-2">Total Records</p>
+            <p className="font-serif text-2xl font-bold text-green">
+              {statusCounts.all}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">

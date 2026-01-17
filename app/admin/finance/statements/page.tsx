@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { formatCurrency, formatRawCurrency } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
@@ -384,9 +384,48 @@ export default function StatementsPage() {
     return Number.isFinite(num) ? num : 0
   }
 
+  // Compute summary totals from loaded statements (single source of truth)
+  const computedSummary = useMemo(() => {
+    // Calculate totals by transaction type from current loaded statements
+    let totalIncomeCents = 0
+    let totalExpensesCents = 0
+    let totalPurchasesCents = 0
+    let totalPaymentsCents = 0
+    
+    statements.forEach(stmt => {
+      const amountCents = safeNum(stmt.amount)
+      switch (stmt.type) {
+        case 'income':
+          totalIncomeCents += amountCents
+          break
+        case 'expense':
+          totalExpensesCents += amountCents
+          break
+        case 'purchase':
+          totalPurchasesCents += amountCents
+          break
+        case 'payment':
+          totalPaymentsCents += amountCents
+          break
+      }
+    })
+    
+    // If API provides summary and we have ALL data (not paginated), prefer API totals
+    // Otherwise use computed totals from visible data
+    const useApiTotals = summary && totalItems > 0 && totalItems === statements.length
+    
+    return {
+      totalIncome: useApiTotals ? safeNum(summary?.totalIncome) : totalIncomeCents,
+      totalExpenses: useApiTotals ? safeNum(summary?.totalExpenses) : totalExpensesCents,
+      totalPurchases: useApiTotals ? safeNum(summary?.totalPurchases) : totalPurchasesCents,
+      totalPayments: useApiTotals ? safeNum(summary?.totalPayments) : totalPaymentsCents,
+      itemCount: statements.length
+    }
+  }, [statements, summary, totalItems])
+
   // Calculate totals for display (Total In, Total Out, Net)
-  const totalIn = safeNum(summary?.totalIncome || 0)
-  const totalOut = safeNum(summary?.totalExpenses || 0) + safeNum(summary?.totalPurchases || 0) + safeNum(summary?.totalPayments || 0)
+  const totalIn = computedSummary.totalIncome
+  const totalOut = computedSummary.totalExpenses + computedSummary.totalPurchases + computedSummary.totalPayments
   const netAmount = totalIn - totalOut
 
   // Format currency helper
@@ -703,7 +742,7 @@ export default function StatementsPage() {
 
       {/* Summary Cards - Total In / Total Out / Net */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {loading && !summary ? (
+        {loading ? (
           // Loading skeleton for summary cards
           Array.from({ length: 3 }).map((_, idx) => (
             <div key={idx} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
@@ -711,7 +750,7 @@ export default function StatementsPage() {
               <div className="h-8 bg-gray-200 rounded w-32"></div>
             </div>
           ))
-        ) : summary ? (
+        ) : (
           <>
             <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green">
               <div className="flex items-center justify-between mb-2">
@@ -756,7 +795,7 @@ export default function StatementsPage() {
               </p>
             </div>
           </>
-        ) : null}
+        )}
       </div>
 
       {/* Ledger Table */}

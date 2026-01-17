@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/src/services/apiClient'
@@ -292,7 +292,7 @@ export default function ExpensesPage() {
     setExpenses(filteredExpenses)
   }, [statusFilter, filter, searchQuery, allExpenses])
 
-  // Calculate status counts for badges
+  // Calculate status counts for badges from allExpenses
   const statusCounts = {
     all: allExpenses.length,
     DRAFT: allExpenses.filter((exp: Expense) => (exp.status || 'DRAFT') === 'DRAFT').length,
@@ -301,6 +301,22 @@ export default function ExpensesPage() {
     REJECTED: allExpenses.filter((exp: Expense) => exp.status === 'REJECTED').length,
     CANCELLED: allExpenses.filter((exp: Expense) => exp.status === 'CANCELLED').length,
   }
+  
+  // Compute summary stats from loaded expenses (single source of truth)
+  const computedSummary = useMemo(() => {
+    // Calculate total expenses from current loaded data
+    const totalExpensesCents = allExpenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0)
+    
+    // Count approved and pending from loaded data
+    const approvedCount = allExpenses.filter(exp => exp.status === 'APPROVED').length
+    const pendingCount = allExpenses.filter(exp => exp.status === 'SUBMITTED').length
+    
+    return {
+      totalExpensesCents,
+      approvedCount,
+      pendingCount
+    }
+  }, [allExpenses])
   
   // Debug: Log expenses state changes
   useEffect(() => {
@@ -911,21 +927,23 @@ export default function ExpensesPage() {
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <p className="text-text-light text-sm mb-2">Total Expenses (This Month)</p>
-          <p className="font-serif text-3xl font-bold text-green">PKR {totalExpenses.toLocaleString()}</p>
+      {/* Summary Cards - Computed from loaded data */}
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <p className="text-text-light text-sm mb-2">Total Expenses (Loaded)</p>
+            <p className="font-serif text-3xl font-bold text-green">PKR {(computedSummary.totalExpensesCents / 100).toLocaleString()}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <p className="text-text-light text-sm mb-2">Approved Expenses</p>
+            <p className="font-serif text-3xl font-bold text-green">{computedSummary.approvedCount}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <p className="text-text-light text-sm mb-2">Pending Approval</p>
+            <p className="font-serif text-3xl font-bold text-yellow">{computedSummary.pendingCount}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <p className="text-text-light text-sm mb-2">Approved Expenses</p>
-          <p className="font-serif text-3xl font-bold text-green">{approvedCount}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <p className="text-text-light text-sm mb-2">Pending Approval</p>
-          <p className="font-serif text-3xl font-bold text-yellow">{pendingCount}</p>
-        </div>
-      </div>
+      )}
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">

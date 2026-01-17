@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/src/services/apiClient'
@@ -241,21 +241,33 @@ export default function IncomePage() {
     return Number.isFinite(num) ? num : 0
   }
 
-  // Calculate status counts from summary or pagination - ensure all values are safe numbers
-  const summaryData: any = summary ?? {}
-  const byStatus = summaryData.byStatus ?? {}
-  
-  // Debug: Log summary structure once to verify API response format
-  if (summary && !sessionStorage.getItem('income-summary-logged')) {
-    console.log('[Income Summary Debug]', { summary, summaryData, byStatus })
-    sessionStorage.setItem('income-summary-logged', 'true')
-  }
+  // Compute summary stats from loaded items (single source of truth)
+  const computedSummary = useMemo(() => {
+    // Calculate totals from current loaded income array
+    const totalIncomeCents = income.reduce((sum, item) => sum + safeNum(item.amount), 0)
+    
+    // Count by status
+    const confirmedCount = income.filter(item => item.status === 'CONFIRMED').length
+    const draftCount = income.filter(item => item.status === 'DRAFT' || !item.status).length
+    const cancelledCount = income.filter(item => item.status === 'CANCELLED').length
+    const submittedCount = income.filter(item => item.status === 'SUBMITTED').length
+    
+    return {
+      totalIncome: totalIncomeCents,
+      totalCount: pagination.total || income.length, // Use API total if available (for paginated data)
+      confirmedCount,
+      draftCount,
+      cancelledCount,
+      submittedCount
+    }
+  }, [income, pagination.total])
   
   const statusCounts = {
-    all: safeNum(summaryData.totalCount ?? summaryData.count ?? pagination.total),
-    DRAFT: safeNum(byStatus.DRAFT ?? summaryData.draftIncome),
-    CONFIRMED: safeNum(byStatus.CONFIRMED ?? summaryData.confirmedIncome),
-    CANCELLED: safeNum(byStatus.CANCELLED ?? summaryData.cancelledIncome),
+    all: computedSummary.totalCount,
+    DRAFT: computedSummary.draftCount,
+    CONFIRMED: computedSummary.confirmedCount,
+    CANCELLED: computedSummary.cancelledCount,
+    SUBMITTED: computedSummary.submittedCount
   }
 
   // Helper function to generate derived title
@@ -392,13 +404,13 @@ export default function IncomePage() {
         </Link>
       </div>
 
-      {/* Summary Cards */}
-      {summary && (
+      {/* Summary Cards - Computed from loaded data */}
+      {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Income</p>
             <p className="font-serif text-3xl font-bold text-green">
-              {formatCurrency(Number(summaryData.totalIncome ?? 0))}
+              {formatCurrency(computedSummary.totalIncome)}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
