@@ -17,8 +17,8 @@ export default function FinanceDashboard() {
     { title: 'Purchases', href: '/admin/finance/purchases', icon: '🛒', color: 'bg-blue-500' },
     { title: 'Profit & Loss', href: '/admin/finance/profit-loss', icon: '📊', color: 'bg-yellow' },
     { title: 'Income Reports', href: '/admin/finance/income', icon: '💰', color: 'bg-green' },
-    { title: 'Monthly Statements', href: '/admin/finance/monthly-statements', icon: '📋', color: 'bg-indigo-500' },
-    { title: 'Staff Payables', href: '/admin/finance/staff-payables', icon: '👥', color: 'bg-pink-500' },
+    { title: 'Statements', href: '/admin/finance/statements', icon: '📋', color: 'bg-indigo-500' },
+    { title: 'Staff Payables', href: '/admin/finance/payables', icon: '👥', color: 'bg-pink-500' },
   ]
 
   const recentTransactions = [

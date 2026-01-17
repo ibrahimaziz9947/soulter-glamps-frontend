@@ -26,8 +26,13 @@ export default function AdminSidebar() {
   ]
 
   const financeSubItems = [
+    { label: 'Dashboard', href: '/admin/finance/dashboard' },
     { label: 'Expenses', href: '/admin/finance/expenses' },
     { label: 'Income', href: '/admin/finance/income' },
+    { label: 'Purchases', href: '/admin/finance/purchases' },
+    { label: 'Payables', href: '/admin/finance/payables' },
+    { label: 'Profit & Loss', href: '/admin/finance/profit-loss' },
+    { label: 'Statements', href: '/admin/finance/statements' },
   ]
 
   return (
