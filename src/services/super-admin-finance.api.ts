@@ -19,7 +19,11 @@ export interface SuperAdminFinanceSummary {
     openCount: number
     openAmountCents: number
   }
-  latestEntries: FinanceEntry[]
+  ledger?: {
+    totalEntries: number
+    latestEntries: FinanceEntry[]
+  }
+  latestEntries?: FinanceEntry[] // Fallback for backward compatibility
 }
 
 export interface FinanceEntry {
@@ -78,5 +82,37 @@ export async function getSuperAdminFinanceSummary(params?: {
     throw new Error('Super Admin Finance API returned no data')
   }
   
-  return response.data
+  // Normalize the response structure to handle different backend formats
+  const rawData = response.data
+  
+  // Ensure profitLoss exists with defaults
+  const profitLoss = rawData.profitLoss || {
+    revenueCents: 0,
+    expenseCents: 0,
+    profitCents: 0
+  }
+  
+  // Ensure payables exists with defaults
+  const payables = rawData.payables || {
+    openCount: 0,
+    openAmountCents: 0
+  }
+  
+  // Handle ledger entries - could be in ledger.latestEntries or latestEntries directly
+  let latestEntries: FinanceEntry[] = []
+  if (rawData.ledger?.latestEntries && Array.isArray(rawData.ledger.latestEntries)) {
+    latestEntries = rawData.ledger.latestEntries
+  } else if (rawData.latestEntries && Array.isArray(rawData.latestEntries)) {
+    latestEntries = rawData.latestEntries
+  }
+  
+  return {
+    profitLoss,
+    payables,
+    ledger: rawData.ledger || {
+      totalEntries: latestEntries.length,
+      latestEntries
+    },
+    latestEntries // Keep for backward compatibility
+  }
 }

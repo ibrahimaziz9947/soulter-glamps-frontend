@@ -85,9 +85,39 @@ export default function SuperAdminFinancePage() {
       return dateString
     }
   }
+  
+  // Safe accessor for ledger entries
+  const getLedgerEntries = () => {
+    if (!financeSummary) return []
+    // Try ledger.latestEntries first, then fall back to latestEntries
+    if (financeSummary.ledger?.latestEntries && Array.isArray(financeSummary.ledger.latestEntries)) {
+      return financeSummary.ledger.latestEntries
+    }
+    if (financeSummary.latestEntries && Array.isArray(financeSummary.latestEntries)) {
+      return financeSummary.latestEntries
+    }
+    return []
+  }
 
   return (
     <div className="space-y-6">
+      {/* Dev Debug Panel - Remove after verification */}
+      {process.env.NODE_ENV !== 'production' && financeSummary && !loading && !error && (
+        <details className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs font-mono">
+          <summary className="cursor-pointer font-semibold text-blue-800 mb-2">🔍 Debug: API Response Keys</summary>
+          <div className="space-y-2 mt-2">
+            <div>
+              <strong className="text-blue-900">Top-level keys:</strong>
+              <pre className="bg-white p-2 rounded mt-1">{JSON.stringify(Object.keys(financeSummary), null, 2)}</pre>
+            </div>
+            <div>
+              <strong className="text-blue-900">Ledger entries count:</strong>
+              <span className="bg-white p-2 rounded ml-2">{getLedgerEntries().length}</span>
+            </div>
+          </div>
+        </details>
+      )}
+      
       {/* Header */}
       <div>
         <h1 className="font-serif text-3xl font-bold text-green">Financial Overview</h1>
@@ -179,7 +209,7 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Total Revenue</h3>
             <p className="font-serif text-3xl font-bold text-green">
-              {formatCurrency(financeSummary.profitLoss.revenueCents)}
+              {formatCurrency(financeSummary.profitLoss?.revenueCents ?? 0)}
             </p>
           </div>
 
@@ -191,7 +221,7 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Total Expenses</h3>
             <p className="font-serif text-3xl font-bold text-red-500">
-              {formatCurrency(financeSummary.profitLoss.expenseCents)}
+              {formatCurrency(financeSummary.profitLoss?.expenseCents ?? 0)}
             </p>
           </div>
 
@@ -203,9 +233,9 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Net Profit</h3>
             <p className={`font-serif text-3xl font-bold ${
-              financeSummary.profitLoss.profitCents >= 0 ? 'text-green' : 'text-red-500'
+              (financeSummary.profitLoss?.profitCents ?? 0) >= 0 ? 'text-green' : 'text-red-500'
             }`}>
-              {formatCurrency(financeSummary.profitLoss.profitCents)}
+              {formatCurrency(financeSummary.profitLoss?.profitCents ?? 0)}
             </p>
           </div>
 
@@ -217,9 +247,9 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Open Payables</h3>
             <p className="font-serif text-3xl font-bold text-orange-500">
-              {formatCurrency(financeSummary.payables.openAmountCents)}
+              {formatCurrency(financeSummary.payables?.openAmountCents ?? 0)}
             </p>
-            <p className="text-sm text-text-light mt-1">{financeSummary.payables.openCount} items</p>
+            <p className="text-sm text-text-light mt-1">{financeSummary.payables?.openCount ?? 0} items</p>
           </div>
         </div>
       )}
@@ -239,11 +269,11 @@ export default function SuperAdminFinancePage() {
             ))}
           </div>
         </div>
-      ) : financeSummary && !error && financeSummary.latestEntries.length > 0 && (
+      ) : financeSummary && !error && getLedgerEntries().length > 0 && (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="p-6 border-b border-gray-100">
             <h2 className="font-serif text-2xl font-bold text-green">Recent Ledger Entries</h2>
-            <p className="text-text-light text-sm mt-1">Latest {financeSummary.latestEntries.length} transactions</p>
+            <p className="text-text-light text-sm mt-1">Latest {getLedgerEntries().length} transactions</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -258,7 +288,7 @@ export default function SuperAdminFinancePage() {
                 </tr>
               </thead>
               <tbody>
-                {financeSummary.latestEntries.map((entry) => (
+                {getLedgerEntries().map((entry) => (
                   <tr key={entry.id} className="border-b border-gray-100 hover:bg-cream/50 transition-smooth">
                     <td className="py-4 px-6 text-text-light text-sm">
                       {formatDate(entry.date)}
@@ -290,7 +320,7 @@ export default function SuperAdminFinancePage() {
                           ? 'text-red-500'
                           : 'text-text-dark'
                       }>
-                        {formatCurrency(entry.amountCents)}
+                        {formatCurrency(entry.amountCents ?? 0)}
                       </span>
                     </td>
                     <td className="py-4 px-6">
@@ -315,7 +345,7 @@ export default function SuperAdminFinancePage() {
       )}
 
       {/* No Data State */}
-      {!loading && !error && financeSummary && financeSummary.latestEntries.length === 0 && (
+      {!loading && !error && financeSummary && getLedgerEntries().length === 0 && (
         <div className="bg-white rounded-lg shadow-lg p-12 text-center">
           <div className="text-text-light">
             <p className="text-lg mb-2">No ledger entries found</p>
