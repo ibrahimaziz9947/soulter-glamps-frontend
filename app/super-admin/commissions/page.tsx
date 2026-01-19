@@ -7,7 +7,7 @@ import {
   markSuperAdminCommissionPaid,
   type SuperAdminCommission 
 } from '@/src/services/super-admin-commissions.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatRawCurrency } from '@/src/utils/currency'
 
 export default function CommissionPage() {
   const router = useRouter()
@@ -270,20 +270,20 @@ export default function CommissionPage() {
             <p className="text-text-light text-sm mb-2">Pending Commissions</p>
             <p className="font-serif text-2xl font-bold text-orange-500">{aggregates.unpaidCount}</p>
             <p className="text-sm text-text-light mt-1">
-              {formatCurrency(aggregates.pendingAmountCents ?? aggregates.unpaidAmountCents ?? 0)}
+              {formatRawCurrency(aggregates.pendingAmountCents ?? aggregates.unpaidAmountCents ?? 0)}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Paid Commissions</p>
             <p className="font-serif text-2xl font-bold text-green">{aggregates.paidCount}</p>
             <p className="text-sm text-text-light mt-1">
-              {formatCurrency(aggregates.paidAmountCents ?? 0)}
+              {formatRawCurrency(aggregates.paidAmountCents ?? 0)}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Amount</p>
             <p className="font-serif text-2xl font-bold text-green">
-              {formatCurrency(aggregates.totalAmountCents ?? 0)}
+              {formatRawCurrency(aggregates.totalAmountCents ?? 0)}
             </p>
             <p className="text-sm text-text-light mt-1">{aggregates.totalCommissions} total</p>
           </div>
@@ -437,7 +437,7 @@ export default function CommissionPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 font-semibold text-green">
-                      {formatCurrency(commission.amountCents ?? 0)}
+                      {formatRawCurrency(commission.amountCents ?? 0)}
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
