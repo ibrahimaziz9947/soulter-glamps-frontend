@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchDashboardSummary, type DashboardSummary } from "@/src/services/dashboard.api";
-import { formatCurrency } from "@/src/utils/currency";
+import { formatRawCurrency } from "@/src/utils/currency";
 import { getAuthToken } from "../../../src/lib/auth";
 
 type Booking = {
@@ -157,7 +157,7 @@ function DashboardContent() {
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-2xl font-bold text-green mb-2">
-                {formatCurrency(summary.revenueCents)}
+                {formatRawCurrency(summary.revenueCents)}
               </h3>
               <p className="text-sm text-text-light">Revenue</p>
             </div>

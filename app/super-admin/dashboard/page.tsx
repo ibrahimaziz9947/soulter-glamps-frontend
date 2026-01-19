@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSuperAdminDashboardSummary, type SuperAdminDashboardSummary } from '@/src/services/super-admin-dashboard.api';
-import { formatCurrency } from '@/src/utils/currency';
+import { formatRawCurrency } from '@/src/utils/currency';
 
 export default function SuperAdminDashboard() {
   // ...existing code...
@@ -90,35 +90,35 @@ function DashboardContent() {
     },
     { 
       label: 'Revenue', 
-      value: formatCurrency(dashboardData.revenueCents ?? 0), 
+      value: formatRawCurrency(dashboardData.revenueCents ?? 0), 
       change: `${dateFrom} to ${dateTo}`, 
       icon: '💰', 
       color: 'bg-yellow' 
     },
     { 
       label: 'Pending Commissions', 
-      value: formatCurrency(dashboardData.pendingCommissions?.amountCents ?? 0), 
+      value: formatRawCurrency(dashboardData.pendingCommissions?.amountCents ?? 0), 
       change: `${dashboardData.pendingCommissions?.count ?? 0} pending`, 
       icon: '💳', 
       color: 'bg-orange-500' 
     },
     { 
       label: 'Finance Revenue', 
-      value: formatCurrency(dashboardData.financeSnapshot?.revenueCents ?? 0), 
+      value: formatRawCurrency(dashboardData.financeSnapshot?.revenueCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '📈', 
       color: 'bg-blue-500' 
     },
     { 
       label: 'Finance Expenses', 
-      value: formatCurrency(dashboardData.financeSnapshot?.expenseCents ?? 0), 
+      value: formatRawCurrency(dashboardData.financeSnapshot?.expenseCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '💸', 
       color: 'bg-red-500' 
     },
     { 
       label: 'Finance Profit', 
-      value: formatCurrency(dashboardData.financeSnapshot?.profitCents ?? 0), 
+      value: formatRawCurrency(dashboardData.financeSnapshot?.profitCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '💵', 
       color: 'bg-green' 

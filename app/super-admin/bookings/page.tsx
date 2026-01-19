@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSuperAdminBookings, type SuperAdminBooking } from '@/src/services/super-admin-bookings.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatRawCurrency } from '@/src/utils/currency'
 
 export default function SuperAdminBookingsPage() {
   const router = useRouter()
@@ -233,7 +233,7 @@ export default function SuperAdminBookingsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Revenue</p>
-            <p className="font-serif text-3xl font-bold text-green">{formatCurrency(aggregates.revenueCents)}</p>
+            <p className="font-serif text-3xl font-bold text-green">{formatRawCurrency(aggregates.revenueCents)}</p>
           </div>
         </div>
       )}
@@ -369,8 +369,8 @@ export default function SuperAdminBookingsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-text-dark">{booking.glampName || `Glamp #${booking.glampId}`}</td>
-                    <td className="py-4 px-6 font-semibold text-green">{formatCurrency(booking.totalAmountCents ?? 0)}</td>
+                    <td className="py-4 px-6 text-text-dark">{booking.glampName || 'Unknown'}</td>
+                    <td className="py-4 px-6 font-semibold text-green">{formatRawCurrency(booking.totalAmountCents ?? 0)}</td>
                     <td className="py-4 px-6 text-sm text-text-light">
                       {booking.agentName || 'Direct'}
                     </td>

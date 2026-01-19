@@ -241,57 +241,82 @@ export default function CommissionPage() {
         </div>
       </div>
 
-      {/* DEBUG: Temporary dev-only block - REMOVE AFTER VERIFICATION */}
-      {!loading && !error && (
-        <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-4">
-          <p className="font-bold text-yellow-800 mb-2">🔍 DEBUG INFO (Remove after verification)</p>
-          <div className="text-xs font-mono bg-white p-3 rounded overflow-auto max-h-40">
-            <p className="font-bold mb-1">Aggregates:</p>
-            <pre>{JSON.stringify(aggregates, null, 2)}</pre>
-            {filteredCommissions.length > 0 && (
-              <>
-                <p className="font-bold mt-3 mb-1">First Commission Item:</p>
-                <pre>{JSON.stringify({
-                  id: filteredCommissions[0].id,
-                  amountCents: filteredCommissions[0].amountCents,
-                  status: filteredCommissions[0].status,
-                  agentName: filteredCommissions[0].agentName
-                }, null, 2)}</pre>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* KPI Cards */}
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <p className="text-text-light text-sm mb-2">Pending Commissions</p>
-            <p className="font-serif text-2xl font-bold text-orange-500">{aggregates.unpaidCount}</p>
-            <p className="text-sm text-text-light mt-1">
-              {formatRawCurrency(aggregates.pendingAmountCents ?? aggregates.unpaidAmountCents ?? 0)}
-            </p>
+          {/* Pending Commissions Card */}
+          <div className="bg-gradient-to-br from-orange-50 to-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500 hover:shadow-xl transition-shadow">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-orange-700 text-sm font-semibold uppercase tracking-wide mb-1">Pending</p>
+                <p className="font-serif text-3xl font-bold text-orange-600">{aggregates.unpaidCount}</p>
+              </div>
+              <div className="bg-orange-100 p-3 rounded-lg">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-orange-200">
+              <p className="text-2xl font-bold text-orange-700">
+                {formatRawCurrency(aggregates.pendingAmountCents ?? aggregates.unpaidAmountCents ?? 0)}
+              </p>
+              <p className="text-xs text-orange-600 mt-1">Awaiting payment</p>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <p className="text-text-light text-sm mb-2">Paid Commissions</p>
-            <p className="font-serif text-2xl font-bold text-green">{aggregates.paidCount}</p>
-            <p className="text-sm text-text-light mt-1">
-              {formatRawCurrency(aggregates.paidAmountCents ?? 0)}
-            </p>
+
+          {/* Paid Commissions Card */}
+          <div className="bg-gradient-to-br from-green-50 to-white rounded-xl shadow-lg p-6 border-l-4 border-green hover:shadow-xl transition-shadow">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-green text-sm font-semibold uppercase tracking-wide mb-1">Paid</p>
+                <p className="font-serif text-3xl font-bold text-green">{aggregates.paidCount}</p>
+              </div>
+              <div className="bg-green/10 p-3 rounded-lg">
+                <svg className="w-6 h-6 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-green/20">
+              <p className="text-2xl font-bold text-green">
+                {formatRawCurrency(aggregates.paidAmountCents ?? 0)}
+              </p>
+              <p className="text-xs text-green/70 mt-1">Successfully processed</p>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <p className="text-text-light text-sm mb-2">Total Amount</p>
-            <p className="font-serif text-2xl font-bold text-green">
-              {formatRawCurrency(aggregates.totalAmountCents ?? 0)}
-            </p>
-            <p className="text-sm text-text-light mt-1">{aggregates.totalCommissions} total</p>
+
+          {/* Total Amount Card */}
+          <div className="bg-gradient-to-br from-yellow/10 to-white rounded-xl shadow-lg p-6 border-l-4 border-yellow hover:shadow-xl transition-shadow">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="text-yellow text-sm font-semibold uppercase tracking-wide mb-1">Total Amount</p>
+                <p className="font-serif text-3xl font-bold text-gray-700">{aggregates.totalCommissions}</p>
+              </div>
+              <div className="bg-yellow/10 p-3 rounded-lg">
+                <svg className="w-6 h-6 text-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-yellow/20">
+              <p className="text-2xl font-bold text-gray-800">
+                {formatRawCurrency(aggregates.totalAmountCents ?? 0)}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">All commissions combined</p>
+            </div>
           </div>
         </div>
       )}
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+        <div className="flex items-center gap-2 mb-4">
+          <svg className="w-5 h-5 text-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          <h3 className="font-serif text-lg font-bold text-gray-800">Filter & Search</h3>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div className="relative md:col-span-2">
             <input
@@ -299,7 +324,7 @@ export default function CommissionPage() {
               placeholder="Search by ID, agent, booking..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow focus:border-yellow transition-all"
             />
             <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -310,7 +335,7 @@ export default function CommissionPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+              className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow focus:border-yellow transition-all"
               placeholder="From"
             />
           </div>
@@ -319,7 +344,7 @@ export default function CommissionPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+              className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow focus:border-yellow transition-all"
               placeholder="To"
             />
           </div>
@@ -327,7 +352,7 @@ export default function CommissionPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow focus:border-yellow transition-all font-medium"
             >
               <option value="all">All Status</option>
               <option value="unpaid">Pending/Unpaid</option>
@@ -340,16 +365,19 @@ export default function CommissionPage() {
               placeholder="Agent ID (optional)"
               value={agentIdFilter}
               onChange={(e) => setAgentIdFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+              className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow focus:border-yellow transition-all"
             />
           </div>
         </div>
-        <div className="mt-4">
+        <div className="mt-5 flex gap-3">
           <button
             onClick={handleApplyFilters}
             disabled={loading}
-            className="px-6 py-2 bg-green text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-2.5 bg-gradient-to-r from-green to-green-700 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center gap-2 transform hover:-translate-y-0.5"
           >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
             {loading ? 'Loading...' : 'Apply Filters'}
           </button>
         </div>
@@ -381,18 +409,22 @@ export default function CommissionPage() {
       )}
 
       {/* Commissions Table */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+        <div className="bg-gradient-to-r from-green to-green/90 px-6 py-4">
+          <h2 className="text-xl font-serif font-bold text-white">Commission Records</h2>
+          <p className="text-green-50 text-sm mt-1">View and manage all agent commissions</p>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-cream">
+            <thead className="bg-gradient-to-r from-cream to-yellow/10 border-b-2 border-yellow/30">
               <tr>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-text-dark">Commission ID</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-text-dark">Date</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-text-dark">Agent</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-text-dark">Booking ID</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-text-dark">Amount</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-text-dark">Status</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-text-dark">Actions</th>
+                <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Commission ID</th>
+                <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Agent</th>
+                <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Booking ID</th>
+                <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Amount</th>
+                <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                <th className="text-left py-4 px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -410,41 +442,53 @@ export default function CommissionPage() {
                   </tr>
                 ))
               ) : filteredCommissions.length > 0 ? (
-                filteredCommissions.map((commission) => (
+                filteredCommissions.map((commission, index) => (
                   <tr 
                     key={commission.id} 
-                    className="border-b border-gray-100 hover:bg-cream/50 transition-smooth"
+                    className={`border-b border-gray-100 hover:bg-gradient-to-r hover:from-cream/30 hover:to-transparent transition-all duration-200 ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                    }`}
                   >
                     <td className="py-4 px-6">
-                      <span className="font-medium text-yellow" title={commission.id}>
+                      <span className="font-mono text-sm font-semibold text-yellow bg-yellow/10 px-2 py-1 rounded" title={commission.id}>
                         {truncateId(commission.id)}
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-text-light text-sm">
-                      {formatDate(commission.createdAt)}
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm">{formatDate(commission.createdAt)}</span>
+                      </div>
                     </td>
                     <td className="py-4 px-6">
                       <div>
-                        <p className="font-medium text-text-dark">{commission.agentName || 'N/A'}</p>
+                        <p className="font-semibold text-gray-800">{commission.agentName || 'N/A'}</p>
                         {commission.agentEmail && (
-                          <p className="text-sm text-text-light">{commission.agentEmail}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{commission.agentEmail}</p>
                         )}
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-text-light" title={commission.bookingId}>
+                      <span className="font-mono text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded" title={commission.bookingId}>
                         {truncateId(commission.bookingId)}
                       </span>
                     </td>
-                    <td className="py-4 px-6 font-semibold text-green">
-                      {formatRawCurrency(commission.amountCents ?? 0)}
+                    <td className="py-4 px-6">
+                      <span className="font-bold text-lg text-green">
+                        {formatRawCurrency(commission.amountCents ?? 0)}
+                      </span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
                         commission.status === 'PAID' 
-                          ? 'bg-green/10 text-green' 
-                          : 'bg-orange-50 text-orange-600'
+                          ? 'bg-green/10 text-green border border-green/20' 
+                          : 'bg-orange-50 text-orange-600 border border-orange-200'
                       }`}>
+                        <span className={`w-2 h-2 rounded-full ${
+                          commission.status === 'PAID' ? 'bg-green' : 'bg-orange-500'
+                        }`}></span>
                         {commission.status.toLowerCase()}
                       </span>
                     </td>
@@ -452,7 +496,7 @@ export default function CommissionPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleViewClick(commission.id)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-smooth"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all hover:scale-110"
                           title="View Details"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -463,7 +507,7 @@ export default function CommissionPage() {
                         {commission.status === 'UNPAID' && (
                           <button
                             onClick={() => handleMarkPaidClick(commission.id)}
-                            className="px-3 py-1 bg-green text-white rounded-lg hover:bg-green-700 transition-smooth text-sm font-semibold"
+                            className="px-4 py-2 bg-green text-white rounded-lg hover:bg-green-700 transition-all text-sm font-bold shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                           >
                             Mark Paid
                           </button>
@@ -488,27 +532,34 @@ export default function CommissionPage() {
         
         {/* Pagination */}
         {!loading && !error && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-            <p className="text-sm text-text-light">
-              Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total commissions)
+          <div className="flex items-center justify-between px-6 py-5 border-t-2 border-gray-100 bg-gradient-to-r from-cream/30 to-transparent">
+            <p className="text-sm text-gray-600 font-medium">
+              Showing page <span className="font-bold text-green">{pagination.page}</span> of <span className="font-bold">{pagination.totalPages}</span> 
+              <span className="text-gray-400 ml-2">({pagination.total} total commissions)</span>
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => handlePageChange(pagination.page - 1)}
                 disabled={pagination.page === 1}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-cream transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 border-2 border-gray-300 rounded-lg hover:bg-green hover:text-white hover:border-green transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
                 Previous
               </button>
-              <span className="px-4 py-2 text-sm text-text-dark">
+              <span className="px-5 py-2 text-sm font-bold text-gray-700 bg-yellow/20 rounded-lg border-2 border-yellow/30">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
               <button
                 onClick={() => handlePageChange(pagination.page + 1)}
                 disabled={pagination.page >= pagination.totalPages}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-cream transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 border-2 border-gray-300 rounded-lg hover:bg-green hover:text-white hover:border-green transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2"
               >
                 Next
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </div>
           </div>
