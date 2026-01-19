@@ -49,7 +49,8 @@ export interface SuperAdminCommissionsResponse {
       unpaidCount: number
       totalAmountCents: number
       paidAmountCents: number
-      unpaidAmountCents: number
+      pendingAmountCents?: number
+      unpaidAmountCents?: number
     }
   }
   error?: string
@@ -102,7 +103,8 @@ export async function getSuperAdminCommissions(params?: {
     unpaidCount: number
     totalAmountCents: number
     paidAmountCents: number
-    unpaidAmountCents: number
+    pendingAmountCents?: number
+    unpaidAmountCents?: number
   }
 }> {
   const queryParams = new URLSearchParams()

@@ -19,12 +19,21 @@ export default function CommissionPage() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   
   // Aggregates from API
-  const [aggregates, setAggregates] = useState({
+  const [aggregates, setAggregates] = useState<{
+    totalCommissions: number
+    paidCount: number
+    unpaidCount: number
+    totalAmountCents: number
+    paidAmountCents: number
+    pendingAmountCents?: number
+    unpaidAmountCents?: number
+  }>({
     totalCommissions: 0,
     paidCount: 0,
     unpaidCount: 0,
     totalAmountCents: 0,
     paidAmountCents: 0,
+    pendingAmountCents: 0,
     unpaidAmountCents: 0
   })
   
@@ -95,6 +104,7 @@ export default function CommissionPage() {
         unpaidCount: 0,
         totalAmountCents: 0,
         paidAmountCents: 0,
+        pendingAmountCents: 0,
         unpaidAmountCents: 0
       })
       setPagination(response.meta || { page: 1, limit: 10, total: 0, totalPages: 0 })
@@ -231,22 +241,50 @@ export default function CommissionPage() {
         </div>
       </div>
 
+      {/* DEBUG: Temporary dev-only block - REMOVE AFTER VERIFICATION */}
+      {!loading && !error && (
+        <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-4">
+          <p className="font-bold text-yellow-800 mb-2">🔍 DEBUG INFO (Remove after verification)</p>
+          <div className="text-xs font-mono bg-white p-3 rounded overflow-auto max-h-40">
+            <p className="font-bold mb-1">Aggregates:</p>
+            <pre>{JSON.stringify(aggregates, null, 2)}</pre>
+            {filteredCommissions.length > 0 && (
+              <>
+                <p className="font-bold mt-3 mb-1">First Commission Item:</p>
+                <pre>{JSON.stringify({
+                  id: filteredCommissions[0].id,
+                  amountCents: filteredCommissions[0].amountCents,
+                  status: filteredCommissions[0].status,
+                  agentName: filteredCommissions[0].agentName
+                }, null, 2)}</pre>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards */}
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Pending Commissions</p>
             <p className="font-serif text-2xl font-bold text-orange-500">{aggregates.unpaidCount}</p>
-            <p className="text-sm text-text-light mt-1">{formatCurrency(aggregates.unpaidAmountCents)}</p>
+            <p className="text-sm text-text-light mt-1">
+              {formatCurrency(aggregates.pendingAmountCents ?? aggregates.unpaidAmountCents ?? 0)}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Paid Commissions</p>
             <p className="font-serif text-2xl font-bold text-green">{aggregates.paidCount}</p>
-            <p className="text-sm text-text-light mt-1">{formatCurrency(aggregates.paidAmountCents)}</p>
+            <p className="text-sm text-text-light mt-1">
+              {formatCurrency(aggregates.paidAmountCents ?? 0)}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Amount</p>
-            <p className="font-serif text-2xl font-bold text-green">{formatCurrency(aggregates.totalAmountCents)}</p>
+            <p className="font-serif text-2xl font-bold text-green">
+              {formatCurrency(aggregates.totalAmountCents ?? 0)}
+            </p>
             <p className="text-sm text-text-light mt-1">{aggregates.totalCommissions} total</p>
           </div>
         </div>
@@ -399,7 +437,7 @@ export default function CommissionPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 font-semibold text-green">
-                      {formatCurrency(commission.amountCents)}
+                      {formatCurrency(commission.amountCents ?? 0)}
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
