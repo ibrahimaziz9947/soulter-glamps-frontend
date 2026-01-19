@@ -372,7 +372,7 @@ export default function SuperAdminBookingsPage() {
                     <td className="py-4 px-6 text-text-dark">{booking.glampName || 'Unknown'}</td>
                     <td className="py-4 px-6 font-semibold text-green">{formatRawCurrency(booking.totalAmountCents ?? 0)}</td>
                     <td className="py-4 px-6 text-sm text-text-light">
-                      {booking.agentName || 'Direct'}
+                      {booking.agentId ? (booking.agentName || 'Agent') : 'Direct'}
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${

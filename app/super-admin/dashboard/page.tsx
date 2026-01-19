@@ -39,6 +39,9 @@ function DashboardContent() {
       
       const data = await getSuperAdminDashboardSummary({ from, to });
       
+      console.log('[Super Admin Dashboard] API Response:', data);
+      console.log('[Super Admin Dashboard] Finance Snapshot:', data?.financeSnapshot);
+      
       setDashboardData(data);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     } catch (err: any) {
@@ -153,7 +156,7 @@ function DashboardContent() {
     { title: 'Add New Agent', icon: '➕', href: '/super-admin/agents', color: 'bg-purple-500' },
     { title: 'View All Bookings', icon: '📋', href: '/super-admin/bookings', color: 'bg-green' },
     { title: 'Financial Overview', icon: '📊', href: '/super-admin/finance', color: 'bg-yellow' },
-    { title: 'Process Commissions', icon: '💵', href: '/super-admin/commission', color: 'bg-orange-500' },
+    { title: 'Process Commissions', icon: '💵', href: '/super-admin/commissions', color: 'bg-orange-500' },
     { title: 'System Settings', icon: '⚙️', href: '/super-admin/settings', color: 'bg-gray-500' },
   ]
 
