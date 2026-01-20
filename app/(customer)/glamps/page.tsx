@@ -97,9 +97,22 @@ export default function GlampsPage() {
               return false
             }
             
+            // ✅ CUSTOMER FILTER: Only show ACTIVE/AVAILABLE glamps
+            const isAvailable = glamp.availability !== false // Handle undefined as true
+            const isActiveStatus = !glamp.status || glamp.status === 'available' // null/undefined/available are OK
+            
+            if (!isAvailable || !isActiveStatus) {
+              console.log('[Glamps Page] 🚫 Filtering out inactive glamp:', {
+                name: glamp.name,
+                status: glamp.status,
+                availability: glamp.availability
+              })
+              return false
+            }
+            
             return true
           })
-          .map((glamp: any) => {
+          .map((glamp: any, index: number) => {
             // CRITICAL: Map id (could be 'id' or '_id') to frontend id
             const glamId = glamp.id || glamp._id
             
@@ -110,10 +123,35 @@ export default function GlampsPage() {
               isUUID: glamId.includes('-')
             })
             
+            // Smart image mapping: Use glamp's images array, or fallback to sequential images
+            let imageUrl = '/images/glamps/glamp1.jpg' // default fallback
+            
+            if (glamp.images && Array.isArray(glamp.images) && glamp.images.length > 0) {
+              // Use the first image from the glamp's images array
+              imageUrl = glamp.images[0]
+            } else {
+              // Fallback: Try to extract glamp number from name (e.g., "GLAMP 1" -> glamp1.jpg)
+              const glampNumberMatch = glamp.name?.match(/GLAMP\s*(\d+)/i)
+              if (glampNumberMatch) {
+                const glampNum = glampNumberMatch[1]
+                imageUrl = `/images/glamps/glamp${glampNum}.jpg`
+              } else {
+                // Last resort: Use index-based mapping (1-4)
+                const imageIndex = (index % 4) + 1
+                imageUrl = `/images/glamps/glamp${imageIndex}.jpg`
+              }
+            }
+            
+            console.log('[Glamps Page] 🖼️ Image mapping:', {
+              name: glamp.name,
+              hasImages: !!glamp.images?.length,
+              mappedImage: imageUrl
+            })
+            
             const transformed = {
               id: glamId, // UUID from backend _id
               name: glamp.name,
-              image: glamp.images?.[0] || '/images/glamps/glamp1.jpg',
+              image: imageUrl,
               description: glamp.description,
               capacity: glamp.capacity,
               price: glamp.pricePerNight,
@@ -137,8 +175,13 @@ export default function GlampsPage() {
           console.warn('[Glamps Page] ⚠️ No valid UUID glamps after filtering - check backend data')
         }
         
+        // Expected count: 4 active glamps
+        if (transformedGlamps.length !== 4) {
+          console.warn(`[Glamps Page] ⚠️ Expected 4 active glamps, got ${transformedGlamps.length}`)
+        }
+        
         setGlamps(transformedGlamps)
-        console.log('[Glamps Page] ✅ State updated with', transformedGlamps.length, 'glamps')
+        console.log('[Glamps Page] ✅ State updated with', transformedGlamps.length, 'active glamps (customer-facing)')
       } catch (err: any) {
         console.error('[Glamps Page] Failed to fetch glamps:', err)
         const errorMessage = err.message || 'Failed to load accommodations'
