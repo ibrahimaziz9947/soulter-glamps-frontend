@@ -99,16 +99,25 @@ export default function GlampsPage() {
             
             // ✅ CUSTOMER FILTER: Only show ACTIVE/AVAILABLE glamps
             const isAvailable = glamp.availability !== false // Handle undefined as true
-            const isActiveStatus = !glamp.status || glamp.status === 'available' // null/undefined/available are OK
+            const statusUpper = glamp.status?.toUpperCase()
+            const isActiveStatus = !glamp.status || statusUpper === 'ACTIVE' || statusUpper === 'AVAILABLE'
             
             if (!isAvailable || !isActiveStatus) {
               console.log('[Glamps Page] 🚫 Filtering out inactive glamp:', {
                 name: glamp.name,
                 status: glamp.status,
-                availability: glamp.availability
+                availability: glamp.availability,
+                isAvailable,
+                isActiveStatus
               })
               return false
             }
+            
+            console.log('[Glamps Page] ✅ Glamp passed active filter:', {
+              name: glamp.name,
+              status: glamp.status,
+              availability: glamp.availability
+            })
             
             return true
           })
@@ -126,7 +135,10 @@ export default function GlampsPage() {
             // Smart image mapping: Use glamp's images array, or fallback to sequential images
             let imageUrl = '/images/glamps/glamp1.jpg' // default fallback
             
-            if (glamp.images && Array.isArray(glamp.images) && glamp.images.length > 0) {
+            // Backend can return either 'imageUrl' (single) or 'images' (array)
+            if (glamp.imageUrl && typeof glamp.imageUrl === 'string') {
+              imageUrl = glamp.imageUrl
+            } else if (glamp.images && Array.isArray(glamp.images) && glamp.images.length > 0) {
               // Use the first image from the glamp's images array
               imageUrl = glamp.images[0]
             } else {
@@ -144,6 +156,7 @@ export default function GlampsPage() {
             
             console.log('[Glamps Page] 🖼️ Image mapping:', {
               name: glamp.name,
+              hasImageUrl: !!glamp.imageUrl,
               hasImages: !!glamp.images?.length,
               mappedImage: imageUrl
             })
@@ -153,7 +166,7 @@ export default function GlampsPage() {
               name: glamp.name,
               image: imageUrl,
               description: glamp.description,
-              capacity: glamp.capacity,
+              capacity: glamp.maxGuests || glamp.capacity || 2, // Backend uses maxGuests
               price: glamp.pricePerNight,
               features: glamp.features || [],
               amenities: glamp.amenities || [],
@@ -169,6 +182,14 @@ export default function GlampsPage() {
         
         console.log('[Glamps Page] ✅ Successfully transformed', transformedGlamps.length, 'UUID glamps')
         console.log('[Glamps Page] ✅ Sample IDs:', transformedGlamps.slice(0, 3).map(g => g.id))
+        console.log('[Glamps Page] ✅ Transformed glamps preview:', 
+          transformedGlamps.slice(0, 2).map(g => ({
+            id: g.id.substring(0, 8) + '...',
+            name: g.name,
+            image: g.image,
+            capacity: g.capacity
+          }))
+        )
         
         // Final safety check
         if (transformedGlamps.length === 0) {
