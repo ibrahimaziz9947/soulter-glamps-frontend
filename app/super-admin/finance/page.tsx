@@ -209,7 +209,7 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Total Revenue</h3>
             <p className="font-serif text-3xl font-bold text-green">
-              {formatCurrency(financeSummary.profitLoss?.revenueCents ?? 0)}
+              {formatCurrency(financeSummary.totals?.totalRevenueCents ?? financeSummary.profitLoss?.revenueCents ?? 0)}
             </p>
           </div>
 
@@ -221,7 +221,7 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Total Expenses</h3>
             <p className="font-serif text-3xl font-bold text-red-500">
-              {formatCurrency(financeSummary.profitLoss?.expenseCents ?? 0)}
+              {formatCurrency(financeSummary.totals?.totalExpensesCents ?? financeSummary.profitLoss?.expenseCents ?? 0)}
             </p>
           </div>
 
@@ -233,9 +233,9 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Net Profit</h3>
             <p className={`font-serif text-3xl font-bold ${
-              (financeSummary.profitLoss?.profitCents ?? 0) >= 0 ? 'text-green' : 'text-red-500'
+              (financeSummary.totals?.netProfitCents ?? financeSummary.profitLoss?.profitCents ?? 0) >= 0 ? 'text-green' : 'text-red-500'
             }`}>
-              {formatCurrency(financeSummary.profitLoss?.profitCents ?? 0)}
+              {formatCurrency(financeSummary.totals?.netProfitCents ?? financeSummary.profitLoss?.profitCents ?? 0)}
             </p>
           </div>
 
@@ -247,9 +247,9 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Open Payables</h3>
             <p className="font-serif text-3xl font-bold text-orange-500">
-              {formatCurrency(financeSummary.payables?.openAmountCents ?? 0)}
+              {formatCurrency(financeSummary.openPayables?.amountCents ?? financeSummary.payables?.openAmountCents ?? 0)}
             </p>
-            <p className="text-sm text-text-light mt-1">{financeSummary.payables?.openCount ?? 0} items</p>
+            <p className="text-sm text-text-light mt-1">{financeSummary.openPayables?.count ?? financeSummary.payables?.openCount ?? 0} items</p>
           </div>
         </div>
       )}
@@ -307,10 +307,10 @@ export default function SuperAdminFinancePage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-text-dark text-sm">
-                      {entry.category || 'N/A'}
+                      {entry.categoryLabel || entry.category || entry.type.toLowerCase()}
                     </td>
                     <td className="py-4 px-6 text-text-dark">
-                      {entry.description}
+                      {entry.description || entry.title || entry.reference || entry.vendorName || '—'}
                     </td>
                     <td className="py-4 px-6 font-semibold">
                       <span className={

@@ -10,12 +10,23 @@ import { apiClient } from './apiClient'
 ========================= */
 
 export interface SuperAdminFinanceSummary {
-  profitLoss: {
+  totals: {
+    totalRevenueCents: number
+    totalExpensesCents: number
+    netProfitCents: number
+  }
+  openPayables: {
+    amountCents: number
+    count: number
+  }
+  recentLedgerEntries: FinanceEntry[]
+  // Legacy fields for backward compatibility
+  profitLoss?: {
     revenueCents: number
     expenseCents: number
     profitCents: number
   }
-  payables: {
+  payables?: {
     openCount: number
     openAmountCents: number
   }
@@ -23,7 +34,7 @@ export interface SuperAdminFinanceSummary {
     totalEntries: number
     latestEntries: FinanceEntry[]
   }
-  latestEntries?: FinanceEntry[] // Fallback for backward compatibility
+  latestEntries?: FinanceEntry[]
 }
 
 export interface FinanceEntry {
@@ -31,8 +42,13 @@ export interface FinanceEntry {
   date: string
   type: 'INCOME' | 'EXPENSE' | 'PAYABLE' | 'PURCHASE'
   category?: string
-  description: string
+  categoryLabel?: string
+  description?: string
+  title?: string
+  reference?: string
+  vendorName?: string
   amountCents: number
+  currency?: string
   status?: string
   createdAt: string
 }
@@ -82,37 +98,39 @@ export async function getSuperAdminFinanceSummary(params?: {
     throw new Error('Super Admin Finance API returned no data')
   }
   
-  // Normalize the response structure to handle different backend formats
+  // Normalize the response structure to handle both new and legacy backend formats
   const rawData = response.data
   
-  // Ensure profitLoss exists with defaults
-  const profitLoss = rawData.profitLoss || {
-    revenueCents: 0,
-    expenseCents: 0,
-    profitCents: 0
+  // Primary structure: new format
+  const totals = rawData.totals || {
+    totalRevenueCents: rawData.profitLoss?.revenueCents || 0,
+    totalExpensesCents: rawData.profitLoss?.expenseCents || 0,
+    netProfitCents: rawData.profitLoss?.profitCents || 0
   }
   
-  // Ensure payables exists with defaults
-  const payables = rawData.payables || {
-    openCount: 0,
-    openAmountCents: 0
+  const openPayables = rawData.openPayables || {
+    amountCents: rawData.payables?.openAmountCents || 0,
+    count: rawData.payables?.openCount || 0
   }
   
-  // Handle ledger entries - could be in ledger.latestEntries or latestEntries directly
-  let latestEntries: FinanceEntry[] = []
-  if (rawData.ledger?.latestEntries && Array.isArray(rawData.ledger.latestEntries)) {
-    latestEntries = rawData.ledger.latestEntries
+  // Handle ledger entries - try multiple possible locations
+  let recentLedgerEntries: FinanceEntry[] = []
+  if (rawData.recentLedgerEntries && Array.isArray(rawData.recentLedgerEntries)) {
+    recentLedgerEntries = rawData.recentLedgerEntries
+  } else if (rawData.ledger?.latestEntries && Array.isArray(rawData.ledger.latestEntries)) {
+    recentLedgerEntries = rawData.ledger.latestEntries
   } else if (rawData.latestEntries && Array.isArray(rawData.latestEntries)) {
-    latestEntries = rawData.latestEntries
+    recentLedgerEntries = rawData.latestEntries
   }
   
   return {
-    profitLoss,
-    payables,
-    ledger: rawData.ledger || {
-      totalEntries: latestEntries.length,
-      latestEntries
-    },
-    latestEntries // Keep for backward compatibility
+    totals,
+    openPayables,
+    recentLedgerEntries,
+    // Keep legacy fields for backward compatibility
+    profitLoss: rawData.profitLoss,
+    payables: rawData.payables,
+    ledger: rawData.ledger,
+    latestEntries: recentLedgerEntries
   }
 }
