@@ -500,6 +500,11 @@ export async function getBookingById(
 // Availability Check
 export interface AvailabilityResponse {
   success: boolean
+  data?: {
+    available: boolean
+    conflictingCount?: number
+    conflicts?: any[]
+  }
   available?: boolean
   message?: string
   error?: string
@@ -552,9 +557,13 @@ export async function checkAvailability(
       }
     }
 
+    // Handle both response formats: { data: { available } } or { available }
+    const available = data.data?.available ?? data.available ?? false
+    
     return {
       success: true,
-      available: data.available,
+      data: data.data,
+      available: available,
       message: data.message,
     }
   } catch (error) {

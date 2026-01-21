@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getGlamps, type Glamp } from '@/src/services/glamps.api'
@@ -15,6 +15,7 @@ export default function AddBookingPage() {
   const [checkingAvailability, setCheckingAvailability] = useState(false)
   const [isAvailable, setIsAvailable] = useState(true)
   const [availabilityChecked, setAvailabilityChecked] = useState(false)
+  const availabilityRequestId = useRef(0)
   
   const [formData, setFormData] = useState({
     glampId: '',
@@ -63,17 +64,33 @@ export default function AddBookingPage() {
       return
     }
 
+    // Increment request ID to track latest request
+    availabilityRequestId.current += 1
+    const currentRequestId = availabilityRequestId.current
+
+    // Reset state before checking
+    setIsAvailable(true)
     setCheckingAvailability(true)
     setAvailabilityChecked(false)
 
     try {
       const result = await checkAvailability(glampId, checkIn, checkOut)
       
+      // Ignore stale responses
+      if (currentRequestId !== availabilityRequestId.current) {
+        console.log('[Add Booking] Ignoring stale availability response')
+        return
+      }
+      
       if (result.success) {
-        setIsAvailable(result.available || false)
+        const available = result.available ?? false
+        console.log('[Add Booking] Availability result:', { available, result })
+        
+        setIsAvailable(available)
         setAvailabilityChecked(true)
         
-        if (!result.available) {
+        // Only show toast if NOT available
+        if (!available) {
           setToast({ 
             message: 'Not available for selected dates', 
             type: 'error' 
@@ -90,7 +107,10 @@ export default function AddBookingPage() {
       setIsAvailable(true)
       setAvailabilityChecked(false)
     } finally {
-      setCheckingAvailability(false)
+      // Only update if still the latest request
+      if (currentRequestId === availabilityRequestId.current) {
+        setCheckingAvailability(false)
+      }
     }
   }, [])
 
