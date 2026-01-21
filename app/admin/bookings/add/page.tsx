@@ -58,11 +58,30 @@ export default function AddBookingPage() {
 
   // Debounced availability check
   const checkDatesAvailability = useCallback(async (glampId: string, checkIn: string, checkOut: string) => {
+    // Validate all required fields exist
     if (!glampId || !checkIn || !checkOut) {
       setIsAvailable(true)
       setAvailabilityChecked(false)
       return
     }
+
+    // Validate checkOut is after checkIn (prevent invalid API calls)
+    const checkInDate = new Date(checkIn)
+    const checkOutDate = new Date(checkOut)
+    if (checkOutDate <= checkInDate) {
+      console.log('[Add Booking] Invalid dates: checkOut must be after checkIn', { checkIn, checkOut })
+      setIsAvailable(true)
+      setAvailabilityChecked(false)
+      return
+    }
+
+    // Log the dates being checked
+    console.log('[Add Booking] Checking availability with dates:', {
+      glampId,
+      checkIn,
+      checkOut,
+      nights: Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))
+    })
 
     // Increment request ID to track latest request
     availabilityRequestId.current += 1
@@ -97,10 +116,19 @@ export default function AddBookingPage() {
           })
         }
       } else {
+        // Handle 400 or other errors - treat as validation issue, not unavailability
         console.error('[Add Booking] Availability check failed:', result.error)
-        // Don't block on availability check failure
+        // Don't block on availability check failure (might be 400 validation error)
         setIsAvailable(true)
         setAvailabilityChecked(false)
+        
+        // Show validation error toast if it's a 400-type error
+        if (result.error && result.error.includes('date')) {
+          setToast({ 
+            message: result.error, 
+            type: 'error' 
+          })
+        }
       }
     } catch (error) {
       console.error('[Add Booking] Availability check error:', error)
@@ -137,6 +165,45 @@ export default function AddBookingPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  // Custom handler for check-in date changes
+  const handleCheckInChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCheckIn = e.target.value
+    
+    // Clear availability state when date changes
+    setIsAvailable(true)
+    setAvailabilityChecked(false)
+    
+    setFormData(prev => {
+      const updates: any = { checkIn: newCheckIn }
+      
+      // If checkOut exists and is <= new checkIn, auto-adjust checkOut to checkIn + 1 day
+      if (prev.checkOut && newCheckIn) {
+        const checkInDate = new Date(newCheckIn)
+        const checkOutDate = new Date(prev.checkOut)
+        
+        if (checkOutDate <= checkInDate) {
+          const nextDay = new Date(checkInDate)
+          nextDay.setDate(nextDay.getDate() + 1)
+          updates.checkOut = nextDay.toISOString().split('T')[0]
+          console.log('[Add Booking] Auto-adjusted checkOut to:', updates.checkOut)
+        }
+      }
+      
+      return { ...prev, ...updates }
+    })
+  }
+
+  // Custom handler for check-out date changes
+  const handleCheckOutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCheckOut = e.target.value
+    
+    // Clear availability state when date changes
+    setIsAvailable(true)
+    setAvailabilityChecked(false)
+    
+    setFormData(prev => ({ ...prev, checkOut: newCheckOut }))
   }
 
   const handleAddOnToggle = (addOnId: string) => {
@@ -317,7 +384,7 @@ export default function AddBookingPage() {
                   type="date"
                   name="checkIn"
                   value={formData.checkIn}
-                  onChange={handleChange}
+                  onChange={handleCheckInChange}
                   required
                   disabled={isSubmitting}
                   min={new Date().toISOString().split('T')[0]}
@@ -333,10 +400,14 @@ export default function AddBookingPage() {
                   type="date"
                   name="checkOut"
                   value={formData.checkOut}
-                  onChange={handleChange}
+                  onChange={handleCheckOutChange}
                   required
                   disabled={isSubmitting}
-                  min={formData.checkIn || new Date().toISOString().split('T')[0]}
+                  min={formData.checkIn ? (() => {
+                    const minDate = new Date(formData.checkIn)
+                    minDate.setDate(minDate.getDate() + 1)
+                    return minDate.toISOString().split('T')[0]
+                  })() : new Date().toISOString().split('T')[0]}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-50"
                 />
               </div>

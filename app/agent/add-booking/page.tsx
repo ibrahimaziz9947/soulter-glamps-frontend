@@ -57,11 +57,30 @@ export default function AddBooking() {
 
   // Debounced availability check
   const checkDatesAvailability = useCallback(async (glampId: string, checkIn: string, checkOut: string) => {
+    // Validate all required fields exist
     if (!glampId || !checkIn || !checkOut) {
       setIsAvailable(true)
       setAvailabilityChecked(false)
       return
     }
+
+    // Validate checkOut is after checkIn (prevent invalid API calls)
+    const checkInDate = new Date(checkIn)
+    const checkOutDate = new Date(checkOut)
+    if (checkOutDate <= checkInDate) {
+      console.log('[Agent Add Booking] Invalid dates: checkOut must be after checkIn', { checkIn, checkOut })
+      setIsAvailable(true)
+      setAvailabilityChecked(false)
+      return
+    }
+
+    // Log the dates being checked
+    console.log('[Agent Add Booking] Checking availability with dates:', {
+      glampId,
+      checkIn,
+      checkOut,
+      nights: Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))
+    })
 
     // Increment request ID to track latest request
     availabilityRequestId.current += 1
@@ -93,8 +112,16 @@ export default function AddBooking() {
           setToast({ message: 'Not available for selected dates', type: 'error' })
         }
       } else {
+        // Handle 400 or other errors - treat as validation issue, not unavailability
+        console.error('[Agent Add Booking] Availability check failed:', result.error)
+        // Don't block on availability check failure (might be 400 validation error)
         setIsAvailable(true)
         setAvailabilityChecked(false)
+        
+        // Show validation error toast if it's a 400-type error
+        if (result.error && result.error.includes('date')) {
+          setToast({ message: result.error, type: 'error' })
+        }
       }
     } catch (error) {
       setIsAvailable(true)
@@ -240,7 +267,26 @@ export default function AddBooking() {
                 type="date"
                 required
                 value={formData.checkIn}
-                onChange={e => setFormData({ ...formData, checkIn: e.target.value })}
+                onChange={e => {
+                  const newCheckIn = e.target.value
+                  // Clear availability state
+                  setIsAvailable(true)
+                  setAvailabilityChecked(false)
+                  
+                  // Auto-adjust checkOut if needed
+                  if (formData.checkOut && newCheckIn) {
+                    const checkInDate = new Date(newCheckIn)
+                    const checkOutDate = new Date(formData.checkOut)
+                    if (checkOutDate <= checkInDate) {
+                      const nextDay = new Date(checkInDate)
+                      nextDay.setDate(nextDay.getDate() + 1)
+                      setFormData({ ...formData, checkIn: newCheckIn, checkOut: nextDay.toISOString().split('T')[0] })
+                      console.log('[Agent Add Booking] Auto-adjusted checkOut')
+                      return
+                    }
+                  }
+                  setFormData({ ...formData, checkIn: newCheckIn })
+                }}
                 min={new Date().toISOString().split('T')[0]}
                 className="w-full px-4 py-3 border-2 rounded-lg"
               />
@@ -251,8 +297,17 @@ export default function AddBooking() {
                 type="date"
                 required
                 value={formData.checkOut}
-                onChange={e => setFormData({ ...formData, checkOut: e.target.value })}
-                min={formData.checkIn || new Date().toISOString().split('T')[0]}
+                onChange={e => {
+                  // Clear availability state
+                  setIsAvailable(true)
+                  setAvailabilityChecked(false)
+                  setFormData({ ...formData, checkOut: e.target.value })
+                }}
+                min={formData.checkIn ? (() => {
+                  const minDate = new Date(formData.checkIn)
+                  minDate.setDate(minDate.getDate() + 1)
+                  return minDate.toISOString().split('T')[0]
+                })() : new Date().toISOString().split('T')[0]}
                 className="w-full px-4 py-3 border-2 rounded-lg"
               />
             </div>
