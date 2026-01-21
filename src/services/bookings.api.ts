@@ -496,3 +496,72 @@ export async function getBookingById(
     }
   }
 }
+
+// Availability Check
+export interface AvailabilityResponse {
+  success: boolean
+  available?: boolean
+  message?: string
+  error?: string
+}
+
+export async function checkAvailability(
+  glampId: string,
+  checkIn: string,
+  checkOut: string
+): Promise<AvailabilityResponse> {
+  console.log('[bookings.api] Checking availability:', { glampId, checkIn, checkOut })
+
+  const baseUrl = getApiBaseUrl()
+  if (!baseUrl) {
+    return {
+      success: false,
+      error: 'Booking service is currently unavailable',
+    }
+  }
+
+  if (!glampId || !checkIn || !checkOut) {
+    return {
+      success: false,
+      error: 'Missing required parameters',
+    }
+  }
+
+  try {
+    const params = new URLSearchParams({
+      glampId,
+      checkIn,
+      checkOut,
+    })
+
+    const response = await fetch(`${baseUrl}/api/bookings/availability?${params}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    })
+
+    const data = await response.json()
+    console.log('[bookings.api] Availability response:', data)
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.error || `HTTP ${response.status}`,
+      }
+    }
+
+    return {
+      success: true,
+      available: data.available,
+      message: data.message,
+    }
+  } catch (error) {
+    console.error('[bookings.api] Network error:', error)
+    return {
+      success: false,
+      error: 'Unable to reach booking server',
+    }
+  }
+}
