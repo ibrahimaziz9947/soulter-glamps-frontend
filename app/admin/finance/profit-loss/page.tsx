@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
 
 interface ProfitLossSummary {
@@ -308,14 +308,9 @@ export default function ProfitLossPage() {
     return Number.isFinite(num) ? num : 0
   }
 
-  // Format currency using Intl.NumberFormat for breakdown tables
-  const formatBreakdownCurrency = (amountCents: number): string => {
-    const amount = amountCents / 100
-    const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount)
-    return `PKR ${formatted}`
+  // Format currency for breakdown tables
+  const formatBreakdownCurrency = (amount: number): string => {
+    return formatMoney(amount)
   }
 
   return (
@@ -473,13 +468,25 @@ export default function ProfitLossPage() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Total Income</p>
               <p className="font-serif text-3xl font-bold text-green">
-                {formatCurrency(safeNum(summary.totalIncome))}
+                {(() => {
+                  const amount = safeNum(summary.totalIncome);
+                  console.log('[P&L] Raw totalIncome:', amount);
+                  const formatted = formatMoney(amount);
+                  console.log('[P&L] Formatted totalIncome:', formatted);
+                  return formatted;
+                })()}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Total Expenses</p>
               <p className="font-serif text-3xl font-bold text-orange-600">
-                {formatCurrency(safeNum(summary.totalExpenses))}
+                {(() => {
+                  const amount = safeNum(summary.totalExpenses);
+                  console.log('[P&L] Raw totalExpenses:', amount, 'Mode:', expenseMode);
+                  const formatted = formatMoney(amount);
+                  console.log('[P&L] Formatted totalExpenses:', formatted);
+                  return formatted;
+                })()}
               </p>
               <div className="mt-2 space-y-1">
                 <p className="text-xs text-gray-600">
@@ -498,7 +505,13 @@ export default function ProfitLossPage() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Total Purchases (Costs)</p>
               <p className="font-serif text-3xl font-bold text-red-600">
-                {formatCurrency(safeNum(summary.totalPurchases))}
+                {(() => {
+                  const amount = safeNum(summary.totalPurchases);
+                  console.log('[P&L] Raw totalPurchases:', amount);
+                  const formatted = formatMoney(amount);
+                  console.log('[P&L] Formatted totalPurchases:', formatted);
+                  return formatted;
+                })()}
               </p>
             </div>
             <div className={`bg-white rounded-lg shadow-lg p-6 ${
@@ -508,7 +521,13 @@ export default function ProfitLossPage() {
               <p className={`font-serif text-3xl font-bold ${
                 summary.netProfit >= 0 ? 'text-green' : 'text-red-600'
               }`}>
-                {formatCurrency(safeNum(summary.netProfit))}
+                {(() => {
+                  const amount = safeNum(summary.netProfit);
+                  console.log('[P&L] Raw netProfit:', amount);
+                  const formatted = formatMoney(amount);
+                  console.log('[P&L] Formatted netProfit:', formatted);
+                  return formatted;
+                })()}
               </p>
             </div>
           </>
@@ -711,7 +730,7 @@ export default function ProfitLossPage() {
                 </div>
               </div>
               <p className="font-serif text-2xl font-bold text-green">
-                {formatCurrency(safeNum(summary.totalIncome))}
+                {formatMoney(safeNum(summary.totalIncome))}
               </p>
             </div>
 
@@ -729,7 +748,7 @@ export default function ProfitLossPage() {
                 </div>
               </div>
               <p className="font-serif text-2xl font-bold text-orange-600">
-                {formatCurrency(safeNum(summary.totalExpenses))}
+                {formatMoney(safeNum(summary.totalExpenses))}
               </p>
             </div>
 
@@ -747,7 +766,7 @@ export default function ProfitLossPage() {
                 </div>
               </div>
               <p className="font-serif text-2xl font-bold text-red-600">
-                {formatCurrency(safeNum(summary.totalPurchases))}
+                {formatMoney(safeNum(summary.totalPurchases))}
               </p>
             </div>
 
@@ -773,7 +792,7 @@ export default function ProfitLossPage() {
               <p className={`font-serif text-3xl font-bold ${
                 summary.netProfit >= 0 ? 'text-green' : 'text-red-600'
               }`}>
-                {summary.netProfit >= 0 ? '+' : ''}{formatCurrency(safeNum(summary.netProfit))}
+                {summary.netProfit >= 0 ? '+' : ''}{formatMoney(safeNum(summary.netProfit))}
               </p>
             </div>
           </div>

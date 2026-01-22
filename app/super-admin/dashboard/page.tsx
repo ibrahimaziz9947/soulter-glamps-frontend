@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSuperAdminDashboardSummary, type SuperAdminDashboardSummary } from '@/src/services/super-admin-dashboard.api';
-import { formatRawCurrency, formatCurrency } from '@/src/utils/currency';
+import { formatRawCurrency, formatMoney } from '@/src/utils/currency';
 
 export default function SuperAdminDashboard() {
   // ...existing code...
@@ -107,21 +107,39 @@ function DashboardContent() {
     },
     { 
       label: 'Finance Income (Ledger)', 
-      value: formatCurrency(dashboardData.financeSnapshot?.totalIncomeCents ?? 0), 
+      value: (() => {
+        const amount = dashboardData.financeSnapshot?.totalIncomeCents ?? 0;
+        console.log('[Super-Admin Dashboard] Finance Income raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Super-Admin Dashboard] Finance Income formatted:', formatted);
+        return formatted;
+      })(), 
       change: 'From finance P&L snapshot', 
       icon: '📈', 
       color: 'bg-blue-500' 
     },
     { 
       label: 'Finance Costs (Ledger)', 
-      value: formatCurrency(dashboardData.financeSnapshot?.totalExpensesCents ?? 0), 
+      value: (() => {
+        const amount = dashboardData.financeSnapshot?.totalExpensesCents ?? 0;
+        console.log('[Super-Admin Dashboard] Finance Costs raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Super-Admin Dashboard] Finance Costs formatted:', formatted);
+        return formatted;
+      })(), 
       change: 'From finance P&L snapshot', 
       icon: '💸', 
       color: 'bg-red-500' 
     },
     { 
       label: 'Finance Net Profit (Ledger)', 
-      value: formatCurrency(dashboardData.financeSnapshot?.netProfitCents ?? 0), 
+      value: (() => {
+        const amount = dashboardData.financeSnapshot?.netProfitCents ?? 0;
+        console.log('[Super-Admin Dashboard] Finance Net Profit raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Super-Admin Dashboard] Finance Net Profit formatted:', formatted);
+        return formatted;
+      })(), 
       change: 'From finance P&L snapshot', 
       icon: '💵', 
       color: 'bg-green' 

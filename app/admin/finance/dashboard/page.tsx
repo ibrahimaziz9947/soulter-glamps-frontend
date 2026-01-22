@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { fetchFinanceDashboard, type FinanceDashboardData } from '@/src/services/finance.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 export default function FinanceDashboard() {
   const [dashboardData, setDashboardData] = useState<FinanceDashboardData | null>(null)
@@ -137,39 +137,75 @@ export default function FinanceDashboard() {
   
   // Generate summary cards from API data
   const summaryCards = dashboardData ? [
-    { 
-      label: 'Total Income', 
-      value: formatCurrency(dashboardData.kpis.totalIncomeCents), 
+    {
+      label: 'Total Income',
+      value: (() => {
+        const amount = dashboardData.kpis.totalIncomeCents;
+        console.log('[Finance Dashboard] Total Income raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Finance Dashboard] Total Income formatted:', formatted);
+        return formatted;
+      })(),
       icon: '💰', 
       color: 'bg-green' 
     },
-    { 
-      label: 'Total Expenses', 
-      value: formatCurrency(dashboardData.kpis.totalExpensesCents), 
+    {
+      label: 'Total Expenses',
+      value: (() => {
+        const amount = dashboardData.kpis.totalExpensesCents;
+        console.log('[Finance Dashboard] Total Expenses raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Finance Dashboard] Total Expenses formatted:', formatted);
+        return formatted;
+      })(),
       icon: '💸', 
       color: 'bg-red-500' 
     },
-    { 
-      label: 'Net Profit', 
-      value: formatCurrency(dashboardData.kpis.netProfitCents), 
+    {
+      label: 'Net Profit',
+      value: (() => {
+        const amount = dashboardData.kpis.netProfitCents;
+        console.log('[Finance Dashboard] Net Profit raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Finance Dashboard] Net Profit formatted:', formatted);
+        return formatted;
+      })(),
       icon: '📈', 
       color: 'bg-yellow' 
     },
-    { 
-      label: 'Pending Payables', 
-      value: formatCurrency(dashboardData.kpis.pendingPayablesCents), 
+    {
+      label: 'Pending Payables',
+      value: (() => {
+        const amount = dashboardData.kpis.pendingPayablesCents;
+        console.log('[Finance Dashboard] Pending Payables raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Finance Dashboard] Pending Payables formatted:', formatted);
+        return formatted;
+      })(),
       icon: '⏰', 
       color: 'bg-orange-500' 
     },
-    { 
-      label: 'Net Cash Flow', 
-      value: formatCurrency(dashboardData.kpis.netCashFlowCents ?? 0), 
+    {
+      label: 'Net Cash Flow',
+      value: (() => {
+        const amount = dashboardData.kpis.netCashFlowCents ?? 0;
+        console.log('[Finance Dashboard] Net Cash Flow raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Finance Dashboard] Net Cash Flow formatted:', formatted);
+        return formatted;
+      })(),
       icon: '💵', 
       color: 'bg-blue-500' 
     },
-    { 
-      label: 'Inventory Value', 
-      value: formatCurrency(dashboardData.kpis.inventoryValueCents ?? 0), 
+    {
+      label: 'Inventory Value',
+      value: (() => {
+        const amount = dashboardData.kpis.inventoryValueCents ?? 0;
+        console.log('[Finance Dashboard] Inventory Value raw:', amount);
+        const formatted = formatMoney(amount);
+        console.log('[Finance Dashboard] Inventory Value formatted:', formatted);
+        return formatted;
+      })(),
       icon: '📦', 
       color: 'bg-purple-500' 
     },

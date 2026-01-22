@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/src/services/apiClient'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 interface Income {
   id: string
@@ -410,7 +410,12 @@ export default function IncomePage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Income</p>
             <p className="font-serif text-3xl font-bold text-green">
-              {formatCurrency(computedSummary.totalIncome)}
+              {(() => {
+                console.log('[Income Summary] Raw totalIncome:', computedSummary.totalIncome);
+                const formatted = formatMoney(computedSummary.totalIncome);
+                console.log('[Income Summary] Formatted display:', formatted);
+                return formatted;
+              })()}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
@@ -657,7 +662,13 @@ export default function IncomePage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 font-semibold text-green">
-                      {formatCurrency(Number(inc.amount || 0))}
+                      {(() => {
+                        const amount = Number(inc.amount || 0);
+                        console.log(`[Income Row ${inc.id}] Raw amount:`, amount, 'Currency:', inc.currency);
+                        const formatted = formatMoney(amount, inc.currency || 'PKR');
+                        console.log(`[Income Row ${inc.id}] Formatted:`, formatted);
+                        return formatted;
+                      })()}
                     </td>
                     <td className="py-4 px-6 text-text-light text-sm uppercase">
                       {inc.currency || 'PKR'}

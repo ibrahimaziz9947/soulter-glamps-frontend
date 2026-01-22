@@ -1,9 +1,11 @@
 /**
  * Currency Utilities
- * Handles currency formatting and conversion between cents (backend) and display values (frontend)
+ * Handles currency formatting for monetary values
  * 
- * IMPORTANT: Backend stores amounts as integers in cents (e.g., 12345 = PKR 123.45)
- * Frontend displays as decimal strings (e.g., "123.45")
+ * IMPORTANT: Most backend fields return amounts in BASE UNITS (not cents), despite field names like "amountCents"
+ * - 125000 = PKR 125,000.00 (NOT PKR 1,250.00)
+ * - Use formatMoney() for base units (default)
+ * - Use formatMoneyFromCents() ONLY for true cents fields (rare)
  */
 
 /* =========================
@@ -76,6 +78,62 @@ export function safeParseFloat(input: string | number | null | undefined): numbe
 ========================= */
 
 /**
+ * Format amount in base currency units (DEFAULT - use this in most cases)
+ * Does NOT divide by 100 - treats input as actual PKR/USD value
+ * @param amount - Amount in base units (e.g., 125000 = PKR 125,000.00)
+ * @param currency - Currency code (default: "PKR")
+ * @param options - Formatting options
+ * @returns Formatted currency string
+ * 
+ * @example
+ * formatMoney(125000) // "PKR 125,000.00"
+ * formatMoney(61000) // "PKR 61,000.00"
+ * formatMoney(154750) // "PKR 154,750.00"
+ * formatMoney(1250, "USD") // "USD 1,250.00"
+ */
+export function formatMoney(
+  amount: number | null | undefined,
+  currency: string = 'PKR',
+  options?: { includeCurrency?: boolean }
+): string {
+  if (amount == null || isNaN(amount)) {
+    amount = 0
+  }
+  
+  const formatted = amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  
+  const includeCurrency = options?.includeCurrency !== false
+  return includeCurrency ? `${currency} ${formatted}` : formatted
+}
+
+/**
+ * Format amount from cents (ONLY for true cents fields)
+ * Divides by 100 before formatting
+ * @param cents - Amount in cents (e.g., 12345 = PKR 123.45)
+ * @param currency - Currency code (default: "PKR")
+ * @returns Formatted currency string
+ * 
+ * @example
+ * formatMoneyFromCents(12345) // "PKR 123.45"
+ * formatMoneyFromCents(500000) // "PKR 5,000.00"
+ */
+export function formatMoneyFromCents(
+  cents: number | null | undefined,
+  currency: string = 'PKR'
+): string {
+  if (cents == null || isNaN(cents)) {
+    cents = 0
+  }
+  
+  const amount = cents / 100
+  return formatMoney(amount, currency)
+}
+
+/**
+ * @deprecated Use formatMoney() instead - most fields are in base units, not cents
  * Format cents as currency with PKR prefix and thousands separators
  * @param amountCents - Amount in cents (integer)
  * @param includeCurrency - Whether to include "PKR" prefix (default: true)
@@ -102,6 +160,7 @@ export function formatCurrency(
 }
 
 /**
+ * @deprecated Use formatMoney() instead
  * Format raw amount (not in cents) as currency
  * Use this when the API returns whole units (e.g., 61000 = PKR 61000, not PKR 610)
  * @param amount - Amount in whole currency units
@@ -116,16 +175,7 @@ export function formatRawCurrency(
   amount: number | null | undefined,
   includeCurrency: boolean = true
 ): string {
-  if (amount == null || isNaN(amount)) {
-    amount = 0
-  }
-  
-  const formatted = amount.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-  
-  return includeCurrency ? `PKR ${formatted}` : formatted
+  return formatMoney(amount, 'PKR', { includeCurrency })
 }
 
 /**

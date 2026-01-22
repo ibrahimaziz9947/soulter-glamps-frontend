@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getSuperAdminFinanceSummary, type SuperAdminFinanceSummary } from '@/src/services/super-admin-finance.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 export default function SuperAdminFinancePage() {
   // State
@@ -209,7 +209,13 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Total Revenue</h3>
             <p className="font-serif text-3xl font-bold text-green">
-              {formatCurrency(financeSummary.totals?.totalRevenueCents ?? financeSummary.profitLoss?.revenueCents ?? 0)}
+              {(() => {
+                const amount = financeSummary.totals?.totalRevenueCents ?? financeSummary.profitLoss?.revenueCents ?? 0;
+                console.log('[Super-Admin Finance] Raw revenue:', amount);
+                const formatted = formatMoney(amount);
+                console.log('[Super-Admin Finance] Formatted revenue:', formatted);
+                return formatted;
+              })()}
             </p>
           </div>
 
@@ -221,7 +227,13 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Total Expenses</h3>
             <p className="font-serif text-3xl font-bold text-red-500">
-              {formatCurrency(financeSummary.totals?.totalExpensesCents ?? financeSummary.profitLoss?.expenseCents ?? 0)}
+              {(() => {
+                const amount = financeSummary.totals?.totalExpensesCents ?? financeSummary.profitLoss?.expenseCents ?? 0;
+                console.log('[Super-Admin Finance] Raw expenses:', amount);
+                const formatted = formatMoney(amount);
+                console.log('[Super-Admin Finance] Formatted expenses:', formatted);
+                return formatted;
+              })()}
             </p>
           </div>
 
@@ -235,7 +247,13 @@ export default function SuperAdminFinancePage() {
             <p className={`font-serif text-3xl font-bold ${
               (financeSummary.totals?.netProfitCents ?? financeSummary.profitLoss?.profitCents ?? 0) >= 0 ? 'text-green' : 'text-red-500'
             }`}>
-              {formatCurrency(financeSummary.totals?.netProfitCents ?? financeSummary.profitLoss?.profitCents ?? 0)}
+              {(() => {
+                const amount = financeSummary.totals?.netProfitCents ?? financeSummary.profitLoss?.profitCents ?? 0;
+                console.log('[Super-Admin Finance] Raw profit:', amount);
+                const formatted = formatMoney(amount);
+                console.log('[Super-Admin Finance] Formatted profit:', formatted);
+                return formatted;
+              })()}
             </p>
           </div>
 
@@ -247,7 +265,13 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Open Payables</h3>
             <p className="font-serif text-3xl font-bold text-orange-500">
-              {formatCurrency(financeSummary.openPayables?.amountCents ?? financeSummary.payables?.openAmountCents ?? 0)}
+              {(() => {
+                const amount = financeSummary.openPayables?.amountCents ?? financeSummary.payables?.openAmountCents ?? 0;
+                console.log('[Super-Admin Finance] Raw payables:', amount);
+                const formatted = formatMoney(amount);
+                console.log('[Super-Admin Finance] Formatted payables:', formatted);
+                return formatted;
+              })()}
             </p>
             <p className="text-sm text-text-light mt-1">{financeSummary.openPayables?.count ?? financeSummary.payables?.openCount ?? 0} items</p>
           </div>
@@ -320,7 +344,13 @@ export default function SuperAdminFinancePage() {
                           ? 'text-red-500'
                           : 'text-text-dark'
                       }>
-                        {formatCurrency(entry.amountCents ?? 0)}
+                        {(() => {
+                          const amount = entry.amountCents ?? 0;
+                          console.log(`[Super-Admin Finance Ledger] Entry ${entry.id} raw amount:`, amount, 'Type:', entry.type);
+                          const formatted = formatMoney(amount);
+                          console.log(`[Super-Admin Finance Ledger] Entry ${entry.id} formatted:`, formatted);
+                          return formatted;
+                        })()}
                       </span>
                     </td>
                     <td className="py-4 px-6">
