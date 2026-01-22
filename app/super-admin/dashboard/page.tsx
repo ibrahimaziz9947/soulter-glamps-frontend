@@ -39,8 +39,16 @@ function DashboardContent() {
       
       const data = await getSuperAdminDashboardSummary({ from, to });
       
-      console.log('[Super Admin Dashboard] API Response:', data);
-      console.log('[Super Admin Dashboard] Finance Snapshot:', data?.financeSnapshot);
+      console.log('========================================');
+      console.log('[Super Admin Dashboard] FULL API Response:', JSON.stringify(data, null, 2));
+      console.log('========================================');
+      console.log('[Super Admin Dashboard] Finance Snapshot Object:', data?.financeSnapshot);
+      console.log('[Super Admin Dashboard] Finance Snapshot Keys:', data?.financeSnapshot ? Object.keys(data.financeSnapshot) : 'N/A');
+      console.log('[Super Admin Dashboard] financeSnapshot.revenueCents =', data?.financeSnapshot?.revenueCents);
+      console.log('[Super Admin Dashboard] financeSnapshot.expenseCents =', data?.financeSnapshot?.expenseCents);
+      console.log('[Super Admin Dashboard] financeSnapshot.profitCents =', data?.financeSnapshot?.profitCents);
+      console.log('[Super Admin Dashboard] All Response Top-Level Keys:', Object.keys(data));
+      console.log('========================================');
       
       setDashboardData(data);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
