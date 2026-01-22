@@ -21,9 +21,9 @@ export interface SuperAdminDashboardSummary {
     amountCents: number
   }
   financeSnapshot: {
-    revenueCents: number
-    expenseCents: number
-    profitCents: number
+    totalIncomeCents: number
+    totalExpensesCents: number
+    netProfitCents: number
   }
   systemHealth: {
     ok: boolean

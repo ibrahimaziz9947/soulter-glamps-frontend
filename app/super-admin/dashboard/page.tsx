@@ -39,16 +39,8 @@ function DashboardContent() {
       
       const data = await getSuperAdminDashboardSummary({ from, to });
       
-      console.log('========================================');
-      console.log('[Super Admin Dashboard] FULL API Response:', JSON.stringify(data, null, 2));
-      console.log('========================================');
-      console.log('[Super Admin Dashboard] Finance Snapshot Object:', data?.financeSnapshot);
-      console.log('[Super Admin Dashboard] Finance Snapshot Keys:', data?.financeSnapshot ? Object.keys(data.financeSnapshot) : 'N/A');
-      console.log('[Super Admin Dashboard] financeSnapshot.revenueCents =', data?.financeSnapshot?.revenueCents);
-      console.log('[Super Admin Dashboard] financeSnapshot.expenseCents =', data?.financeSnapshot?.expenseCents);
-      console.log('[Super Admin Dashboard] financeSnapshot.profitCents =', data?.financeSnapshot?.profitCents);
-      console.log('[Super Admin Dashboard] All Response Top-Level Keys:', Object.keys(data));
-      console.log('========================================');
+      console.log('[Super Admin Dashboard] API Response:', data);
+      console.log('[Super Admin Dashboard] Finance Snapshot:', data?.financeSnapshot);
       
       setDashboardData(data);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -115,21 +107,21 @@ function DashboardContent() {
     },
     { 
       label: 'Finance Revenue', 
-      value: formatCurrency(dashboardData.financeSnapshot?.revenueCents ?? 0), 
+      value: formatCurrency(dashboardData.financeSnapshot?.totalIncomeCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '📈', 
       color: 'bg-blue-500' 
     },
     { 
       label: 'Finance Expenses', 
-      value: formatCurrency(dashboardData.financeSnapshot?.expenseCents ?? 0), 
+      value: formatCurrency(dashboardData.financeSnapshot?.totalExpensesCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '💸', 
       color: 'bg-red-500' 
     },
     { 
       label: 'Finance Profit', 
-      value: formatCurrency(dashboardData.financeSnapshot?.profitCents ?? 0), 
+      value: formatCurrency(dashboardData.financeSnapshot?.netProfitCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '💵', 
       color: 'bg-green' 
@@ -148,8 +140,8 @@ function DashboardContent() {
     (dashboardData.totalBookings || 0) === 0 && 
     (dashboardData.revenueCents ?? 0) === 0 && 
     (dashboardData.pendingCommissions?.count ?? 0) === 0 && 
-    (dashboardData.financeSnapshot?.revenueCents ?? 0) === 0 && 
-    (dashboardData.financeSnapshot?.expenseCents ?? 0) === 0;
+    (dashboardData.financeSnapshot?.totalIncomeCents ?? 0) === 0 && 
+    (dashboardData.financeSnapshot?.totalExpensesCents ?? 0) === 0;
 
   const recentActivity = [
     { type: 'Admin', action: 'New admin "Sarah Khan" added', time: '2 hours ago', user: 'Super Admin' },
