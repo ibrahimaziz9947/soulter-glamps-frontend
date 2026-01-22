@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { displayToCents, centsToDisplay, isValidCurrencyInput, sanitizeCurrencyInput } from '@/src/utils/currency'
+import { isValidCurrencyInput, sanitizeCurrencyInput } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
 
 interface BookingOption {
@@ -29,7 +29,7 @@ interface IncomeFormProps {
   initialData?: {
     source?: string
     status?: string
-    amount?: number // In cents from backend
+    amount?: number // In major units (PKR base units)
     currency?: string
     date?: string
     reference?: string
@@ -40,7 +40,7 @@ interface IncomeFormProps {
   onSubmit: (data: {
     source: string
     status: string
-    amount: number // In cents
+    amount: number // In major units (PKR base units)
     currency: string
     dateReceived: string
     reference?: string
@@ -64,7 +64,7 @@ export default function IncomeForm({
   const [formData, setFormData] = useState<IncomeFormData>({
     source: initialData?.source || 'MANUAL',
     status: initialData?.status || 'CONFIRMED',
-    amount: initialData?.amount ? centsToDisplay(initialData.amount) : '',
+    amount: initialData?.amount ? initialData.amount.toString() : '',
     currency: initialData?.currency || 'PKR',
     dateReceived: initialData?.date || new Date().toISOString().split('T')[0],
     reference: initialData?.reference || '',
@@ -197,7 +197,7 @@ export default function IncomeForm({
       const payload = {
         source: formData.source,
         status: formData.status,
-        amount: displayToCents(formData.amount), // Convert to cents
+        amount: parseFloat(formData.amount) || 0, // Send as major units
         currency: formData.currency,
         dateReceived: formData.dateReceived,
         reference: formData.reference.trim() || undefined,

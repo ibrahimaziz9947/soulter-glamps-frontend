@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createPurchase } from '@/src/services/purchases.api'
-import { displayToCents, centsToDisplay, isValidCurrencyInput, sanitizeCurrencyInput } from '@/src/utils/currency'
+import { isValidCurrencyInput, sanitizeCurrencyInput } from '@/src/utils/currency'
 
 interface PurchaseFormData {
   vendorName: string
@@ -108,7 +108,7 @@ export default function NewPurchasePage() {
       const apiPayload = {
         vendorName: formData.vendorName.trim(),
         purchaseDate: formData.purchaseDate,
-        amount: displayToCents(formData.amount), // Convert to cents
+        amount: parseFloat(formData.amount) || 0, // Send as major units
         currency: formData.currency.trim(),
         status: formData.status,
         category: 'GENERAL', // Default category

@@ -10,9 +10,11 @@
 
 /* =========================
    CONVERSION FUNCTIONS
+   ⚠️ DEPRECATED - Backend now uses major units
 ========================= */
 
 /**
+ * @deprecated Backend now sends amounts in major units (not cents). Use amount.toString() instead.
  * Convert cents (integer) to display string
  * @param amountCents - Amount in cents (integer)
  * @returns Formatted string with 2 decimal places (e.g., "123.45")
@@ -33,6 +35,7 @@ export function centsToDisplay(amountCents: number | null | undefined): string {
 }
 
 /**
+ * @deprecated Backend now expects amounts in major units (not cents). Use parseFloat() directly.
  * Convert display string to cents (integer)
  * @param displayValue - Amount as string (e.g., "123.45")
  * @returns Amount in cents (integer)

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { fetchPurchaseById, updatePurchase } from '@/src/services/purchases.api'
-import { displayToCents, centsToDisplay, isValidCurrencyInput, sanitizeCurrencyInput } from '@/src/utils/currency'
+import { isValidCurrencyInput, sanitizeCurrencyInput } from '@/src/utils/currency'
 
 interface Purchase {
   id: string
@@ -59,11 +59,11 @@ export default function EditPurchasePage() {
         const purchaseData = response.data
         setPurchase(purchaseData)
         
-        // Prefill form with existing data - convert amount from cents to decimal
+        // Prefill form with existing data - amount is already in major units
         setFormData({
           vendorName: purchaseData.vendorName || '',
           purchaseDate: purchaseData.purchaseDate || new Date().toISOString().split('T')[0],
-          amount: centsToDisplay(purchaseData.amount), // Convert cents to decimal display
+          amount: purchaseData.amount.toString(), // Use amount directly
           currency: purchaseData.currency || 'PKR',
           status: purchaseData.status || 'DRAFT',
           reference: purchaseData.reference || '',
@@ -164,7 +164,7 @@ export default function EditPurchasePage() {
       const apiPayload = {
         vendorName: formData.vendorName.trim(),
         purchaseDate: formData.purchaseDate,
-        amount: displayToCents(formData.amount), // Convert to cents
+        amount: parseFloat(formData.amount) || 0, // Send as major units
         currency: formData.currency.trim(),
         status: formData.status,
         category: purchase?.category || 'GENERAL', // Keep existing category or default
