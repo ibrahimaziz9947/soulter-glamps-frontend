@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSuperAdminDashboardSummary, type SuperAdminDashboardSummary } from '@/src/services/super-admin-dashboard.api';
-import { formatRawCurrency } from '@/src/utils/currency';
+import { formatRawCurrency, formatCurrency } from '@/src/utils/currency';
 
 export default function SuperAdminDashboard() {
   // ...existing code...
@@ -107,21 +107,21 @@ function DashboardContent() {
     },
     { 
       label: 'Finance Revenue', 
-      value: formatRawCurrency(dashboardData.financeSnapshot?.revenueCents ?? 0), 
+      value: formatCurrency(dashboardData.financeSnapshot?.revenueCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '📈', 
       color: 'bg-blue-500' 
     },
     { 
       label: 'Finance Expenses', 
-      value: formatRawCurrency(dashboardData.financeSnapshot?.expenseCents ?? 0), 
+      value: formatCurrency(dashboardData.financeSnapshot?.expenseCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '💸', 
       color: 'bg-red-500' 
     },
     { 
       label: 'Finance Profit', 
-      value: formatRawCurrency(dashboardData.financeSnapshot?.profitCents ?? 0), 
+      value: formatCurrency(dashboardData.financeSnapshot?.profitCents ?? 0), 
       change: 'From finance snapshot', 
       icon: '💵', 
       color: 'bg-green' 
