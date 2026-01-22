@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/src/services/apiClient'
+import { formatCurrency } from '@/src/utils/currency'
 
 interface Expense {
   id: string
@@ -931,8 +932,9 @@ export default function ExpensesPage() {
       {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
-            <p className="text-text-light text-sm mb-2">Total Expenses (Loaded)</p>
-            <p className="font-serif text-3xl font-bold text-green">PKR {(computedSummary.totalExpensesCents / 100).toLocaleString()}</p>
+            <p className="text-text-light text-sm mb-2">Total Expenses</p>
+            <p className="font-serif text-3xl font-bold text-green">{formatCurrency(computedSummary.totalExpensesCents)}</p>
+            <p className="text-xs text-text-light mt-1">From loaded expenses</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Approved Expenses</p>

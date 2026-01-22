@@ -657,9 +657,7 @@ export default function IncomePage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 font-semibold text-green">
-                      {inc.currency && inc.currency !== 'PKR' 
-                        ? `${inc.currency} ${(Number(inc.amount || 0) / 100).toFixed(2)}`
-                        : formatCurrency(Number(inc.amount || 0))}
+                      {formatCurrency(Number(inc.amount || 0))}
                     </td>
                     <td className="py-4 px-6 text-text-light text-sm uppercase">
                       {inc.currency || 'PKR'}
