@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { apiClient } from '@/src/services/apiClient'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 interface Event {
   id: string
@@ -444,9 +444,7 @@ export default function IncomeDetailPage() {
           <div>
             <label className="block text-sm font-semibold text-text-light mb-2">Amount</label>
             <p className="text-3xl font-bold text-green">
-              {income.currency && income.currency !== 'PKR' 
-                ? `${income.currency} ${(income.amount / 100).toFixed(2)}`
-                : formatCurrency(income.amount)}
+              {formatMoney(income.amount, income.currency || 'PKR')}
             </p>
           </div>
 

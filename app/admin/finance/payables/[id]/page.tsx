@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { fetchPurchaseById } from '@/src/services/purchases.api'
 import { payPurchase } from '@/src/services/payables.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 interface Purchase {
   id: string
@@ -108,7 +108,7 @@ export default function PayableDetailsPage() {
   const handlePayFull = () => {
     if (purchase) {
       const payable = computePayableInfo(purchase)
-      setPaymentAmount((payable.outstanding / 100).toFixed(2))
+      setPaymentAmount(payable.outstanding.toFixed(2))
     }
   }
 
@@ -122,7 +122,7 @@ export default function PayableDetailsPage() {
     }
 
     const payable = computePayableInfo(purchase)
-    if (amount > payable.outstanding / 100) {
+    if (amount > payable.outstanding) {
       showToast('Payment amount cannot exceed outstanding amount', 'error')
       return
     }
@@ -130,16 +130,15 @@ export default function PayableDetailsPage() {
     try {
       setProcessing(true)
       
-      const amountCents = Math.round(amount * 100)
       const response = await payPurchase(
         purchaseId,
-        amountCents,
+        amount,
         { notes: paymentNotes || undefined }
       )
       
       if (response.success) {
         showToast(
-          response.message || `Payment of ${formatCurrency(amountCents)} recorded successfully`,
+          response.message || `Payment of ${formatMoney(amount, purchase.currency)} recorded successfully`,
           'success'
         )
         
@@ -272,7 +271,7 @@ export default function PayableDetailsPage() {
                 <div>
                   <p className="text-xs text-text-light mb-1">Outstanding</p>
                   <p className="font-semibold text-red-600 text-lg">
-                    {formatCurrency(safeNum(payable.outstanding))}
+                    {formatMoney(safeNum(payable.outstanding), purchase.currency)}
                   </p>
                 </div>
               </div>
@@ -288,7 +287,7 @@ export default function PayableDetailsPage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    max={safeNum(payable.outstanding) / 100}
+                    max={safeNum(payable.outstanding)}
                     value={paymentAmount}
                     onChange={e => setPaymentAmount(e.target.value)}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-600 focus:outline-none"
@@ -389,19 +388,19 @@ export default function PayableDetailsPage() {
           <div>
             <p className="text-sm text-text-light mb-2">Total Amount</p>
             <p className="font-serif text-2xl font-bold text-text-dark">
-              {formatCurrency(safeNum(payable.total))}
+              {formatMoney(safeNum(payable.total), purchase.currency)}
             </p>
           </div>
           <div>
             <p className="text-sm text-text-light mb-2">Paid</p>
             <p className="font-serif text-2xl font-bold text-green">
-              {formatCurrency(safeNum(payable.paid))}
+              {formatMoney(safeNum(payable.paid), purchase.currency)}
             </p>
           </div>
           <div>
             <p className="text-sm text-text-light mb-2">Outstanding</p>
             <p className="font-serif text-2xl font-bold text-red-600">
-              {formatCurrency(safeNum(payable.outstanding))}
+              {formatMoney(safeNum(payable.outstanding), purchase.currency)}
             </p>
           </div>
           <div>

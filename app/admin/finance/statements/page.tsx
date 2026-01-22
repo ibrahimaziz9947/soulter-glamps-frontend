@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { formatCurrency, formatRawCurrency } from '@/src/utils/currency'
+import { formatCurrency, formatRawCurrency, formatMoney } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
 
 interface StatementItem {
@@ -429,13 +429,8 @@ export default function StatementsPage() {
   const netAmount = totalIn - totalOut
 
   // Format currency helper
-  const formatStatementCurrency = (amountCents: number, currency: string = 'PKR'): string => {
-    const amount = amountCents / 100
-    const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount)
-    return `${currency} ${formatted}`
+  const formatStatementCurrency = (amount: number, currency: string = 'PKR'): string => {
+    return formatMoney(amount, currency)
   }
 
   // Get type badge color
@@ -523,7 +518,7 @@ export default function StatementsPage() {
       const category = stmt.category || '—'
       const status = stmt.status || '—'
       const currency = stmt.currency
-      const amount = (stmt.amount / 100).toFixed(2) // Convert cents to currency
+      const amount = stmt.amount.toFixed(2) // Already in major units
       const sign = stmt.type === 'income' ? '+' : '-'
       
       return [date, type, title, counterparty, category, status, currency, `${sign}${amount}`]

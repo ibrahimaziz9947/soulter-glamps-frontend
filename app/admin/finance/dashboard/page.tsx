@@ -126,13 +126,8 @@ export default function FinanceDashboard() {
   }
   
   // Currency formatting helper (consistent with Statements page)
-  const formatTransactionCurrency = (amountCents: number, currency: string = 'PKR'): string => {
-    const amount = amountCents / 100
-    const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount)
-    return `${currency} ${formatted}`
+  const formatTransactionCurrency = (amount: number, currency: string = 'PKR'): string => {
+    return formatMoney(amount, currency)
   }
   
   // Generate summary cards from API data

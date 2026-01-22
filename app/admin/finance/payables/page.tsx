@@ -10,7 +10,7 @@ import {
   type Payable,
   type PayablesSummary
 } from '@/src/services/payables.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 interface PaginationMeta {
   page: number
@@ -152,7 +152,7 @@ export default function PayablesPage() {
   // Pay full button - fills outstanding amount
   const handlePayFull = () => {
     if (payableToProcess) {
-      setPaymentAmount((payableToProcess.outstanding / 100).toFixed(2))
+      setPaymentAmount(payableToProcess.outstanding.toFixed(2))
     }
   }
 
@@ -165,7 +165,7 @@ export default function PayablesPage() {
       return
     }
 
-    if (amount > payableToProcess.outstanding / 100) {
+    if (amount > payableToProcess.outstanding) {
       showToast('Payment amount cannot exceed outstanding amount', 'error')
       return
     }
@@ -173,11 +173,10 @@ export default function PayablesPage() {
     try {
       setProcessing(true)
       
-      // Call payment API
-      const amountCents = Math.round(amount * 100)
+      // Call payment API - send amount in major units
       const response = await payPurchase(
         payableToProcess.purchaseId,
-        amountCents,
+        amount,
         {
           notes: paymentNotes || undefined
         }
@@ -185,7 +184,7 @@ export default function PayablesPage() {
       
       if (response.success) {
         showToast(
-          response.message || `Payment of ${formatCurrency(amountCents)} recorded successfully`,
+          response.message || `Payment of ${formatMoney(amount, payableToProcess.currency)} recorded successfully`,
           'success'
         )
         
@@ -341,19 +340,19 @@ export default function PayablesPage() {
                 <div>
                   <p className="text-xs text-text-light mb-1">Total</p>
                   <p className="font-semibold text-text-dark">
-                    {formatCurrency(safeNum(payableToProcess.total))}
+                    {formatMoney(safeNum(payableToProcess.total), payableToProcess.currency)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-text-light mb-1">Paid</p>
                   <p className="font-semibold text-green">
-                    {formatCurrency(safeNum(payableToProcess.paid))}
+                    {formatMoney(safeNum(payableToProcess.paid), payableToProcess.currency)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-text-light mb-1">Outstanding</p>
                   <p className="font-semibold text-red-600 text-lg">
-                    {formatCurrency(safeNum(payableToProcess.outstanding))}
+                    {formatMoney(safeNum(payableToProcess.outstanding), payableToProcess.currency)}
                   </p>
                 </div>
               </div>
@@ -370,7 +369,7 @@ export default function PayablesPage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    max={safeNum(payableToProcess.outstanding) / 100}
+                    max={safeNum(payableToProcess.outstanding)}
                     value={paymentAmount}
                     onChange={e => setPaymentAmount(e.target.value)}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-600 focus:outline-none"
@@ -474,7 +473,7 @@ export default function PayablesPage() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <p className="text-text-light text-sm mb-2">Outstanding Amount</p>
               <p className="font-serif text-2xl font-bold text-red-600">
-                {formatCurrency(safeNum(summary.outstandingAmount))}
+                {formatMoney(safeNum(summary.outstandingAmount))}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -738,19 +737,13 @@ export default function PayablesPage() {
                       {payable.reference || '—'}
                     </td>
                     <td className="py-4 px-6 font-semibold text-text-dark">
-                      {payable.currency && payable.currency !== 'PKR' 
-                        ? `${payable.currency} ${(safeNum(payable.total) / 100).toFixed(2)}`
-                        : formatCurrency(safeNum(payable.total))}
+                      {formatMoney(safeNum(payable.total), payable.currency || 'PKR')}
                     </td>
                     <td className="py-4 px-6 font-semibold text-green">
-                      {payable.currency && payable.currency !== 'PKR' 
-                        ? `${payable.currency} ${(safeNum(payable.paid) / 100).toFixed(2)}`
-                        : formatCurrency(safeNum(payable.paid))}
+                      {formatMoney(safeNum(payable.paid), payable.currency || 'PKR')}
                     </td>
                     <td className="py-4 px-6 font-semibold text-red-600">
-                      {payable.currency && payable.currency !== 'PKR' 
-                        ? `${payable.currency} ${(safeNum(payable.outstanding) / 100).toFixed(2)}`
-                        : formatCurrency(safeNum(payable.outstanding))}
+                      {formatMoney(safeNum(payable.outstanding), payable.currency || 'PKR')}
                     </td>
                     <td className="py-4 px-6 text-text-dark text-sm">
                       {payable.currency || 'PKR'}

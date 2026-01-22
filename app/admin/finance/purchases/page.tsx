@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { fetchPurchases, fetchPurchasesSummary, deletePurchase } from '@/src/services/purchases.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 interface Purchase {
   id: string
@@ -300,7 +300,7 @@ export default function PurchasesPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-semibold text-text-dark mb-4">Confirm Delete</h3>
             <p className="text-text-light mb-6">
-              Are you sure you want to delete purchase from <strong>{purchaseToDelete.vendorName}</strong> ({formatCurrency(safeNum(purchaseToDelete.amount))})? This action cannot be undone.
+              Are you sure you want to delete purchase from <strong>{purchaseToDelete.vendorName}</strong> ({formatMoney(safeNum(purchaseToDelete.amount), purchaseToDelete.currency)})? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -348,7 +348,7 @@ export default function PurchasesPage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Purchases</p>
             <p className="font-serif text-3xl font-bold text-green">
-              {formatCurrency(computedSummary.totalPurchases)}
+              {formatMoney(computedSummary.totalPurchases)}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
@@ -549,9 +549,7 @@ export default function PurchasesPage() {
                         {purchase.vendorName || 'N/A'}
                       </td>
                       <td className="py-4 px-6 font-semibold text-green">
-                        {purchase.currency && purchase.currency !== 'PKR' 
-                          ? `${purchase.currency} ${(safeNum(purchase.amount) / 100).toFixed(2)}`
-                          : formatCurrency(safeNum(purchase.amount))}
+                        {formatMoney(safeNum(purchase.amount), purchase.currency || 'PKR')}
                       </td>
                       <td className="py-4 px-6">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase ${

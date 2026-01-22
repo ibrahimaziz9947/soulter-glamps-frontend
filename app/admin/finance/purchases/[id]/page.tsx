@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { fetchPurchaseById, deletePurchase, restorePurchase } from '@/src/services/purchases.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 interface Purchase {
   id: string
@@ -373,9 +373,7 @@ export default function PurchaseDetailPage() {
             <div>
               <label className="block text-sm font-semibold text-text-light mb-1">Amount</label>
               <p className="text-2xl font-bold text-green">
-                {purchase.currency && purchase.currency !== 'PKR' 
-                  ? `${purchase.currency} ${(purchase.amount / 100).toFixed(2)}`
-                  : formatCurrency(purchase.amount)}
+                {formatMoney(purchase.amount, purchase.currency || 'PKR')}
               </p>
             </div>
 
