@@ -92,9 +92,9 @@ function DashboardContent() {
       color: 'bg-green' 
     },
     { 
-      label: 'Revenue', 
+      label: 'Booking Revenue', 
       value: formatRawCurrency(dashboardData.revenueCents ?? 0), 
-      change: `${dateFrom} to ${dateTo}`, 
+      change: 'From bookings', 
       icon: '💰', 
       color: 'bg-yellow' 
     },
@@ -106,23 +106,23 @@ function DashboardContent() {
       color: 'bg-orange-500' 
     },
     { 
-      label: 'Finance Revenue', 
+      label: 'Finance Income (Ledger)', 
       value: formatCurrency(dashboardData.financeSnapshot?.totalIncomeCents ?? 0), 
-      change: 'From finance snapshot', 
+      change: 'From finance P&L snapshot', 
       icon: '📈', 
       color: 'bg-blue-500' 
     },
     { 
-      label: 'Finance Expenses', 
+      label: 'Finance Costs (Ledger)', 
       value: formatCurrency(dashboardData.financeSnapshot?.totalExpensesCents ?? 0), 
-      change: 'From finance snapshot', 
+      change: 'From finance P&L snapshot', 
       icon: '💸', 
       color: 'bg-red-500' 
     },
     { 
-      label: 'Finance Profit', 
+      label: 'Finance Net Profit (Ledger)', 
       value: formatCurrency(dashboardData.financeSnapshot?.netProfitCents ?? 0), 
-      change: 'From finance snapshot', 
+      change: 'From finance P&L snapshot', 
       icon: '💵', 
       color: 'bg-green' 
     },
