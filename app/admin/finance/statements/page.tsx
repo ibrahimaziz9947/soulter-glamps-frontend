@@ -12,18 +12,18 @@ interface StatementItem {
   description: string
   category?: string
   vendor?: string
-  amount: number // In cents
+  amount: number // In major units (PKR)
   currency: string
   status?: string
   reference?: string
 }
 
 interface StatementSummary {
-  totalIncome: number // In cents
-  totalExpenses: number // In cents
-  totalPurchases: number // In cents
-  totalPayments: number // In cents
-  netFlow: number // In cents
+  totalIncome: number // In major units (PKR)
+  totalExpenses: number // In major units (PKR)
+  totalPurchases: number // In major units (PKR)
+  totalPayments: number // In major units (PKR)
+  netFlow: number // In major units (PKR)
   itemCount: number
 }
 
@@ -253,7 +253,7 @@ export default function StatementsPage() {
             description: item.description || item.title || 'N/A',
             category: item.category || undefined,
             vendor: item.vendor || undefined,
-            amount: Number(item.amount || item.amountCents || 0),
+            amount: Number(item.amount || 0),
             currency: item.currency || 'PKR',
             status: item.status || undefined,
             reference: item.reference || item.referenceNumber || undefined
@@ -264,11 +264,11 @@ export default function StatementsPage() {
       
       // Process summary
       const summaryData: StatementSummary = {
-        totalIncome: Number(data?.summary?.totalIncomeCents || 0),
-        totalExpenses: Number(data?.summary?.totalExpensesCents || 0),
-        totalPurchases: Number(data?.summary?.totalPurchasesCents || 0),
-        totalPayments: Number(data?.summary?.totalPaymentsCents || 0),
-        netFlow: Number(data?.summary?.netFlowCents || 0),
+        totalIncome: Number(data?.summary?.totalIncome || 0),
+        totalExpenses: Number(data?.summary?.totalExpenses || 0),
+        totalPurchases: Number(data?.summary?.totalPurchases || 0),
+        totalPayments: Number(data?.summary?.totalPayments || 0),
+        netFlow: Number(data?.summary?.netFlow || 0),
         itemCount: statementsData.length
       }
       
@@ -387,25 +387,25 @@ export default function StatementsPage() {
   // Compute summary totals from loaded statements (single source of truth)
   const computedSummary = useMemo(() => {
     // Calculate totals by transaction type from current loaded statements
-    let totalIncomeCents = 0
-    let totalExpensesCents = 0
-    let totalPurchasesCents = 0
-    let totalPaymentsCents = 0
+    let totalIncome = 0
+    let totalExpenses = 0
+    let totalPurchases = 0
+    let totalPayments = 0
     
     statements.forEach(stmt => {
-      const amountCents = safeNum(stmt.amount)
+      const amount = safeNum(stmt.amount)
       switch (stmt.type) {
         case 'income':
-          totalIncomeCents += amountCents
+          totalIncome += amount
           break
         case 'expense':
-          totalExpensesCents += amountCents
+          totalExpenses += amount
           break
         case 'purchase':
-          totalPurchasesCents += amountCents
+          totalPurchases += amount
           break
         case 'payment':
-          totalPaymentsCents += amountCents
+          totalPayments += amount
           break
       }
     })
@@ -415,10 +415,10 @@ export default function StatementsPage() {
     const useApiTotals = summary && totalItems > 0 && totalItems === statements.length
     
     return {
-      totalIncome: useApiTotals ? safeNum(summary?.totalIncome) : totalIncomeCents,
-      totalExpenses: useApiTotals ? safeNum(summary?.totalExpenses) : totalExpensesCents,
-      totalPurchases: useApiTotals ? safeNum(summary?.totalPurchases) : totalPurchasesCents,
-      totalPayments: useApiTotals ? safeNum(summary?.totalPayments) : totalPaymentsCents,
+      totalIncome: useApiTotals ? safeNum(summary?.totalIncome) : totalIncome,
+      totalExpenses: useApiTotals ? safeNum(summary?.totalExpenses) : totalExpenses,
+      totalPurchases: useApiTotals ? safeNum(summary?.totalPurchases) : totalPurchases,
+      totalPayments: useApiTotals ? safeNum(summary?.totalPayments) : totalPayments,
       itemCount: statements.length
     }
   }, [statements, summary, totalItems])

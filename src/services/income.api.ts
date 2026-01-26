@@ -13,7 +13,7 @@ export interface Income {
   id: string
   source: string // BOOKING | MANUAL | OTHER
   status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
-  amount: number // Amount in cents (integer)
+  amount: number // Amount in major units (PKR)
   currency: string // PKR | USD | EUR | GBP
   dateReceived?: string // ISO date string (YYYY-MM-DD)
   reference?: string
@@ -55,7 +55,7 @@ export interface Income {
 export interface IncomePayload {
   source: string // BOOKING | MANUAL | OTHER
   status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
-  amount: number // Amount in cents (integer)
+  amount: number // Amount in major units (PKR)
   currency: string // PKR | USD | EUR | GBP
   dateReceived: string // ISO date string (YYYY-MM-DD)
   reference?: string
@@ -73,14 +73,14 @@ export interface IncomeListResponse {
       total: number
       totalPages: number
     }
-    totalAmount: number // Total in cents
+    totalAmount: number // Total in major units (PKR)
   }
 }
 
 export interface IncomeSummaryResponse {
   success: boolean
   data: {
-    totalIncome: number // In cents
+    totalIncome: number // In major units (PKR)
     totalCount: number
     byStatus?: {
       DRAFT?: number
@@ -92,15 +92,10 @@ export interface IncomeSummaryResponse {
     confirmedIncome?: number
     draftIncome?: number
     cancelledIncome?: number
-    approvedIncome?: number // In cents
-    pendingIncome?: number // In cents
-    rejectedIncome?: number // In cents
+    approvedIncome?: number // In major units (PKR)
+    pendingIncome?: number // In major units (PKR)
+    rejectedIncome?: number // In major units (PKR)
   }
-}
-
-export interface IncomeDetailResponse {
-  success: boolean
-  data: Income
 }
 
 /* =========================
@@ -108,149 +103,87 @@ export interface IncomeDetailResponse {
 ========================= */
 
 /**
- * Get list of income records with pagination and filters
+ * Fetch income list
  */
-export async function getIncomeList(params?: {
+export async function fetchIncomeList(params?: {
   page?: number
   limit?: number
   status?: string
-  category?: string
+  source?: string
+  from?: string
+  to?: string
   search?: string
-  startDate?: string
-  endDate?: string
 }): Promise<IncomeListResponse> {
   const queryParams = new URLSearchParams()
-
-  if (params?.page) queryParams.append('page', String(params.page))
-  if (params?.limit) queryParams.append('limit', String(params.limit))
+  
+  if (params?.page) queryParams.append('page', params.page.toString())
+  if (params?.limit) queryParams.append('limit', params.limit.toString())
   if (params?.status) queryParams.append('status', params.status)
-  if (params?.category) queryParams.append('category', params.category)
+  if (params?.source) queryParams.append('source', params.source)
+  if (params?.from) queryParams.append('from', params.from)
+  if (params?.to) queryParams.append('to', params.to)
   if (params?.search) queryParams.append('search', params.search)
-  if (params?.startDate) queryParams.append('startDate', params.startDate)
-  if (params?.endDate) queryParams.append('endDate', params.endDate)
-
-  const query = queryParams.toString()
-  const endpoint = query ? `/finance/income?${query}` : '/finance/income'
-
-  return apiClient<IncomeListResponse>(endpoint, {
-    method: 'GET',
-  })
+  
+  const queryString = queryParams.toString()
+  const endpoint = `/finance/income${queryString ? `?${queryString}` : ''}`
+  
+  return apiClient<IncomeListResponse>(endpoint)
 }
 
 /**
- * Get income summary/statistics
+ * Fetch income summary/stats
  */
-export async function getIncomeSummary(params?: {
-  startDate?: string
-  endDate?: string
+export async function fetchIncomeSummary(params?: {
+  from?: string
+  to?: string
 }): Promise<IncomeSummaryResponse> {
   const queryParams = new URLSearchParams()
-
-  if (params?.startDate) queryParams.append('startDate', params.startDate)
-  if (params?.endDate) queryParams.append('endDate', params.endDate)
-
-  const query = queryParams.toString()
-  const endpoint = query ? `/finance/income/summary?${query}` : '/finance/income/summary'
-
-  return apiClient<IncomeSummaryResponse>(endpoint, {
-    method: 'GET',
-  })
-}
-
-/**
- * Get single income record by ID
- */
-export async function getIncomeById(id: string): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>(`/finance/income/${id}`, {
-    method: 'GET',
-  })
+  
+  if (params?.from) queryParams.append('from', params.from)
+  if (params?.to) queryParams.append('to', params.to)
+  
+  const queryString = queryParams.toString()
+  const endpoint = `/finance/income/summary${queryString ? `?${queryString}` : ''}`
+  
+  return apiClient<IncomeSummaryResponse>(endpoint)
 }
 
 /**
  * Create new income record
  */
-export async function createIncome(payload: IncomePayload): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>('/finance/income', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
+export async function createIncome(data: IncomePayload): Promise<Income> {
+  const response = await apiClient<{ success: boolean; data: Income }>(
+    '/finance/income',
+    {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }
+  )
+  return response.data
 }
 
 /**
- * Update existing income record
+ * Update income record
  */
-export async function updateIncome(
-  id: string,
-  payload: Partial<IncomePayload>
-): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>(`/finance/income/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  })
+export async function updateIncome(id: string, data: Partial<IncomePayload>): Promise<Income> {
+  const response = await apiClient<{ success: boolean; data: Income }>(
+    `/finance/income/${id}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }
+  )
+  return response.data
 }
 
 /**
- * Delete income record (soft delete)
+ * Delete income record
  */
-export async function deleteIncome(id: string): Promise<{ success: boolean; message: string }> {
-  return apiClient(`/finance/income/${id}`, {
-    method: 'DELETE',
-  })
-}
-
-/**
- * Restore soft-deleted income record (if backend supports)
- */
-export async function restoreIncome(id: string): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>(`/finance/income/${id}/restore`, {
-    method: 'POST',
-  })
-}
-
-/**
- * Submit income for approval
- */
-export async function submitIncome(id: string): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>(`/finance/income/${id}/submit`, {
-    method: 'POST',
-  })
-}
-
-/**
- * Approve income record
- */
-export async function approveIncome(
-  id: string,
-  comment?: string
-): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>(`/finance/income/${id}/approve`, {
-    method: 'POST',
-    body: JSON.stringify({ comment }),
-  })
-}
-
-/**
- * Reject income record
- */
-export async function rejectIncome(
-  id: string,
-  reason: string
-): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>(`/finance/income/${id}/reject`, {
-    method: 'POST',
-    body: JSON.stringify({ reason }),
-  })
-}
-
-/**
- * Cancel income record
- */
-export async function cancelIncome(
-  id: string,
-  reason?: string
-): Promise<IncomeDetailResponse> {
-  return apiClient<IncomeDetailResponse>(`/finance/income/${id}/cancel`, {
-    method: 'POST',
-    body: JSON.stringify({ reason }),
-  })
+export async function deleteIncome(id: string): Promise<void> {
+  await apiClient<{ success: boolean }>(
+    `/finance/income/${id}`,
+    {
+      method: 'DELETE'
+    }
+  )
 }

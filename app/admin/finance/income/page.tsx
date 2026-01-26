@@ -39,7 +39,7 @@ interface PaginationMeta {
 }
 
 interface IncomeSummary {
-  totalIncome: number // In cents
+  totalIncome: number // In major units (PKR)
   totalCount: number
   byStatus?: {
     DRAFT?: number
@@ -244,7 +244,7 @@ export default function IncomePage() {
   // Compute summary stats from loaded items (single source of truth)
   const computedSummary = useMemo(() => {
     // Calculate totals from current loaded income array
-    const totalIncomeCents = income.reduce((sum, item) => sum + safeNum(item.amount), 0)
+    const totalIncome = income.reduce((sum, item) => sum + safeNum(item.amount), 0)
     
     // Count by status
     const confirmedCount = income.filter(item => item.status === 'CONFIRMED').length
@@ -253,7 +253,7 @@ export default function IncomePage() {
     const submittedCount = income.filter(item => item.status === 'SUBMITTED').length
     
     return {
-      totalIncome: totalIncomeCents,
+      totalIncome: totalIncome,
       totalCount: pagination.total || income.length, // Use API total if available (for paginated data)
       confirmedCount,
       draftCount,

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSuperAdminBookingById, type SuperAdminBooking } from '@/src/services/super-admin-bookings.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 export default function SuperAdminBookingDetailPage() {
   const params = useParams()
@@ -356,18 +356,18 @@ export default function SuperAdminBookingDetailPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-text-light">Total Amount</span>
-                <span className="font-semibold text-text-dark">{formatCurrency(booking.totalAmountCents ?? 0)}</span>
+                <span className="font-semibold text-text-dark">{formatMoney(booking.totalAmount ?? 0)}</span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-text-light">Amount Paid</span>
-                <span className="font-semibold text-green">{formatCurrency(booking.amountPaidCents ?? 0)}</span>
+                <span className="font-semibold text-green">{formatMoney(booking.amountPaid ?? 0)}</span>
               </div>
               
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex justify-between items-center">
                   <span className="font-medium text-text-dark">Remaining Balance</span>
-                  <span className="font-bold text-xl text-yellow">{formatCurrency(booking.remainingAmountCents ?? 0)}</span>
+                  <span className="font-bold text-xl text-yellow">{formatMoney(booking.remainingAmount ?? 0)}</span>
                 </div>
               </div>
             </div>
@@ -389,10 +389,10 @@ export default function SuperAdminBookingDetailPage() {
                   <p className="font-medium text-text-dark">{booking.agentId}</p>
                 </div>
                 
-                {booking.commissionCents !== undefined && (
+                {booking.commission !== undefined && (
                   <div className="pt-4 border-t border-gray-200">
                     <p className="text-sm text-text-light mb-1">Commission Amount</p>
-                    <p className="font-bold text-xl text-green">{formatCurrency(booking.commissionCents)}</p>
+                    <p className="font-bold text-xl text-green">{formatMoney(booking.commission)}</p>
                   </div>
                 )}
               </div>

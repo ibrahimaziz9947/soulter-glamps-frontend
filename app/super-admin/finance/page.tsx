@@ -210,7 +210,7 @@ export default function SuperAdminFinancePage() {
             <h3 className="text-text-light text-sm mb-1">Total Revenue</h3>
             <p className="font-serif text-3xl font-bold text-green">
               {(() => {
-                const amount = financeSummary.totals?.totalRevenueCents ?? financeSummary.profitLoss?.revenueCents ?? 0;
+                const amount = financeSummary.totals?.totalRevenue ?? financeSummary.profitLoss?.revenue ?? 0;
                 console.log('[Super-Admin Finance] Raw revenue:', amount);
                 const formatted = formatMoney(amount);
                 console.log('[Super-Admin Finance] Formatted revenue:', formatted);
@@ -228,7 +228,7 @@ export default function SuperAdminFinancePage() {
             <h3 className="text-text-light text-sm mb-1">Total Expenses</h3>
             <p className="font-serif text-3xl font-bold text-red-500">
               {(() => {
-                const amount = financeSummary.totals?.totalExpensesCents ?? financeSummary.profitLoss?.expenseCents ?? 0;
+                const amount = financeSummary.totals?.totalExpenses ?? financeSummary.profitLoss?.expense ?? 0;
                 console.log('[Super-Admin Finance] Raw expenses:', amount);
                 const formatted = formatMoney(amount);
                 console.log('[Super-Admin Finance] Formatted expenses:', formatted);
@@ -245,10 +245,10 @@ export default function SuperAdminFinancePage() {
             </div>
             <h3 className="text-text-light text-sm mb-1">Net Profit</h3>
             <p className={`font-serif text-3xl font-bold ${
-              (financeSummary.totals?.netProfitCents ?? financeSummary.profitLoss?.profitCents ?? 0) >= 0 ? 'text-green' : 'text-red-500'
+              (financeSummary.totals?.netProfit ?? financeSummary.profitLoss?.profit ?? 0) >= 0 ? 'text-green' : 'text-red-500'
             }`}>
               {(() => {
-                const amount = financeSummary.totals?.netProfitCents ?? financeSummary.profitLoss?.profitCents ?? 0;
+                const amount = financeSummary.totals?.netProfit ?? financeSummary.profitLoss?.profit ?? 0;
                 console.log('[Super-Admin Finance] Raw profit:', amount);
                 const formatted = formatMoney(amount);
                 console.log('[Super-Admin Finance] Formatted profit:', formatted);
@@ -266,7 +266,7 @@ export default function SuperAdminFinancePage() {
             <h3 className="text-text-light text-sm mb-1">Open Payables</h3>
             <p className="font-serif text-3xl font-bold text-orange-500">
               {(() => {
-                const amount = financeSummary.openPayables?.amountCents ?? financeSummary.payables?.openAmountCents ?? 0;
+                const amount = financeSummary.openPayables?.amount ?? financeSummary.payables?.openAmount ?? 0;
                 console.log('[Super-Admin Finance] Raw payables:', amount);
                 const formatted = formatMoney(amount);
                 console.log('[Super-Admin Finance] Formatted payables:', formatted);
@@ -345,7 +345,7 @@ export default function SuperAdminFinancePage() {
                           : 'text-text-dark'
                       }>
                         {(() => {
-                          const amount = entry.amountCents ?? 0;
+                          const amount = entry.amount ?? 0;
                           console.log(`[Super-Admin Finance Ledger] Entry ${entry.id} raw amount:`, amount, 'Type:', entry.type);
                           const formatted = formatMoney(amount);
                           console.log(`[Super-Admin Finance Ledger] Entry ${entry.id} formatted:`, formatted);

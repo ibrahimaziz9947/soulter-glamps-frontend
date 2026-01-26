@@ -11,7 +11,7 @@ import { apiClient } from './apiClient'
 
 export interface DashboardSummary {
   totalBookings: number
-  revenueCents: number
+  revenue: number // In major units (PKR)
   occupancyRatePercent: number
   activeStaff: number
 }

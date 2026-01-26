@@ -7,7 +7,7 @@ import {
   markSuperAdminCommissionPaid,
   type SuperAdminCommission 
 } from '@/src/services/super-admin-commissions.api'
-import { formatRawCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 export default function CommissionPage() {
   const router = useRouter()
@@ -23,18 +23,18 @@ export default function CommissionPage() {
     totalCommissions: number
     paidCount: number
     unpaidCount: number
-    totalAmountCents: number
-    paidAmountCents: number
-    pendingAmountCents?: number
-    unpaidAmountCents?: number
+    totalAmount: number
+    paidAmount: number
+    pendingAmount?: number
+    unpaidAmount?: number
   }>({
     totalCommissions: 0,
     paidCount: 0,
     unpaidCount: 0,
-    totalAmountCents: 0,
-    paidAmountCents: 0,
-    pendingAmountCents: 0,
-    unpaidAmountCents: 0
+    totalAmount: 0,
+    paidAmount: 0,
+    pendingAmount: 0,
+    unpaidAmount: 0
   })
   
   // Pagination metadata
@@ -84,7 +84,14 @@ export default function CommissionPage() {
       setLoading(true)
       setError(null)
       
-      const params: any = {
+      const params: {
+        page: number
+        limit: number
+        from?: string
+        to?: string
+        status?: string
+        agentId?: string
+      } = {
         page,
         limit: 10
       }
@@ -102,23 +109,24 @@ export default function CommissionPage() {
         totalCommissions: 0,
         paidCount: 0,
         unpaidCount: 0,
-        totalAmountCents: 0,
-        paidAmountCents: 0,
-        pendingAmountCents: 0,
-        unpaidAmountCents: 0
+        totalAmount: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        unpaidAmount: 0
       })
       setPagination(response.meta || { page: 1, limit: 10, total: 0, totalPages: 0 })
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMessage = 'Failed to load commissions'
-      if (err.message) {
-        errorMessage = err.message
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { message?: string; status?: number }
+        if (e.message) {
+          errorMessage = e.message
+        }
+        if (typeof e.status === 'number') {
+          errorMessage = `[${e.status}] ${errorMessage}`
+        }
       }
-      
-      if (err.status) {
-        errorMessage = `[${err.status}] ${errorMessage}`
-      }
-      
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -130,7 +138,7 @@ export default function CommissionPage() {
     const { from, to } = getLast30Days()
     setDateFrom(from)
     setDateTo(to)
-    loadCommissions(from, to, statusFilter, agentIdFilter, 1)
+    loadCommissions(from, to, undefined, undefined, 1)
   }, [])
   
   // Handle filter apply
@@ -181,8 +189,12 @@ export default function CommissionPage() {
       setSelectedCommissionId(null)
       // Refetch list
       loadCommissions(dateFrom, dateTo, statusFilter, agentIdFilter, pagination.page)
-    } catch (err: any) {
-      setToast({ message: err.message || 'Failed to mark commission as paid', type: 'error' })
+    } catch (err: unknown) {
+      let message = 'Failed to mark commission as paid'
+      if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message?: string }).message === 'string') {
+        message = (err as { message?: string }).message as string
+      }
+      setToast({ message, type: 'error' })
     } finally {
       setMarkingPaid(false)
     }
@@ -259,7 +271,7 @@ export default function CommissionPage() {
             </div>
             <div className="mt-4 pt-4 border-t border-orange-200">
               <p className="text-2xl font-bold text-orange-700">
-                {formatRawCurrency(aggregates.pendingAmountCents ?? aggregates.unpaidAmountCents ?? 0)}
+                {formatMoney(aggregates.pendingAmount ?? aggregates.unpaidAmount ?? 0)}
               </p>
               <p className="text-xs text-orange-600 mt-1">Awaiting payment</p>
             </div>
@@ -280,7 +292,7 @@ export default function CommissionPage() {
             </div>
             <div className="mt-4 pt-4 border-t border-green/20">
               <p className="text-2xl font-bold text-green">
-                {formatRawCurrency(aggregates.paidAmountCents ?? 0)}
+                {formatMoney(aggregates.paidAmount ?? 0)}
               </p>
               <p className="text-xs text-green/70 mt-1">Successfully processed</p>
             </div>
@@ -301,7 +313,7 @@ export default function CommissionPage() {
             </div>
             <div className="mt-4 pt-4 border-t border-yellow/20">
               <p className="text-2xl font-bold text-gray-800">
-                {formatRawCurrency(aggregates.totalAmountCents ?? 0)}
+                {formatMoney(aggregates.totalAmount ?? 0)}
               </p>
               <p className="text-xs text-gray-600 mt-1">All commissions combined</p>
             </div>
@@ -477,7 +489,7 @@ export default function CommissionPage() {
                     </td>
                     <td className="py-4 px-6">
                       <span className="font-bold text-lg text-green">
-                        {formatRawCurrency(commission.amountCents ?? 0)}
+                        {formatMoney(commission.amount ?? 0)}
                       </span>
                     </td>
                     <td className="py-4 px-6">

@@ -51,16 +51,16 @@ export interface Purchase {
   deletedAt?: string | null
   // Payment tracking fields
   paymentStatus?: 'UNPAID' | 'PARTIAL' | 'PAID'
-  paidAmountCents?: number
-  totalAmountCents?: number
-  outstandingAmountCents?: number
+  paidAmount?: number
+  totalAmount?: number
+  outstandingAmount?: number
 }
 
 export interface PurchasePayload {
   vendorName: string
   category: string
   status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
-  amount: number // Amount in cents (integer)
+  amount: number // Amount in major units (PKR)
   currency: string // PKR | USD | EUR | GBP
   purchaseDate: string // ISO date string (YYYY-MM-DD)
   reference?: string
@@ -68,8 +68,8 @@ export interface PurchasePayload {
   items?: Array<{
     name: string
     quantity: number
-    unitPrice: number // in cents
-    total: number // in cents
+    unitPrice: number // in major units (PKR)
+    total: number // in major units (PKR)
   }>
 }
 
@@ -83,14 +83,14 @@ export interface PurchaseListResponse {
       total: number
       totalPages: number
     }
-    totalAmount: number // Total in cents
+    totalAmount: number // Total in major units (PKR)
   }
 }
 
 export interface PurchaseSummaryResponse {
   success: boolean
   data: {
-    totalPurchases: number // In cents
+    totalPurchases: number // In major units (PKR)
     totalCount: number
     byStatus?: {
       DRAFT?: number
@@ -101,15 +101,15 @@ export interface PurchaseSummaryResponse {
       REJECTED?: number
     }
     byCategory?: {
-      [key: string]: number // Amount in cents per category
+      [key: string]: number // Amount in major units (PKR) per category
     }
     // Legacy fields for backward compatibility
     confirmedPurchases?: number
     draftPurchases?: number
     cancelledPurchases?: number
-    approvedPurchases?: number // In cents
-    pendingPurchases?: number // In cents
-    rejectedPurchases?: number // In cents
+    approvedPurchases?: number // In major units (PKR)
+    pendingPurchases?: number // In major units (PKR)
+    rejectedPurchases?: number // In major units (PKR)
   }
 }
 
@@ -233,12 +233,9 @@ export async function fetchPurchasesSummary(params?: {
       summaryData = response.data
     }
     
-    // Normalize totalPurchases field (might be totalAmount, totalAmountCents, etc.)
+    // Normalize totalPurchases field
     if (summaryData.totalPurchases === undefined) {
-      summaryData.totalPurchases = summaryData.totalAmount || 
-                                    summaryData.totalAmountCents || 
-                                    summaryData.totalAmountInCents || 
-                                    0
+      summaryData.totalPurchases = summaryData.totalAmount || 0
     }
     
     // Ensure totalCount exists

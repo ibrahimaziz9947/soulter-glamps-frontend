@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { formatMoney } from '@/src/utils/currency'
 
 export default function AgentsManagementPage() {
   const [searchQuery, setSearchQuery] = useState('')

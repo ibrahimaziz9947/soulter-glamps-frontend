@@ -157,7 +157,7 @@ function DashboardContent() {
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-2xl font-bold text-green mb-2">
-                {formatRawCurrency(summary.revenueCents)}
+                {formatRawCurrency(summary.revenue)}
               </h3>
               <p className="text-sm text-text-light">Booking Revenue</p>
               <p className="text-xs text-text-light mt-1">From bookings</p>

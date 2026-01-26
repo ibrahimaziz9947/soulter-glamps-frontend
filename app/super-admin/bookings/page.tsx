@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSuperAdminBookings, type SuperAdminBooking } from '@/src/services/super-admin-bookings.api'
-import { formatRawCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 export default function SuperAdminBookingsPage() {
   const router = useRouter()
@@ -22,7 +22,7 @@ export default function SuperAdminBookingsPage() {
     pendingCount: 0,
     cancelledCount: 0,
     completedCount: 0,
-    revenueCents: 0
+    revenue: 0
   })
   
   // Pagination metadata
@@ -233,7 +233,7 @@ export default function SuperAdminBookingsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Revenue</p>
-            <p className="font-serif text-3xl font-bold text-green">{formatRawCurrency(aggregates.revenueCents)}</p>
+            <p className="font-serif text-3xl font-bold text-green">{formatMoney(aggregates.revenue)}</p>
           </div>
         </div>
       )}
@@ -370,7 +370,7 @@ export default function SuperAdminBookingsPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6 text-text-dark">{booking.glampName || 'Unknown'}</td>
-                    <td className="py-4 px-6 font-semibold text-green">{formatRawCurrency(booking.totalAmountCents ?? 0)}</td>
+                    <td className="py-4 px-6 font-semibold text-green">{formatMoney(booking.totalAmount ?? 0)}</td>
                     <td className="py-4 px-6 text-sm text-text-light">
                       {booking.agentId ? (booking.agentName || 'Agent') : 'Direct'}
                     </td>

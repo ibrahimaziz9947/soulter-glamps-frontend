@@ -11,7 +11,7 @@ interface Purchase {
   vendorName: string
   category: string
   status: string // DRAFT | CONFIRMED | CANCELLED | SUBMITTED
-  amount: number // In cents
+  amount: number // In major units (PKR)
   currency: string // PKR | USD | EUR | GBP
   purchaseDate?: string // ISO date string (YYYY-MM-DD)
   reference?: string
@@ -28,7 +28,7 @@ interface PaginationMeta {
 }
 
 interface PurchaseSummary {
-  totalPurchases: number // In cents
+  totalPurchases: number // In major units (PKR)
   totalCount: number
   byStatus?: {
     DRAFT?: number
@@ -224,7 +224,7 @@ export default function PurchasesPage() {
   // Compute summary stats from loaded purchases (single source of truth)
   const computedSummary = useMemo(() => {
     // Calculate totals from current loaded purchases array
-    const totalPurchasesCents = purchases.reduce((sum, item) => sum + safeNum(item.amount), 0)
+    const totalPurchases = purchases.reduce((sum, item) => sum + safeNum(item.amount), 0)
     
     // Count by status
     const confirmedCount = purchases.filter(item => item.status === 'CONFIRMED').length
@@ -233,7 +233,7 @@ export default function PurchasesPage() {
     const submittedCount = purchases.filter(item => item.status === 'SUBMITTED').length
     
     return {
-      totalPurchases: totalPurchasesCents,
+      totalPurchases: totalPurchases,
       totalCount: pagination.total || purchases.length, // Use API total if available (for paginated data)
       confirmedCount,
       draftCount,

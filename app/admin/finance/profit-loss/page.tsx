@@ -6,16 +6,16 @@ import { formatMoney } from '@/src/utils/currency'
 import { apiClient } from '@/src/services/apiClient'
 
 interface ProfitLossSummary {
-  totalIncome: number // In cents
-  totalExpenses: number // In cents (from payables)
-  totalPurchases: number // In cents (costs)
-  netProfit: number // In cents (income - expenses - purchases)
+  totalIncome: number // In major units (PKR)
+  totalExpenses: number // In major units (PKR)
+  totalPurchases: number // In major units (PKR)
+  netProfit: number // In major units (PKR)
 }
 
 interface BreakdownItem {
   name: string
   count: number
-  total: number // In cents
+  total: number // In major units (PKR)
 }
 
 interface Breakdowns {
@@ -145,21 +145,21 @@ export default function ProfitLossPage() {
       // LOG: Key values from API response
       console.log('[P&L TRACE] API Response:', {
         expenseModeSent: effectiveExpenseMode,
-        totalExpensesCentsFromAPI: data?.summary?.totalExpensesCents,
-        totalIncomeCentsFromAPI: data?.summary?.totalIncomeCents,
-        totalPurchasesCentsFromAPI: data?.summary?.totalPurchasesCents,
+        totalExpensesFromAPI: data?.summary?.totalExpenses,
+        totalIncomeFromAPI: data?.summary?.totalIncome,
+        totalPurchasesFromAPI: data?.summary?.totalPurchases,
         debugCountsFromAPI: data?.debugCounts,
         requestId: currentReqId
       })
       
-      // Calculate totals with NaN guards - READ FROM data.summary.xxxCents
-      const totalIncome = Number.isFinite(Number(data?.summary?.totalIncomeCents ?? 0)) ? Number(data.summary.totalIncomeCents ?? 0) : 0
-      const totalExpenses = Number.isFinite(Number(data?.summary?.totalExpensesCents ?? 0)) ? Number(data.summary.totalExpensesCents ?? 0) : 0
-      const totalPurchases = Number.isFinite(Number(data?.summary?.totalPurchasesCents ?? 0)) ? Number(data.summary.totalPurchasesCents ?? 0) : 0
-      const netProfit = Number.isFinite(Number(data?.summary?.netProfitCents ?? 0)) ? Number(data.summary.netProfitCents ?? 0) : totalIncome - totalExpenses - totalPurchases
+      // Calculate totals with NaN guards - READ FROM data.summary.xxx
+      const totalIncome = Number.isFinite(Number(data?.summary?.totalIncome ?? 0)) ? Number(data.summary.totalIncome ?? 0) : 0
+      const totalExpenses = Number.isFinite(Number(data?.summary?.totalExpenses ?? 0)) ? Number(data.summary.totalExpenses ?? 0) : 0
+      const totalPurchases = Number.isFinite(Number(data?.summary?.totalPurchases ?? 0)) ? Number(data.summary.totalPurchases ?? 0) : 0
+      const netProfit = Number.isFinite(Number(data?.summary?.netProfit ?? 0)) ? Number(data.summary.netProfit ?? 0) : totalIncome - totalExpenses - totalPurchases
       
-      // TEMP DEBUG: Log computed totals (these are in CENTS)
-      console.log('[P&L DEBUG] Computed Totals (in cents):', {
+      // TEMP DEBUG: Log computed totals
+      console.log('[P&L DEBUG] Computed Totals:', {
         totalIncome,
         totalExpenses,
         totalPurchases,

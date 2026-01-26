@@ -8,7 +8,7 @@ import {
   markSuperAdminCommissionUnpaid,
   type SuperAdminCommission 
 } from '@/src/services/super-admin-commissions.api'
-import { formatCurrency } from '@/src/utils/currency'
+import { formatMoney } from '@/src/utils/currency'
 
 export default function CommissionDetailPage() {
   const router = useRouter()
@@ -210,7 +210,7 @@ export default function CommissionDetailPage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Commission Amount</p>
             <p className="font-serif text-4xl font-bold text-green">
-              {formatCurrency(commission.amountCents)}
+              {formatMoney(commission.amount)}
             </p>
           </div>
 
@@ -269,10 +269,10 @@ export default function CommissionDetailPage() {
                   <p className="font-medium text-text-dark">{formatDate(commission.bookingCheckOutDate)}</p>
                 </div>
               )}
-              {commission.bookingTotalAmountCents && (
+              {commission.bookingTotalAmount && (
                 <div>
                   <p className="text-text-light text-sm mb-1">Booking Total Amount</p>
-                  <p className="font-medium text-text-dark">{formatCurrency(commission.bookingTotalAmountCents)}</p>
+                  <p className="font-medium text-text-dark">{formatMoney(commission.bookingTotalAmount)}</p>
                 </div>
               )}
             </div>

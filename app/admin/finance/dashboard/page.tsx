@@ -61,12 +61,12 @@ export default function FinanceDashboard() {
       
       // Success logging
       console.log('[Dashboard] ✓ Data received successfully:', {
-        totalIncome: data.kpis.totalIncomeCents,
-        totalExpenses: data.kpis.totalExpensesCents,
-        netProfit: data.kpis.netProfitCents,
-        pendingPayables: data.kpis.pendingPayablesCents,
-        netCashFlow: data.kpis.netCashFlowCents,
-        inventoryValue: data.kpis.inventoryValueCents,
+        totalIncome: data.kpis.totalIncome,
+        totalExpenses: data.kpis.totalExpenses,
+        netProfit: data.kpis.netProfit,
+        pendingPayables: data.kpis.pendingPayables,
+        netCashFlow: data.kpis.netCashFlow,
+        inventoryValue: data.kpis.inventoryValue,
         transactionCount: data.recentTransactions.length
       })
       
@@ -135,7 +135,7 @@ export default function FinanceDashboard() {
     {
       label: 'Total Income',
       value: (() => {
-        const amount = dashboardData.kpis.totalIncomeCents;
+        const amount = dashboardData.kpis.totalIncome;
         console.log('[Finance Dashboard] Total Income raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Finance Dashboard] Total Income formatted:', formatted);
@@ -147,7 +147,7 @@ export default function FinanceDashboard() {
     {
       label: 'Total Expenses',
       value: (() => {
-        const amount = dashboardData.kpis.totalExpensesCents;
+        const amount = dashboardData.kpis.totalExpenses;
         console.log('[Finance Dashboard] Total Expenses raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Finance Dashboard] Total Expenses formatted:', formatted);
@@ -159,7 +159,7 @@ export default function FinanceDashboard() {
     {
       label: 'Net Profit',
       value: (() => {
-        const amount = dashboardData.kpis.netProfitCents;
+        const amount = dashboardData.kpis.netProfit;
         console.log('[Finance Dashboard] Net Profit raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Finance Dashboard] Net Profit formatted:', formatted);
@@ -171,7 +171,7 @@ export default function FinanceDashboard() {
     {
       label: 'Pending Payables',
       value: (() => {
-        const amount = dashboardData.kpis.pendingPayablesCents;
+        const amount = dashboardData.kpis.pendingPayables;
         console.log('[Finance Dashboard] Pending Payables raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Finance Dashboard] Pending Payables formatted:', formatted);
@@ -183,7 +183,7 @@ export default function FinanceDashboard() {
     {
       label: 'Net Cash Flow',
       value: (() => {
-        const amount = dashboardData.kpis.netCashFlowCents ?? 0;
+        const amount = dashboardData.kpis.netCashFlow ?? 0;
         console.log('[Finance Dashboard] Net Cash Flow raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Finance Dashboard] Net Cash Flow formatted:', formatted);
@@ -195,7 +195,7 @@ export default function FinanceDashboard() {
     {
       label: 'Inventory Value',
       value: (() => {
-        const amount = dashboardData.kpis.inventoryValueCents ?? 0;
+        const amount = dashboardData.kpis.inventoryValue ?? 0;
         console.log('[Finance Dashboard] Inventory Value raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Finance Dashboard] Inventory Value formatted:', formatted);
@@ -432,8 +432,8 @@ export default function FinanceDashboard() {
                   
                   // Amount display logic
                   const displayAmount = transaction.direction === 'OUTFLOW' 
-                    ? Math.abs(transaction.amountCents)
-                    : transaction.amountCents
+                    ? Math.abs(transaction.amount)
+                    : transaction.amount
                   
                   return (
                     <tr key={transaction.id} className="border-b border-gray-100 hover:bg-green-50/30 transition-colors">

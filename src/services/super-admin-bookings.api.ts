@@ -20,16 +20,16 @@ export interface SuperAdminBooking {
   checkInDate: string
   checkOutDate: string
   guests: number
-  totalAmountCents?: number
-  amountPaidCents?: number
-  remainingAmountCents?: number
+  totalAmount?: number
+  amountPaid?: number
+  remainingAmount?: number
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
   paymentStatus?: 'UNPAID' | 'PARTIAL' | 'PAID'
   specialRequests?: string
   addOns?: string[]
   agentId?: string
   agentName?: string
-  commissionCents?: number
+  commission?: number
   createdAt: string
   updatedAt: string
 }
@@ -54,7 +54,7 @@ export interface SuperAdminBookingsResponse {
       pendingCount: number
       cancelledCount: number
       completedCount: number
-      revenueCents: number
+      revenue: number
     }
   }
   error?: string
@@ -95,7 +95,7 @@ export async function getSuperAdminBookings(params?: {
     pendingCount: number
     cancelledCount: number
     completedCount: number
-    revenueCents: number
+    revenue: number
   }
 }> {
   const queryParams = new URLSearchParams()
@@ -155,9 +155,9 @@ export async function getSuperAdminBookings(params?: {
         pendingCount: response.data.filter((b: SuperAdminBooking) => b.status === 'PENDING').length,
         cancelledCount: response.data.filter((b: SuperAdminBooking) => b.status === 'CANCELLED').length,
         completedCount: response.data.filter((b: SuperAdminBooking) => b.status === 'COMPLETED').length,
-        revenueCents: response.data
+        revenue: response.data
           .filter((b: SuperAdminBooking) => b.status === 'CONFIRMED')
-          .reduce((sum: number, b: SuperAdminBooking) => sum + (b.totalAmountCents || 0), 0)
+          .reduce((sum: number, b: SuperAdminBooking) => sum + (b.totalAmount || 0), 0)
       }
     }
   }

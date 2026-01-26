@@ -1,5 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { formatCurrency } from '@/src/utils/currency'
+
 export default function RevenueReportPage() {
   // Mock revenue data
   const revenueData = {

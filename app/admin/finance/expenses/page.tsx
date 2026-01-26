@@ -306,14 +306,14 @@ export default function ExpensesPage() {
   // Compute summary stats from loaded expenses (single source of truth)
   const computedSummary = useMemo(() => {
     // Calculate total expenses from current loaded data
-    const totalExpensesCents = allExpenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0)
+    const totalExpenses = allExpenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0)
     
     // Count approved and pending from loaded data
     const approvedCount = allExpenses.filter(exp => exp.status === 'APPROVED').length
     const pendingCount = allExpenses.filter(exp => exp.status === 'SUBMITTED').length
     
     return {
-      totalExpensesCents,
+      totalExpenses,
       approvedCount,
       pendingCount
     }
@@ -934,8 +934,8 @@ export default function ExpensesPage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <p className="text-text-light text-sm mb-2">Total Expenses</p>
             <p className="font-serif text-3xl font-bold text-green">{(() => {
-              console.log('[Expenses] Raw totalExpensesCents:', computedSummary.totalExpensesCents);
-              const formatted = formatMoney(computedSummary.totalExpensesCents);
+              console.log('[Expenses] Raw totalExpenses:', computedSummary.totalExpenses);
+              const formatted = formatMoney(computedSummary.totalExpenses);
               console.log('[Expenses] Formatted display:', formatted);
               return formatted;
             })()}</p>

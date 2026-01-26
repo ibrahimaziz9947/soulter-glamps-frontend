@@ -93,14 +93,14 @@ function DashboardContent() {
     },
     { 
       label: 'Booking Revenue', 
-      value: formatRawCurrency(dashboardData.revenueCents ?? 0), 
+      value: formatMoney(dashboardData.revenue ?? 0), 
       change: 'From bookings', 
       icon: '💰', 
       color: 'bg-yellow' 
     },
     { 
       label: 'Pending Commissions', 
-      value: formatRawCurrency(dashboardData.pendingCommissions?.amountCents ?? 0), 
+      value: formatMoney(dashboardData.pendingCommissions?.amount ?? 0), 
       change: `${dashboardData.pendingCommissions?.count ?? 0} pending`, 
       icon: '💳', 
       color: 'bg-orange-500' 
@@ -108,7 +108,7 @@ function DashboardContent() {
     { 
       label: 'Finance Income (Ledger)', 
       value: (() => {
-        const amount = dashboardData.financeSnapshot?.totalIncomeCents ?? 0;
+        const amount = dashboardData.financeSnapshot?.totalIncome ?? 0;
         console.log('[Super-Admin Dashboard] Finance Income raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Super-Admin Dashboard] Finance Income formatted:', formatted);
@@ -121,7 +121,7 @@ function DashboardContent() {
     { 
       label: 'Finance Costs (Ledger)', 
       value: (() => {
-        const amount = dashboardData.financeSnapshot?.totalExpensesCents ?? 0;
+        const amount = dashboardData.financeSnapshot?.totalExpenses ?? 0;
         console.log('[Super-Admin Dashboard] Finance Costs raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Super-Admin Dashboard] Finance Costs formatted:', formatted);
@@ -134,15 +134,15 @@ function DashboardContent() {
     { 
       label: 'Finance Net Profit (Ledger)', 
       value: (() => {
-        const amount = dashboardData.financeSnapshot?.netProfitCents ?? 0;
+        const amount = dashboardData.financeSnapshot?.netProfit ?? 0;
         console.log('[Super-Admin Dashboard] Finance Net Profit raw:', amount);
         const formatted = formatMoney(amount);
         console.log('[Super-Admin Dashboard] Finance Net Profit formatted:', formatted);
         return formatted;
       })(), 
       change: 'From finance P&L snapshot', 
-      icon: '💵', 
-      color: 'bg-green' 
+      icon: '�', 
+      color: 'bg-purple-500' 
     },
     { 
       label: 'System Health', 
@@ -156,10 +156,10 @@ function DashboardContent() {
   // Check if data is empty (all zeros)
   const isEmptyData = dashboardData && 
     (dashboardData.totalBookings || 0) === 0 && 
-    (dashboardData.revenueCents ?? 0) === 0 && 
+    (dashboardData.revenue ?? 0) === 0 && 
     (dashboardData.pendingCommissions?.count ?? 0) === 0 && 
-    (dashboardData.financeSnapshot?.totalIncomeCents ?? 0) === 0 && 
-    (dashboardData.financeSnapshot?.totalExpensesCents ?? 0) === 0;
+    (dashboardData.financeSnapshot?.totalIncome ?? 0) === 0 && 
+    (dashboardData.financeSnapshot?.totalExpenses ?? 0) === 0;
 
   const recentActivity = [
     { type: 'Admin', action: 'New admin "Sarah Khan" added', time: '2 hours ago', user: 'Super Admin' },

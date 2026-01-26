@@ -11,24 +11,24 @@ import { apiClient } from './apiClient'
 
 export interface SuperAdminFinanceSummary {
   totals: {
-    totalRevenueCents: number
-    totalExpensesCents: number
-    netProfitCents: number
+    totalRevenue: number
+    totalExpenses: number
+    netProfit: number
   }
   openPayables: {
-    amountCents: number
+    amount: number
     count: number
   }
   recentLedgerEntries: FinanceEntry[]
   // Legacy fields for backward compatibility
   profitLoss?: {
-    revenueCents: number
-    expenseCents: number
-    profitCents: number
+    revenue: number
+    expense: number
+    profit: number
   }
   payables?: {
     openCount: number
-    openAmountCents: number
+    openAmount: number
   }
   ledger?: {
     totalEntries: number
@@ -47,7 +47,7 @@ export interface FinanceEntry {
   title?: string
   reference?: string
   vendorName?: string
-  amountCents: number
+  amount: number
   currency?: string
   status?: string
   createdAt: string
@@ -103,13 +103,13 @@ export async function getSuperAdminFinanceSummary(params?: {
   
   // Primary structure: new format
   const totals = rawData.totals || {
-    totalRevenueCents: rawData.profitLoss?.revenueCents || 0,
-    totalExpensesCents: rawData.profitLoss?.expenseCents || 0,
-    netProfitCents: rawData.profitLoss?.profitCents || 0
+    totalRevenue: rawData.profitLoss?.revenue || 0,
+    totalExpenses: rawData.profitLoss?.expense || 0,
+    netProfit: rawData.profitLoss?.profit || 0
   }
   
   const openPayables = rawData.openPayables || {
-    amountCents: rawData.payables?.openAmountCents || 0,
+    amount: rawData.payables?.openAmount || 0,
     count: rawData.payables?.openCount || 0
   }
   

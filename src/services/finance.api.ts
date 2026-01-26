@@ -11,12 +11,12 @@ import { apiClient } from './apiClient'
 
 export interface FinanceDashboardData {
   kpis: {
-    totalIncomeCents: number
-    totalExpensesCents: number
-    netProfitCents: number
-    pendingPayablesCents: number
-    netCashFlowCents?: number
-    inventoryValueCents: number
+    totalIncome: number
+    totalExpenses: number
+    netProfit: number
+    pendingPayables: number
+    netCashFlow?: number
+    inventoryValue: number
   }
   recentTransactions: DashboardTransaction[]
 }
@@ -26,7 +26,7 @@ export interface DashboardTransaction {
   date: string
   type: 'income' | 'expense' | 'purchase' | 'payable'
   description: string
-  amountCents: number
+  amount: number
   currency: string
   status?: string
   direction: 'INFLOW' | 'OUTFLOW'

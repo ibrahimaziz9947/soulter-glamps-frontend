@@ -11,7 +11,7 @@ import { apiClient } from './apiClient'
 
 export interface SuperAdminCommission {
   id: string
-  amountCents: number
+  amount: number
   agentId: string
   agentName?: string
   agentEmail?: string
@@ -19,7 +19,7 @@ export interface SuperAdminCommission {
   bookingCustomerName?: string
   bookingCheckInDate?: string
   bookingCheckOutDate?: string
-  bookingTotalAmountCents?: number
+  bookingTotalAmount?: number
   glampId?: string
   glampName?: string
   status: 'UNPAID' | 'PAID'
@@ -47,10 +47,10 @@ export interface SuperAdminCommissionsResponse {
       totalCommissions: number
       paidCount: number
       unpaidCount: number
-      totalAmountCents: number
-      paidAmountCents: number
-      pendingAmountCents?: number
-      unpaidAmountCents?: number
+      totalAmount: number
+      paidAmount: number
+      pendingAmount?: number
+      unpaidAmount?: number
     }
   }
   error?: string
@@ -101,10 +101,10 @@ export async function getSuperAdminCommissions(params?: {
     totalCommissions: number
     paidCount: number
     unpaidCount: number
-    totalAmountCents: number
-    paidAmountCents: number
-    pendingAmountCents?: number
-    unpaidAmountCents?: number
+    totalAmount: number
+    paidAmount: number
+    pendingAmount?: number
+    unpaidAmount?: number
   }
 }> {
   const queryParams = new URLSearchParams()
@@ -162,13 +162,13 @@ export async function getSuperAdminCommissions(params?: {
         totalCommissions: response.data.length,
         paidCount: response.data.filter((c: SuperAdminCommission) => c.status === 'PAID').length,
         unpaidCount: response.data.filter((c: SuperAdminCommission) => c.status === 'UNPAID').length,
-        totalAmountCents: response.data.reduce((sum: number, c: SuperAdminCommission) => sum + c.amountCents, 0),
-        paidAmountCents: response.data
+        totalAmount: response.data.reduce((sum: number, c: SuperAdminCommission) => sum + c.amount, 0),
+        paidAmount: response.data
           .filter((c: SuperAdminCommission) => c.status === 'PAID')
-          .reduce((sum: number, c: SuperAdminCommission) => sum + c.amountCents, 0),
-        unpaidAmountCents: response.data
+          .reduce((sum: number, c: SuperAdminCommission) => sum + c.amount, 0),
+        unpaidAmount: response.data
           .filter((c: SuperAdminCommission) => c.status === 'UNPAID')
-          .reduce((sum: number, c: SuperAdminCommission) => sum + c.amountCents, 0)
+          .reduce((sum: number, c: SuperAdminCommission) => sum + c.amount, 0)
       }
     }
   }

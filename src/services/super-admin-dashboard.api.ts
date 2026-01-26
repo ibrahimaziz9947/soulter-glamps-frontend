@@ -15,15 +15,15 @@ export interface SuperAdminDashboardSummary {
     to: string
   }
   totalBookings: number
-  revenueCents: number
+  revenue: number
   pendingCommissions: {
     count: number
-    amountCents: number
+    amount: number
   }
   financeSnapshot: {
-    totalIncomeCents: number
-    totalExpensesCents: number
-    netProfitCents: number
+    totalIncome: number
+    totalExpenses: number
+    netProfit: number
   }
   systemHealth: {
     ok: boolean

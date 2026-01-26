@@ -17,9 +17,9 @@ export interface Payable {
   dueDate: string
   vendorName: string
   reference: string
-  total: number // In cents
-  paid: number // In cents
-  outstanding: number // In cents
+  total: number // In major units
+  paid: number // In major units
+  outstanding: number // In major units
   currency: string
   status: 'PAID' | 'PARTIAL' | 'UNPAID'
   purchase?: Purchase
@@ -39,16 +39,16 @@ export interface PayableListParams {
 
 export interface PayablesSummary {
   totalPayables: number // Count
-  outstandingAmount: number // In cents
+  outstandingAmount: number // In major units
   unpaidCount: number
   partialCount: number
   paidCount: number
-  totalAmount?: number // In cents
+  totalAmount?: number // In major units
 }
 
 export interface PaymentPayload {
   purchaseId: string
-  amountCents: number
+  amount: number
   paymentDate?: string // ISO date, defaults to today
   paymentMethod?: string // 'CASH' | 'BANK_TRANSFER' | 'CHEQUE' | 'CREDIT_CARD'
   reference?: string
@@ -95,8 +95,8 @@ export interface PaymentResponse {
  */
 function computePayableFromPurchase(purchase: Purchase): Payable {
   // Support multiple field name variations from backend
-  const total = purchase.totalAmountCents ?? purchase.amount ?? 0
-  const paid = purchase.paidAmountCents ?? 0
+  const total = purchase.totalAmount ?? purchase.amount ?? 0
+  const paid = purchase.paidAmount ?? 0
   const outstanding = Math.max(0, total - paid)
   
   // Calculate due date (30 days from purchase date by default)
@@ -343,7 +343,7 @@ export async function fetchPayablesSummary(params?: {
  */
 export async function payPurchase(
   purchaseId: string,
-  amountCents: number,
+  amount: number,
   paymentDetails?: {
     paymentDate?: string
     paymentMethod?: string
@@ -352,10 +352,10 @@ export async function payPurchase(
   }
 ): Promise<PaymentResponse> {
   try {
-    console.log('[Payables API] Recording payment:', { purchaseId, amountCents })
+    console.log('[Payables API] Recording payment:', { purchaseId, amount })
     
     const payload = {
-      amountCents,
+      amount,
       paymentDate: paymentDetails?.paymentDate || new Date().toISOString().split('T')[0],
       paymentMethod: paymentDetails?.paymentMethod || 'BANK_TRANSFER',
       reference: paymentDetails?.reference,
@@ -374,7 +374,7 @@ export async function payPurchase(
       data: {
         paymentId: response.data?.id || response.data?.paymentId || `PAY-${Date.now()}`,
         purchaseId: response.data?.purchaseId || purchaseId,
-        amountPaid: response.data?.amountPaid || amountCents,
+        amountPaid: response.data?.amountPaid || amount,
         remainingBalance: response.data?.remainingBalance || 0,
         status: response.data?.status || 'PAID'
       },
@@ -396,7 +396,7 @@ export async function fetchPaymentHistory(purchaseId: string): Promise<{
     items: Array<{
       id: string
       purchaseId: string
-      amountCents: number
+      amount: number
       paymentDate: string
       paymentMethod: string
       reference?: string
@@ -406,9 +406,6 @@ export async function fetchPaymentHistory(purchaseId: string): Promise<{
   }
 }> {
   try {
-    // V1: Return empty array
-    // V2: Uncomment to fetch actual data
-    /*
     const response = await apiClient<any>(`/finance/purchases/${purchaseId}/payments`, {
       method: 'GET'
     })
@@ -419,15 +416,6 @@ export async function fetchPaymentHistory(purchaseId: string): Promise<{
       success: true,
       data: {
         items: normalized.items
-      }
-    }
-    */
-
-    // V1 Mock
-    return {
-      success: true,
-      data: {
-        items: []
       }
     }
   } catch (error: any) {
