@@ -64,7 +64,7 @@ export default function NewIncomePage() {
 
       // Redirect to detail page after short delay
       setTimeout(() => {
-        router.push(`/admin/finance/income/${response.data.id}`)
+        router.push(`/admin/finance/income/${response.id}`)
       }, 500)
     } catch (error: any) {
       console.error('Failed to create income:', error)

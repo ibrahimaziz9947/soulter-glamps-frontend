@@ -98,6 +98,11 @@ export interface IncomeSummaryResponse {
   }
 }
 
+export interface IncomeDetailResponse {
+  success: boolean
+  data: Income
+}
+
 /* =========================
    API FUNCTIONS
 ========================= */
@@ -146,6 +151,17 @@ export async function fetchIncomeSummary(params?: {
   const endpoint = `/finance/income/summary${queryString ? `?${queryString}` : ''}`
   
   return apiClient<IncomeSummaryResponse>(endpoint)
+}
+
+/**
+ * Fetch single income by ID
+ */
+export async function getIncomeById(id: string): Promise<IncomeDetailResponse> {
+  if (!id || !id.trim()) {
+    throw new Error('Income ID is required')
+  }
+  const endpoint = `/finance/income/${id.trim()}`
+  return apiClient<IncomeDetailResponse>(endpoint)
 }
 
 /**

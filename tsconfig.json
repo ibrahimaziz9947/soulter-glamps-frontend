@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next.config.js", "app/agent/login/page.jsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "INCOME-API-USAGE-EXAMPLES.tsx"]
 }

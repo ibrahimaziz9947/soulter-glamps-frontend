@@ -410,7 +410,16 @@ export async function fetchPaymentHistory(purchaseId: string): Promise<{
       method: 'GET'
     })
 
-    const normalized = normalizeListResponse(response, 'items')
+    const normalized = normalizeListResponse<{
+      id: string
+      purchaseId: string
+      amount: number
+      paymentDate: string
+      paymentMethod: string
+      reference?: string
+      notes?: string
+      createdAt: string
+    }>(response, 'items')
     
     return {
       success: true,
