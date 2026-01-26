@@ -91,7 +91,7 @@ export default function SuperAdminBookingsPage() {
         pendingCount: 0,
         cancelledCount: 0,
         completedCount: 0,
-        revenueCents: 0
+        revenue: 0
       })
       setPagination(response.meta || { page: 1, limit: 10, total: 0, totalPages: 0 })
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))

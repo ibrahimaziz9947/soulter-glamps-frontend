@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { getSuperAdminDashboardSummary, type SuperAdminDashboardSummary } from '@/src/services/super-admin-dashboard.api';
-import { formatRawCurrency, formatMoney } from '@/src/utils/currency';
+import { formatMoney } from '@/src/utils/currency';
 
 export default function SuperAdminDashboard() {
   // ...existing code...
@@ -44,20 +43,21 @@ function DashboardContent() {
       
       setDashboardData(data);
       setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMessage = 'Failed to load dashboard data';
-      if (err.message) {
-        errorMessage = err.message;
-      } else if (err.data?.message) {
-        errorMessage = err.data.message;
-      } else if (err.data?.error) {
-        errorMessage = err.data.error;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { message?: string; status?: number; data?: { message?: string; error?: string } }
+        if (e.message) {
+          errorMessage = e.message;
+        } else if (e.data?.message) {
+          errorMessage = e.data.message;
+        } else if (e.data?.error) {
+          errorMessage = e.data.error;
+        }
+        if (typeof e.status === 'number') {
+          errorMessage = `[${e.status}] ${errorMessage}`;
+        }
       }
-      
-      if (err.status) {
-        errorMessage = `[${err.status}] ${errorMessage}`;
-      }
-      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -141,7 +141,7 @@ function DashboardContent() {
         return formatted;
       })(), 
       change: 'From finance P&L snapshot', 
-      icon: '�', 
+      icon: '📊', 
       color: 'bg-purple-500' 
     },
     { 
