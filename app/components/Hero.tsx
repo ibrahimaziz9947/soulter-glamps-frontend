@@ -18,20 +18,17 @@ export default function Hero() {
   const heroImageUrl = '/images/hero/main-hero.jpg'
 
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden bg-green-dark">
+    <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Enhanced Loading */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 z-0 opacity-[0.15]"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 z-0"
         style={{
           backgroundImage: `url('${heroImageUrl}')`,
           backgroundPosition: 'center center',
         }}
       >
-        {/* Dark overlay with gradient for better text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-green-dark/60 via-green-dark/50 to-green-dark/70"></div>
-        
-        {/* Additional center spotlight effect for text area */}
-        <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/10 to-black/20"></div>
+        {/* Minimal overlay for text readability while keeping image original */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30"></div>
       </div>
 
       {/* Content with enhanced text shadows */}
