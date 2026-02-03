@@ -22,11 +22,11 @@ export default function Navbar() {
                 priority
               />
             </div>
-            <span className="font-serif text-3xl font-bold text-yellow">Soulter Glamps</span>
+            <span className="font-serif text-2xl font-bold text-yellow pt-1">Soulter Glamps</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8 ml-auto">
             <Link href="/" className="hover:text-yellow transition-smooth">
               HOME
             </Link>
