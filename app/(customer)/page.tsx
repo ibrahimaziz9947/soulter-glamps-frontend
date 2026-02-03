@@ -274,52 +274,14 @@ export default function HomePage() {
 
 import Hero from '../components/Hero'
 import SectionHeading from '../components/SectionHeading'
-import GlampGrid from '../components/GlampGrid'
 import Button from '../components/Button'
 import Link from 'next/link'
-import { glamps } from '../data/glamps'
 
 export default function HomePage() {
-  /**
-   * 🔧 Normalize static glamps to match GlampGrid contract
-   * Featured glamps are preview-only, so features can be empty safely
-   
-  const featuredGlamps = glamps.slice(0, 3).map((glamp) => ({
-    ...glamp,
-    features: glamp.features ?? [], // ✅ FIX: required by GlampGrid
-  })) */
-
-  const featuredGlamps = glamps.slice(0, 3).map((glamp) => ({
-  ...glamp,
-  features: [], // ✅ explicitly injected for GlampGrid contract
-}))
-
-
   return (
     <>
       {/* Hero Section */}
       <Hero />
-
-      {/* Featured Glamps Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-cream">
-        <div className="max-w-7xl mx-auto">
-          <SectionHeading
-            title="Featured Accommodations"
-            subtitle="Discover our handpicked selection of luxury glamping experiences"
-            centered
-          />
-
-          <GlampGrid glamps={featuredGlamps} />
-
-          <div className="text-center mt-12">
-            <Link href="/glamps">
-              <Button variant="primary" size="large">
-                View All Glamps
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Why Choose Us Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
