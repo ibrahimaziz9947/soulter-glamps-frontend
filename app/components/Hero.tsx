@@ -18,10 +18,10 @@ export default function Hero() {
   const heroImageUrl = '/images/hero/main-hero.jpg'
 
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative h-screen flex items-center justify-center overflow-hidden bg-green-dark">
       {/* Background Image with Enhanced Loading */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 z-0"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 z-0 opacity-[0.15]"
         style={{
           backgroundImage: `url('${heroImageUrl}')`,
           backgroundPosition: 'center center',
