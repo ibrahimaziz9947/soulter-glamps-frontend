@@ -78,8 +78,9 @@ export interface BookingPayload {
   checkInDate: string
   checkOutDate: string
   guests: number
+  numberOfGlamps: number
   customerName: string
-  customerEmail: string
+  customerEmail?: string
   customerPhone: string
 }
 

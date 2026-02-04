@@ -28,6 +28,7 @@ function BookingPageContent() {
     checkIn: searchParams.get('checkIn') || '',
     checkOut: searchParams.get('checkOut') || '',
     guests: parseInt(searchParams.get('guests') || '2'),
+    numberOfGlamps: parseInt(searchParams.get('numberOfGlamps') || '1'),
     glampType: searchParams.get('glampType') || '',
 
     firstName: '',
@@ -70,8 +71,15 @@ function BookingPageContent() {
     }
   }, [selectedGlamp, nights])
 
+  const maxGuests = (Number(formData.numberOfGlamps) || 1) * 4
+  const isGuestLimitExceeded = Number(formData.guests) > maxGuests
+
   const handleAvailabilitySubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isGuestLimitExceeded) {
+      setError(`Each glamp accommodates max 4 guests. With ${formData.numberOfGlamps} glamps you can book up to ${maxGuests} guests.`)
+      return
+    }
     setError(null)
     setCurrentStep(2)
   }
@@ -113,6 +121,7 @@ function BookingPageContent() {
       checkInDate: formData.checkIn,
       checkOutDate: formData.checkOut,
       guests: Number(formData.guests),
+      numberOfGlamps: Number(formData.numberOfGlamps),
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
       customerEmail: formData.email,
       customerPhone: formData.phone,
@@ -152,6 +161,7 @@ function BookingPageContent() {
       checkInDate: formData.checkIn,
       checkOutDate: formData.checkOut,
       guests: Number(formData.guests),
+      numberOfGlamps: Number(formData.numberOfGlamps),
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
       customerEmail: formData.email,
       customerPhone: formData.phone,
@@ -254,6 +264,26 @@ function BookingPageContent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
+                          Number of Glamps *
+                        </label>
+                        <select
+                          name="numberOfGlamps"
+                          value={formData.numberOfGlamps}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                          required
+                          disabled={isSubmitting}
+                        >
+                          {[1, 2, 3, 4].map((num) => (
+                            <option key={num} value={num}>
+                              {num}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-text-dark mb-2">
                           Check-in Date *
                         </label>
                         <input
@@ -292,16 +322,21 @@ function BookingPageContent() {
                           name="guests"
                           value={formData.guests}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent ${
+                            isGuestLimitExceeded ? 'border-red-500' : 'border-gray-300'
+                          }`}
                           required
                           disabled={isSubmitting}
                         >
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((num) => (
                             <option key={num} value={num}>
                               {num} {num === 1 ? 'Guest' : 'Guests'}
                             </option>
                           ))}
                         </select>
+                        <p className={`text-xs mt-1 ${isGuestLimitExceeded ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
+                          Max guests allowed: {maxGuests} (4 per glamp)
+                        </p>
                       </div>
 
                       <div>
@@ -384,7 +419,7 @@ function BookingPageContent() {
 
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
-                          Email Address *
+                          Email Address
                         </label>
                         <input
                           type="email"
@@ -392,7 +427,6 @@ function BookingPageContent() {
                           value={formData.email}
                           onChange={handleInputChange}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
-                          required
                           disabled={isSubmitting}
                         />
                       </div>
