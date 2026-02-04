@@ -388,21 +388,22 @@ function getApiBaseUrl(): string | null {
   return API_BASE_URL
 }*/
 
+const isDev = process.env.NODE_ENV !== 'production'
 function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL || ''
-  console.log('[bookings.api] Base URL:', envUrl)
+  if (isDev) console.log('[bookings.api] Base URL:', envUrl)
   return envUrl
 }
 
 export async function createBooking(
   payload: BookingPayload
 ): Promise<BookingResponse> {
-  console.log('[bookings.api] Creating booking with payload:', payload)
+  if (isDev) console.log('[bookings.api] Creating booking with payload:', payload)
 
   const baseUrl = getApiBaseUrl()
   const path = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
   const url = `${baseUrl}${path}`
-  console.log('[bookings.api] POST URL:', url)
+  if (isDev) console.log('[bookings.api] POST URL:', url)
 
   const hasMulti = 'glampIds' in payload
   const hasSingle = 'glampId' in payload
@@ -464,8 +465,10 @@ export async function createBooking(
     })
 
     const data = await response.json()
-    console.log('[bookings.api] API response status:', response.status)
-    console.log('[bookings.api] API response:', data)
+    if (isDev) {
+      console.log('[bookings.api] API response status:', response.status)
+      console.log('[bookings.api] API response:', data)
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -493,7 +496,7 @@ export async function createBooking(
       booking: data.booking,
     }
   } catch (error) {
-    console.error('[bookings.api] Network error:', error)
+    if (isDev) console.error('[bookings.api] Network error:', error)
     return {
       success: false,
       error: 'Unable to reach booking server',
@@ -504,12 +507,12 @@ export async function createBooking(
 export async function getBookingById(
   id: string
 ): Promise<BookingResponse> {
-  console.log('[bookings.api] Fetching booking:', id)
+  if (isDev) console.log('[bookings.api] Fetching booking:', id)
 
   const baseUrl = getApiBaseUrl()
   const path = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
   const url = `${baseUrl}${path}/${id}`
-  console.log('[bookings.api] GET URL:', url)
+  if (isDev) console.log('[bookings.api] GET URL:', url)
 
   try {
     const response = await fetch(url, {
@@ -521,8 +524,10 @@ export async function getBookingById(
     })
 
     const data = await response.json()
-    console.log('[bookings.api] API response status:', response.status)
-    console.log('[bookings.api] Booking details:', data)
+    if (isDev) {
+      console.log('[bookings.api] API response status:', response.status)
+      console.log('[bookings.api] Booking details:', data)
+    }
 
     if (!response.ok || !data?.success || !data?.booking) {
       return {
@@ -536,7 +541,7 @@ export async function getBookingById(
       booking: data.booking,
     }
   } catch (error) {
-    console.error('[bookings.api] Network error:', error)
+    if (isDev) console.error('[bookings.api] Network error:', error)
     return {
       success: false,
       error: 'Unable to reach booking server',
@@ -562,12 +567,12 @@ export async function checkAvailability(
   checkIn: string,
   checkOut: string
 ): Promise<AvailabilityResponse> {
-  console.log('[bookings.api] Checking availability:', { glampId, checkIn, checkOut })
+  if (isDev) console.log('[bookings.api] Checking availability:', { glampId, checkIn, checkOut })
 
   const baseUrl = getApiBaseUrl()
   const bookingsPath = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
   const url = `${baseUrl}${bookingsPath}/availability`
-  console.log('[bookings.api] AVAIL URL (single):', url)
+  if (isDev) console.log('[bookings.api] AVAIL URL (single):', url)
 
   if (!glampId || !checkIn || !checkOut) {
     return {
@@ -592,8 +597,10 @@ export async function checkAvailability(
     })
 
     const data = await response.json()
-    console.log('[bookings.api] API response status:', response.status)
-    console.log('[bookings.api] Availability response:', data)
+    if (isDev) {
+      console.log('[bookings.api] API response status:', response.status)
+      console.log('[bookings.api] Availability response:', data)
+    }
 
     if (!response.ok) {
       return {
@@ -612,7 +619,7 @@ export async function checkAvailability(
       message: data.message,
     }
   } catch (error) {
-    console.error('[bookings.api] Network error:', error)
+    if (isDev) console.error('[bookings.api] Network error:', error)
     return {
       success: false,
       error: 'Unable to reach booking server',
@@ -625,12 +632,12 @@ export async function checkAvailabilityForGlamps(
   checkIn: string,
   checkOut: string
 ): Promise<AvailabilityResponse> {
-  console.log('[bookings.api] Checking availability (multi):', { glampIds, checkIn, checkOut })
+  if (isDev) console.log('[bookings.api] Checking availability (multi):', { glampIds, checkIn, checkOut })
 
   const baseUrl = getApiBaseUrl()
   const bookingsPath = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
   const url = `${baseUrl}${bookingsPath}/availability`
-  console.log('[bookings.api] AVAIL URL (multi):', url)
+  if (isDev) console.log('[bookings.api] AVAIL URL (multi):', url)
 
   if (!glampIds?.length || !checkIn || !checkOut) {
     return {
@@ -655,8 +662,10 @@ export async function checkAvailabilityForGlamps(
     })
 
     const data = await response.json()
-    console.log('[bookings.api] API response status:', response.status)
-    console.log('[bookings.api] Availability response (multi):', data)
+    if (isDev) {
+      console.log('[bookings.api] API response status:', response.status)
+      console.log('[bookings.api] Availability response (multi):', data)
+    }
 
     if (!response.ok) {
       return {
@@ -673,7 +682,7 @@ export async function checkAvailabilityForGlamps(
       message: data.message,
     }
   } catch (error) {
-    console.error('[bookings.api] Network error:', error)
+    if (isDev) console.error('[bookings.api] Network error:', error)
     return {
       success: false,
       error: 'Unable to reach booking server',
