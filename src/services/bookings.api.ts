@@ -376,11 +376,8 @@ function getApiBaseUrl(): string | null {
 }*/
 
 import { API_BASE_URL } from '@/app/config/api'
-function getApiBaseUrl(): string | null {
-  if (!API_BASE_URL) {
-    console.error('[bookings.api] NEXT_PUBLIC_API_URL is missing. Booking API unavailable.')
-    return null
-  }
+function getApiBaseUrl(): string {
+  // Allow empty string for relative paths (proxy usage)
   return API_BASE_URL
 }
 
@@ -390,12 +387,6 @@ export async function createBooking(
   console.log('[bookings.api] Creating booking with payload:', payload)
 
   const baseUrl = getApiBaseUrl()
-  if (!baseUrl) {
-    return {
-      success: false,
-      error: 'Booking service is currently unavailable',
-    }
-  }
 
   if (!payload.glampId || !payload.checkInDate || !payload.checkOutDate) {
     return {
@@ -458,12 +449,6 @@ export async function getBookingById(
   console.log('[bookings.api] Fetching booking:', id)
 
   const baseUrl = getApiBaseUrl()
-  if (!baseUrl) {
-    return {
-      success: false,
-      error: 'Booking service is currently unavailable',
-    }
-  }
 
   try {
     const response = await fetch(`${baseUrl}/api/bookings/${id}`, {
@@ -518,12 +503,6 @@ export async function checkAvailability(
   console.log('[bookings.api] Checking availability:', { glampId, checkIn, checkOut })
 
   const baseUrl = getApiBaseUrl()
-  if (!baseUrl) {
-    return {
-      success: false,
-      error: 'Booking service is currently unavailable',
-    }
-  }
 
   if (!glampId || !checkIn || !checkOut) {
     return {

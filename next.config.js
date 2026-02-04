@@ -16,6 +16,14 @@ const nextConfig = {
     }
     return config
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://web-production-9eb74.up.railway.app/api/:path*',
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
