@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
 export default function Footer() {
+  const msg = "Hi! I’m contacting you from Soulter Glamps website. I want to book."
+  const whatsappUrl = `https://wa.me/923235521558?text=${encodeURIComponent(msg)}`
   return (
     <footer className="bg-green-dark text-cream">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -46,9 +48,46 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-lg mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-cream/80">
-              <li>Email: info@soulterglamps.com</li>
-              <li>Phone: +92 XXXX XXX</li>
-              <li>Location: Nathia Gali, near Kalabagh Base, KPK</li>
+              <li>
+                <a 
+                  href="mailto:info@soulterglamps.com" 
+                  className="hover:underline hover:text-yellow transition-smooth"
+                  aria-label="Email us"
+                >
+                  Email: info@soulterglamps.com
+                </a>
+              </li>
+              <li>
+                <a 
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:underline hover:text-yellow transition-smooth"
+                  aria-label="Chat on WhatsApp"
+                >
+                  <svg aria-hidden="true" className="w-5 h-5 text-cream" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.04 2C6.58 2 2.14 6.44 2.14 11.9c0 2.1.63 4.07 1.71 5.72L2 22l4.51-1.8c1.6.99 3.47 1.56 5.53 1.56 5.46 0 9.9-4.44 9.9-9.9S17.5 2 12.04 2zm5.8 14.22c-.25.71-1.45 1.36-2 1.45-.54.1-1.24.18-2.1-.13-.49-.17-1.12-.36-1.94-.81-3.41-1.91-5.63-6.16-5.8-6.44-.17-.28-1.39-1.85-1.39-3.54 0-1.69.9-2.52 1.22-2.86.31-.34.68-.43.9-.43.22 0 .45 0 .65.01.21.01.5-.08.79.6.25.56.85 2.06.93 2.21.08.15.13.32.02.52-.12.2-.18.32-.36.51-.17.19-.32.41-.46.55-.15.14-.31.3-.13.63.18.34.78 1.28 1.68 2.08 1.16 1.04 2.13 1.36 2.47 1.51.34.15.55.13.75-.08.2-.21.86-1 1.09-1.35.22-.35.47-.29.79-.17.32.12 2.03.96 2.38 1.13.35.17.58.26.67.4.09.14.09.81-.16 1.53z"/>
+                  </svg>
+                  <svg aria-hidden="true" className="w-5 h-5 text-cream" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.1.36 2.28.55 3.58.55a1 1 0 011 1v3.5a1 1 0 01-1 1C10.29 22 2 13.71 2 3.5a1 1 0 011-1H6.5a1 1 0 011 1c0 1.3.19 2.48.55 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/>
+                  </svg>
+                  <span>Phone: 03235521558</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.google.com/maps/place/Soulters+Guest+House/@34.0601968,73.3646594,17z/data=!3m1!4b1!4m20!1m10!3m9!1s0x38dfd32211b3482d:0x1e4cd76e31f18c54!2sSoulters+Guest+House!5m2!4m1!1i2!8m2!3d34.0601924!4d73.3672343!16s%2Fg%2F11q2kdxlt_!3m8!1s0x38dfd32211b3482d:0x1e4cd76e31f18c54!5m2!4m1!1i2!8m2!3d34.0601924!4d73.3672343!16s%2Fg%2F11q2kdxlt_?entry=ttu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:underline hover:text-yellow transition-smooth"
+                  aria-label="Open location in Google Maps"
+                >
+                  <svg aria-hidden="true" className="w-5 h-5 text-cream" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 119.5 9 2.5 2.5 0 0112 11.5z"/>
+                  </svg>
+                  <span>Location: Nathia Gali, near Kalabagh Base, KPK</span>
+                </a>
+              </li>
             </ul>
           </div>
 
