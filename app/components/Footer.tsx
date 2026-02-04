@@ -71,7 +71,7 @@ export default function Footer() {
                   <svg aria-hidden="true" className="w-5 h-5 text-cream" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.1.36 2.28.55 3.58.55a1 1 0 011 1v3.5a1 1 0 01-1 1C10.29 22 2 13.71 2 3.5a1 1 0 011-1H6.5a1 1 0 011 1c0 1.3.19 2.48.55 3.58a1 1 0 01-.24 1.01l-2.2 2.2z"/>
                   </svg>
-                  <span>Phone: 03235521558</span>
+                  <span>Phone: 03395069280</span>
                 </a>
               </li>
               <li>
