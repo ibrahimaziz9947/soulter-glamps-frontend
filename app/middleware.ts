@@ -46,9 +46,24 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Handle API proxy headers - Force Origin to match Backend Allowlist
+  if (pathname.startsWith('/api')) {
+    const requestHeaders = new Headers(request.headers)
+    
+    // Force the Origin header to be one that the backend definitely accepts
+    // This bypasses strict CORS checks when proxying from Vercel/Localhost
+    requestHeaders.set('Origin', 'https://soultersglamps.com')
+    
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/agent/:path*'],
+  matcher: ['/agent/:path*', '/api/:path*'],
 }
