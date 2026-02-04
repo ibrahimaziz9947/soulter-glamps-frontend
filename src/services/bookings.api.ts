@@ -333,15 +333,27 @@ export async function getBookingById(id: string): Promise<BookingResponse> {
 
 // src/services/bookings.api.ts
 
-export interface BookingPayload {
-  glampId: string
-  checkInDate: string
-  checkOutDate: string
-  guests: number
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-}
+export type BookingPayload =
+  | {
+      glampIds: string[]
+      numberOfGlamps: number
+      checkInDate: string
+      checkOutDate: string
+      guests: number
+      customerName: string
+      customerEmail?: string
+      customerPhone: string
+    }
+  | {
+      glampId: string
+      checkInDate: string
+      checkOutDate: string
+      guests: number
+      customerName: string
+      customerEmail?: string
+      customerPhone: string
+      numberOfGlamps?: number
+    }
 
 export interface Booking {
   id: string
@@ -389,14 +401,22 @@ export async function createBooking(
 
   const baseUrl = getApiBaseUrl()
 
-  if (!payload.glampId || !payload.checkInDate || !payload.checkOutDate) {
+  const hasMulti = 'glampIds' in payload
+  const hasSingle = 'glampId' in payload
+
+  if (
+    (hasMulti && (!payload.glampIds || payload.glampIds.length < 1)) ||
+    (hasSingle && !payload.glampId) ||
+    !payload.checkInDate ||
+    !payload.checkOutDate
+  ) {
     return {
       success: false,
       error: 'Missing required booking fields',
     }
   }
 
-  if (!payload.customerName || !payload.customerEmail || !payload.customerPhone) {
+  if (!payload.customerName || !payload.customerPhone) {
     return {
       success: false,
       error: 'Missing required customer information',
@@ -544,6 +564,63 @@ export async function checkAvailability(
       success: true,
       data: data.data,
       available: available,
+      message: data.message,
+    }
+  } catch (error) {
+    console.error('[bookings.api] Network error:', error)
+    return {
+      success: false,
+      error: 'Unable to reach booking server',
+    }
+  }
+}
+
+export async function checkAvailabilityForGlamps(
+  glampIds: string[],
+  checkIn: string,
+  checkOut: string
+): Promise<AvailabilityResponse> {
+  console.log('[bookings.api] Checking availability (multi):', { glampIds, checkIn, checkOut })
+
+  const baseUrl = getApiBaseUrl()
+
+  if (!glampIds?.length || !checkIn || !checkOut) {
+    return {
+      success: false,
+      error: 'Missing required parameters',
+    }
+  }
+
+  try {
+    const params = new URLSearchParams({
+      glampIds: glampIds.join(','),
+      checkIn,
+      checkOut,
+    })
+
+    const response = await fetch(`${baseUrl}/api/bookings/availability?${params}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    })
+
+    const data = await response.json()
+    console.log('[bookings.api] Availability response (multi):', data)
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.error || `HTTP ${response.status}`,
+      }
+    }
+
+    const available = data.data?.available ?? data.available ?? false
+    return {
+      success: true,
+      data: data.data,
+      available,
       message: data.message,
     }
   } catch (error) {

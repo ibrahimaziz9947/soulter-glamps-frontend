@@ -40,7 +40,7 @@ function BookingPageContent() {
     arrivalTime: '',
   })
 
-  const [selectedGlamp, setSelectedGlamp] = useState<any>(null)
+  const [selectedGlampIds, setSelectedGlampIds] = useState<string[]>([])
   const [nights, setNights] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
 
@@ -48,11 +48,8 @@ function BookingPageContent() {
   // 🔧 STEP 1 — STORE REAL GLAMP ID
   // ===============================//
   useEffect(() => {
-    if (formData.glampType) {
-      const glamp = glamps.find(g => g.id === formData.glampType)
-      setSelectedGlamp(glamp || null)
-    }
-  }, [formData.glampType])
+    console.log('[BookingPage] selected glampIds', selectedGlampIds)
+  }, [selectedGlampIds])
 
   useEffect(() => {
     if (formData.checkIn && formData.checkOut) {
@@ -65,14 +62,20 @@ function BookingPageContent() {
   }, [formData.checkIn, formData.checkOut])
 
   useEffect(() => {
-    if (selectedGlamp && nights > 0) {
-      const price = 25000 * nights
+    const perNight = 25000
+    const count = selectedGlampIds.length
+    if (nights > 0) {
+      const price = perNight * count * nights
       setTotalPrice(price)
+    } else {
+      setTotalPrice(0)
     }
-  }, [selectedGlamp, nights])
+  }, [selectedGlampIds, nights])
 
   const maxGuests = (Number(formData.numberOfGlamps) || 1) * 4
   const isGuestLimitExceeded = Number(formData.guests) > maxGuests
+  const selectedCount = selectedGlampIds.length
+  const numberOfGlamps = Number(formData.numberOfGlamps) || 1
 
   const handleAvailabilitySubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,6 +83,15 @@ function BookingPageContent() {
       setError(`Each glamp accommodates max 4 guests. With ${formData.numberOfGlamps} glamps you can book up to ${maxGuests} guests.`)
       return
     }
+    if (selectedCount !== numberOfGlamps) {
+      setError(`Please select exactly ${numberOfGlamps} glamp(s). Currently selected: ${selectedCount}.`)
+      return
+    }
+    if (selectedCount > 4) {
+      setError('You can select up to 4 glamps.')
+      return
+    }
+    console.log('[BookingPage] numberOfGlamps', numberOfGlamps, 'guests', formData.guests, 'max', selectedCount * 4)
     setError(null)
     setCurrentStep(2)
   }
@@ -110,25 +122,28 @@ function BookingPageContent() {
     setIsSubmitting(true)
     setError(null)
 
-    if (!selectedGlamp?.id) {
+    if (!selectedGlampIds.length) {
       setError('Invalid glamp selection. Please try again.')
       setIsSubmitting(false)
       return
     }
 
-    const payload: BookingPayload = {
-      glampId: selectedGlamp.id, // ✅ REAL DATABASE ID
+    const basePayload = {
+      glampIds: selectedGlampIds,
+      numberOfGlamps: selectedGlampIds.length,
       checkInDate: formData.checkIn,
       checkOutDate: formData.checkOut,
       guests: Number(formData.guests),
-      numberOfGlamps: Number(formData.numberOfGlamps),
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
-      customerEmail: formData.email,
       customerPhone: formData.phone,
     }
+    const payload: BookingPayload =
+      formData.email && formData.email.trim()
+        ? { ...basePayload, customerEmail: formData.email.trim() }
+        : basePayload
 
-    console.log('[BookingPage] Selected glamp:', selectedGlamp)
-    console.log('[BookingPage] Booking payload:', payload)
+    console.log('[BookingPage] selected glampIds', selectedGlampIds)
+    console.log('[BookingPage] submit payload', payload)
 
     const response = await createBooking(payload)
 
@@ -150,25 +165,28 @@ function BookingPageContent() {
     await new Promise(resolve => setTimeout(resolve, 1500))
     setPaymentSuccess(true)
 
-    if (!selectedGlamp?.id) {
+    if (!selectedGlampIds.length) {
       setError('Invalid glamp selection. Please try again.')
       setIsSubmitting(false)
       return
     }
 
-    const payload: BookingPayload = {
-      glampId: selectedGlamp.id, // ✅ REAL DATABASE ID
+    const basePayload = {
+      glampIds: selectedGlampIds,
+      numberOfGlamps: selectedGlampIds.length,
       checkInDate: formData.checkIn,
       checkOutDate: formData.checkOut,
       guests: Number(formData.guests),
-      numberOfGlamps: Number(formData.numberOfGlamps),
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
-      customerEmail: formData.email,
       customerPhone: formData.phone,
     }
+    const payload: BookingPayload =
+      formData.email && formData.email.trim()
+        ? { ...basePayload, customerEmail: formData.email.trim() }
+        : basePayload
 
-    console.log('[BookingPage] Selected glamp:', selectedGlamp)
-    console.log('[BookingPage] Booking payload:', payload)
+    console.log('[BookingPage] selected glampIds', selectedGlampIds)
+    console.log('[BookingPage] submit payload', payload)
 
     const response = await createBooking(payload)
 
@@ -341,38 +359,59 @@ function BookingPageContent() {
 
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
-                          Select Glamp *
+                          Choose Glamps *
                         </label>
-                        <select
-                          name="glampType"
-                          value={formData.glampType}
-                          onChange={handleInputChange}
-                          value={selectedGlamp?.id || ''}
-                          onChange={(e) => {
-                            const glamp = glamps.find(g => g.id === e.target.value)
-                            setSelectedGlamp(glamp || null)
-                            setFormData(prev => ({
-                              ...prev,
-                              glampType: e.target.value, // ✅ REAL ID ONLY
-                            }))
-                          }}
-
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
-                          required
-                          disabled={isSubmitting}
-                        >
-                          <option value="">Choose your glamp</option>
-                          {glamps.map((glamp) => (
-                            <option key={glamp.id} value={glamp.id}>
-                              {glamp.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-2">
+                          {glamps.map((glamp) => {
+                            const checked = selectedGlampIds.includes(glamp.id)
+                            const disableNewSelection =
+                              !checked && (selectedCount >= numberOfGlamps || selectedCount >= 4)
+                            return (
+                              <label key={glamp.id} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  disabled={isSubmitting || disableNewSelection}
+                                  onChange={(e) => {
+                                    const isChecked = e.target.checked
+                                    setError(null)
+                                    setSelectedGlampIds((prev) => {
+                                      if (isChecked) {
+                                        if (prev.length >= 4) {
+                                          setError('You can select up to 4 glamps.')
+                                          return prev
+                                        }
+                                        if (prev.length >= numberOfGlamps) {
+                                          setError(`You can select ${numberOfGlamps} glamp(s) for this booking.`)
+                                          return prev
+                                        }
+                                        return [...prev, glamp.id]
+                                      } else {
+                                        return prev.filter((id) => id !== glamp.id)
+                                      }
+                                    })
+                                  }}
+                                  className="h-4 w-4"
+                                />
+                                <span className="text-sm">{glamp.name}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Selected {selectedCount} of {numberOfGlamps} allowed
+                        </p>
                       </div>
                     </div>
 
                     <div className="mt-8">
-                      <Button type="submit" variant="primary" size="large" className="w-full" disabled={isSubmitting}>
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="large"
+                        className="w-full"
+                        disabled={isSubmitting || isGuestLimitExceeded || selectedCount !== numberOfGlamps || selectedCount > 4}
+                      >
                         Continue to Guest Details
                       </Button>
                     </div>
@@ -817,6 +856,7 @@ function BookingPageContent() {
     checkIn: searchParams.get('checkIn') || '',
     checkOut: searchParams.get('checkOut') || '',
     guests: parseInt(searchParams.get('guests') || '2'),
+    numberOfGlamps: parseInt(searchParams.get('numberOfGlamps') || '1'),
     glampType: searchParams.get('glampType') || '',
 
     firstName: '',
@@ -828,7 +868,7 @@ function BookingPageContent() {
     arrivalTime: '',
   })
 
-  const [selectedGlamp, setSelectedGlamp] = useState<any>(null)
+  const [selectedGlampIds, setSelectedGlampIds] = useState<string[]>([])
   const [nights, setNights] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
 
@@ -836,12 +876,8 @@ function BookingPageContent() {
   // 🔧 STEP 2 — SELECT REAL GLAMP BY ID
   // ===============================
   useEffect(() => {
-    if (formData.glampType && glamps.length > 0) {
-      const glamp = glamps.find(g => String(g.id) === String(formData.glampType))
-      setSelectedGlamp(glamp || null)
-      console.log('[BookingPage] Selected glamp:', glamp)
-    }
-  }, [formData.glampType, glamps])
+    console.log('[BookingPage] selected glampIds', selectedGlampIds)
+  }, [selectedGlampIds])
 
   useEffect(() => {
     if (formData.checkIn && formData.checkOut) {
@@ -854,17 +890,43 @@ function BookingPageContent() {
   }, [formData.checkIn, formData.checkOut])
 
   useEffect(() => {
-    if (selectedGlamp && nights > 0) {
-      // Calculate price using backend pricePerNight or fallback to 25000
-      const pricePerNight = selectedGlamp.pricePerNight || 25000
-      const price = pricePerNight * nights
-      setTotalPrice(price)
-      console.log('[BookingPage] Price calculated:', { pricePerNight, nights, total: price })
+    if (nights > 0) {
+      const perGlampTotals = selectedGlampIds.map((id) => {
+        const g = glamps.find((x) => String(x.id) === String(id))
+        const pricePerNight = (g && (g.pricePerNight || g.price || 25000)) as number
+        const numericPrice =
+          typeof pricePerNight === 'string'
+            ? 25000
+            : (pricePerNight as number)
+        return (numericPrice || 25000)
+      })
+      const sumPerNight = perGlampTotals.reduce((acc, n) => acc + n, 0)
+      const total = sumPerNight * nights
+      setTotalPrice(total)
+      console.log('[BookingPage] Price calculated (multi):', { nights, perNightSum: sumPerNight, total })
+    } else {
+      setTotalPrice(0)
     }
-  }, [selectedGlamp, nights])
+  }, [selectedGlampIds, nights, glamps])
 
   const handleAvailabilitySubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const numberOfGlamps = Number(formData.numberOfGlamps) || 1
+    const selectedCount = selectedGlampIds.length
+    const maxGuests = selectedCount * 4
+    if (!selectedCount || selectedCount > 4) {
+      setError('Please select between 1 and 4 glamps.')
+      return
+    }
+    if (selectedCount !== numberOfGlamps) {
+      setError(`Please select exactly ${numberOfGlamps} glamp(s). Currently selected: ${selectedCount}.`)
+      return
+    }
+    if (Number(formData.guests) > maxGuests) {
+      setError(`Each glamp accommodates max 4 guests. With ${selectedCount} glamps you can book up to ${maxGuests} guests.`)
+      return
+    }
+    console.log('[BookingPage] numberOfGlamps', numberOfGlamps, 'guests', formData.guests, 'max', selectedCount * 4)
     setError(null)
     setCurrentStep(2)
   }
@@ -893,24 +955,28 @@ function BookingPageContent() {
     setIsSubmitting(true)
     setError(null)
 
-    if (!selectedGlamp?.id) {
+    if (!selectedGlampIds.length) {
       setError('Invalid glamp selection. Please try again.')
       setIsSubmitting(false)
       return
     }
 
-    const payload: BookingPayload = {
-      glampId: String(selectedGlamp.id), // ✅ REAL DATABASE ID
+    const basePayload = {
+      glampIds: selectedGlampIds,
+      numberOfGlamps: selectedGlampIds.length,
       checkInDate: formData.checkIn,
       checkOutDate: formData.checkOut,
       guests: Number(formData.guests),
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
-      customerEmail: formData.email,
       customerPhone: formData.phone,
     }
+    const payload: BookingPayload =
+      formData.email && formData.email.trim()
+        ? { ...basePayload, customerEmail: formData.email.trim() }
+        : basePayload
 
-    console.log('[BookingPage] Selected glamp:', selectedGlamp)
-    console.log('[BookingPage] Booking payload:', payload)
+    console.log('[BookingPage] selected glampIds', selectedGlampIds)
+    console.log('[BookingPage] submit payload', payload)
 
     const response = await createBooking(payload)
 
@@ -932,24 +998,28 @@ function BookingPageContent() {
     await new Promise(resolve => setTimeout(resolve, 1500))
     setPaymentSuccess(true)
 
-    if (!selectedGlamp?.id) {
+    if (!selectedGlampIds.length) {
       setError('Invalid glamp selection. Please try again.')
       setIsSubmitting(false)
       return
     }
 
-    const payload: BookingPayload = {
-      glampId: String(selectedGlamp.id), // ✅ REAL DATABASE ID
+    const basePayload = {
+      glampIds: selectedGlampIds,
+      numberOfGlamps: selectedGlampIds.length,
       checkInDate: formData.checkIn,
       checkOutDate: formData.checkOut,
       guests: Number(formData.guests),
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
-      customerEmail: formData.email,
       customerPhone: formData.phone,
     }
+    const payload: BookingPayload =
+      formData.email && formData.email.trim()
+        ? { ...basePayload, customerEmail: formData.email.trim() }
+        : basePayload
 
-    console.log('[BookingPage] Selected glamp:', selectedGlamp)
-    console.log('[BookingPage] Booking payload:', payload)
+    console.log('[BookingPage] selected glampIds', selectedGlampIds)
+    console.log('[BookingPage] submit payload', payload)
 
     const response = await createBooking(payload)
 
@@ -1074,6 +1144,26 @@ function BookingPageContent() {
 
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
+                          Number of Glamps *
+                        </label>
+                        <select
+                          name="numberOfGlamps"
+                          value={formData.numberOfGlamps}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
+                          required
+                          disabled={isSubmitting}
+                        >
+                          {[1, 2, 3, 4].map((num) => (
+                            <option key={num} value={num}>
+                              {num}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-text-dark mb-2">
                           Number of Guests *
                         </label>
                         <select
@@ -1084,47 +1174,75 @@ function BookingPageContent() {
                           required
                           disabled={isSubmitting}
                         >
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                          {Array.from({ length: Math.min((Number(formData.numberOfGlamps) || 1) * 4, 16) }, (_, i) => i + 1).map((num) => (
                             <option key={num} value={num}>
                               {num} {num === 1 ? 'Guest' : 'Guests'}
                             </option>
                           ))}
                         </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Max guests allowed: {(Number(formData.numberOfGlamps) || 1) * 4} (4 per glamp)
+                        </p>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
-                          Select Glamp *
+                          Choose Glamps *
                         </label>
-                        <select
-                          name="glampType"
-                          value={selectedGlamp?.id || ''}
-                          onChange={(e) => {
-                            const glamp = glamps.find(g => String(g.id) === e.target.value)
-                            setSelectedGlamp(glamp || null)
-                            setFormData(prev => ({
-                              ...prev,
-                              glampType: e.target.value, // ✅ REAL ID ONLY
-                            }))
-                          }}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
-                          required
-                          disabled={isSubmitting || isLoadingGlamps}
-                        >
-                          <option value="">
-                            {isLoadingGlamps ? 'Loading accommodations...' : 'Choose your glamp'}
-                          </option>
-                          {glamps.map((glamp) => (
-                            <option key={glamp.id} value={glamp.id}>
-                              {glamp.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-2">
+                          {isLoadingGlamps && <p className="text-sm text-text-light">Loading accommodations...</p>}
+                          {!isLoadingGlamps && glamps.map((glamp) => {
+                            const checked = selectedGlampIds.includes(String(glamp.id))
+                            const selectedCount = selectedGlampIds.length
+                            const numberOfGlamps = Number(formData.numberOfGlamps) || 1
+                            const disableNewSelection =
+                              !checked && (selectedCount >= numberOfGlamps || selectedCount >= 4)
+                            return (
+                              <label key={glamp.id} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  disabled={isSubmitting || disableNewSelection}
+                                  onChange={(e) => {
+                                    const isChecked = e.target.checked
+                                    setError(null)
+                                    setSelectedGlampIds((prev) => {
+                                      if (isChecked) {
+                                        if (prev.length >= 4) {
+                                          setError('You can select up to 4 glamps.')
+                                          return prev
+                                        }
+                                        if (prev.length >= numberOfGlamps) {
+                                          setError(`You can select ${numberOfGlamps} glamp(s) for this booking.`)
+                                          return prev
+                                        }
+                                        return [...prev, String(glamp.id)]
+                                      } else {
+                                        return prev.filter((id) => String(id) !== String(glamp.id))
+                                      }
+                                    })
+                                  }}
+                                  className="h-4 w-4"
+                                />
+                                <span className="text-sm">{glamp.name}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Selected {selectedGlampIds.length} of {formData.numberOfGlamps} allowed
+                        </p>
                       </div>
                     </div>
 
                     <div className="mt-8">
-                      <Button type="submit" variant="primary" size="large" className="w-full" disabled={isSubmitting}>
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="large"
+                        className="w-full"
+                        disabled={isSubmitting || selectedGlampIds.length !== (Number(formData.numberOfGlamps) || 1)}
+                      >
                         Continue to Guest Details
                       </Button>
                     </div>
@@ -1171,7 +1289,7 @@ function BookingPageContent() {
 
                       <div>
                         <label className="block text-sm font-medium text-text-dark mb-2">
-                          Email Address *
+                          Email Address
                         </label>
                         <input
                           type="email"
@@ -1179,7 +1297,6 @@ function BookingPageContent() {
                           value={formData.email}
                           onChange={handleInputChange}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent"
-                          required
                           disabled={isSubmitting}
                         />
                       </div>
@@ -1340,10 +1457,12 @@ function BookingPageContent() {
               <div className="sticky top-24 bg-white rounded-lg shadow-lg p-6">
                 <h2 className="font-serif text-2xl font-bold text-green mb-6">Booking Summary</h2>
 
-                {selectedGlamp ? (
+                {selectedGlampIds.length > 0 ? (
                   <>
                     <div className="mb-6">
-                      <h3 className="font-semibold text-text-dark mb-2">{selectedGlamp.name}</h3>
+                      <h3 className="font-semibold text-text-dark mb-2">
+                        {selectedGlampIds.length} {selectedGlampIds.length === 1 ? 'Glamp' : 'Glamps'} selected
+                      </h3>
                       <p className="text-sm text-text-light">{formData.guests} guests</p>
                     </div>
 
@@ -1367,11 +1486,15 @@ function BookingPageContent() {
                     <div className="space-y-3 mb-6">
                       <div className="flex justify-between text-sm">
                         <span className="text-text-light">
-                          PKR {(selectedGlamp?.pricePerNight || 25000).toLocaleString()} x {nights} nights
+                          {selectedGlampIds.length} glamp{selectedGlampIds.length > 1 ? 's' : ''} x PKR {25000 .toLocaleString()} per night
                         </span>
                         <span className="text-text-dark">
-                          PKR {((selectedGlamp?.pricePerNight || 25000) * nights).toLocaleString()}
+                          PKR {(selectedGlampIds.length * 25000).toLocaleString()}/night
                         </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-text-light">Nights</span>
+                        <span className="text-text-dark">{nights}</span>
                       </div>
                     </div>
 
@@ -1384,13 +1507,13 @@ function BookingPageContent() {
 
                     <div className="bg-cream rounded-lg p-4">
                       <p className="text-xs text-text-dark text-center">
-                        Price includes breakfast, parking, and room service.
+                        All glamps are priced at approximately PKR 25,000 per night and include breakfast, parking, and room service.
                       </p>
                     </div>
                   </>
                 ) : (
                   <div className="text-center text-text-light py-8">
-                    <p>Please select a glamp to see pricing</p>
+                    <p>Please select glamps to see pricing</p>
                   </div>
                 )}
               </div>
