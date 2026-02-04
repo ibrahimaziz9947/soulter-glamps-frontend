@@ -388,10 +388,10 @@ function getApiBaseUrl(): string | null {
   return API_BASE_URL
 }*/
 
-import { API_BASE_URL } from '@/app/config/api'
 function getApiBaseUrl(): string {
-  // Allow empty string for relative paths (proxy usage)
-  return API_BASE_URL
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || ''
+  console.log('[bookings.api] Base URL:', envUrl)
+  return envUrl
 }
 
 export async function createBooking(
@@ -400,6 +400,8 @@ export async function createBooking(
   console.log('[bookings.api] Creating booking with payload:', payload)
 
   const baseUrl = getApiBaseUrl()
+  const url = `${baseUrl}/bookings`
+  console.log('[bookings.api] POST URL:', url)
 
   const hasMulti = 'glampIds' in payload
   const hasSingle = 'glampId' in payload
@@ -424,13 +426,40 @@ export async function createBooking(
   }
 
   try {
-    const response = await fetch(`${baseUrl}/api/bookings`, {
+    const body: Record<string, any> = {
+      guests: payload.guests,
+      customerName: payload.customerName,
+      customerPhone: payload.customerPhone,
+      // dates: include both shapes for backend compatibility
+      checkInDate: payload.checkInDate,
+      checkOutDate: payload.checkOutDate,
+      checkIn: payload.checkInDate,
+      checkOut: payload.checkOutDate,
+    }
+
+    if ('glampIds' in payload) {
+      body.glampIds = payload.glampIds
+      body.numberOfGlamps = payload.numberOfGlamps ?? payload.glampIds.length
+      if (payload.glampIds?.length === 1) {
+        body.glampId = payload.glampIds[0]
+      }
+    } else if ('glampId' in payload) {
+      body.glampId = payload.glampId
+      body.glampIds = [payload.glampId]
+      body.numberOfGlamps = payload.numberOfGlamps ?? 1
+    }
+
+    if (payload.customerEmail && payload.customerEmail.trim()) {
+      body.customerEmail = payload.customerEmail.trim()
+    }
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // future-safe for auth
-      body: JSON.stringify(payload),
+      credentials: 'include',
+      body: JSON.stringify(body),
     })
 
     const data = await response.json()
@@ -439,14 +468,14 @@ export async function createBooking(
     if (!response.ok) {
       return {
         success: false,
-        error: data?.error || `HTTP ${response.status}`,
+        error: data?.error || data?.message || `HTTP ${response.status}`,
       }
     }
 
     if (!data?.success || !data?.booking) {
       return {
         success: false,
-        error: data?.error || 'Booking creation failed',
+        error: data?.error || data?.message || 'Booking creation failed',
       }
     }
 
@@ -470,9 +499,11 @@ export async function getBookingById(
   console.log('[bookings.api] Fetching booking:', id)
 
   const baseUrl = getApiBaseUrl()
+  const url = `${baseUrl}/bookings/${id}`
+  console.log('[bookings.api] GET URL:', url)
 
   try {
-    const response = await fetch(`${baseUrl}/api/bookings/${id}`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -486,7 +517,7 @@ export async function getBookingById(
     if (!response.ok || !data?.success || !data?.booking) {
       return {
         success: false,
-        error: data?.error || 'Failed to fetch booking',
+        error: data?.error || data?.message || 'Failed to fetch booking',
       }
     }
 
@@ -524,6 +555,8 @@ export async function checkAvailability(
   console.log('[bookings.api] Checking availability:', { glampId, checkIn, checkOut })
 
   const baseUrl = getApiBaseUrl()
+  const url = `${baseUrl}/bookings/availability`
+  console.log('[bookings.api] AVAIL URL (single):', url)
 
   if (!glampId || !checkIn || !checkOut) {
     return {
@@ -539,7 +572,7 @@ export async function checkAvailability(
       checkOut,
     })
 
-    const response = await fetch(`${baseUrl}/api/bookings/availability?${params}`, {
+    const response = await fetch(`${url}?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -553,7 +586,7 @@ export async function checkAvailability(
     if (!response.ok) {
       return {
         success: false,
-        error: data?.error || `HTTP ${response.status}`,
+        error: data?.error || data?.message || `HTTP ${response.status}`,
       }
     }
 
@@ -583,6 +616,8 @@ export async function checkAvailabilityForGlamps(
   console.log('[bookings.api] Checking availability (multi):', { glampIds, checkIn, checkOut })
 
   const baseUrl = getApiBaseUrl()
+  const url = `${baseUrl}/bookings/availability`
+  console.log('[bookings.api] AVAIL URL (multi):', url)
 
   if (!glampIds?.length || !checkIn || !checkOut) {
     return {
@@ -598,7 +633,7 @@ export async function checkAvailabilityForGlamps(
       checkOut,
     })
 
-    const response = await fetch(`${baseUrl}/api/bookings/availability?${params}`, {
+    const response = await fetch(`${url}?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -612,7 +647,7 @@ export async function checkAvailabilityForGlamps(
     if (!response.ok) {
       return {
         success: false,
-        error: data?.error || `HTTP ${response.status}`,
+        error: data?.error || data?.message || `HTTP ${response.status}`,
       }
     }
 
