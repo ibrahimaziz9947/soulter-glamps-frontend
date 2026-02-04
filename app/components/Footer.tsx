@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Footer() {
   const msg = "Hi! I’m contacting you from Soulter Glamps website. I want to book."
-  const whatsappUrl = `https://wa.me/923235521558?text=${encodeURIComponent(msg)}`
+  const whatsappUrl = `https://wa.me/923395069280?text=${encodeURIComponent(msg)}`
   return (
     <footer className="bg-green-dark text-cream">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
