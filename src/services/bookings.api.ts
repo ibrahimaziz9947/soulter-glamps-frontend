@@ -400,7 +400,8 @@ export async function createBooking(
   console.log('[bookings.api] Creating booking with payload:', payload)
 
   const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}/bookings`
+  const path = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
+  const url = `${baseUrl}${path}`
   console.log('[bookings.api] POST URL:', url)
 
   const hasMulti = 'glampIds' in payload
@@ -463,9 +464,16 @@ export async function createBooking(
     })
 
     const data = await response.json()
+    console.log('[bookings.api] API response status:', response.status)
     console.log('[bookings.api] API response:', data)
 
     if (!response.ok) {
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: 'This endpoint is for admin login only',
+        }
+      }
       return {
         success: false,
         error: data?.error || data?.message || `HTTP ${response.status}`,
@@ -499,7 +507,8 @@ export async function getBookingById(
   console.log('[bookings.api] Fetching booking:', id)
 
   const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}/bookings/${id}`
+  const path = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
+  const url = `${baseUrl}${path}/${id}`
   console.log('[bookings.api] GET URL:', url)
 
   try {
@@ -512,6 +521,7 @@ export async function getBookingById(
     })
 
     const data = await response.json()
+    console.log('[bookings.api] API response status:', response.status)
     console.log('[bookings.api] Booking details:', data)
 
     if (!response.ok || !data?.success || !data?.booking) {
@@ -555,7 +565,8 @@ export async function checkAvailability(
   console.log('[bookings.api] Checking availability:', { glampId, checkIn, checkOut })
 
   const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}/bookings/availability`
+  const bookingsPath = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
+  const url = `${baseUrl}${bookingsPath}/availability`
   console.log('[bookings.api] AVAIL URL (single):', url)
 
   if (!glampId || !checkIn || !checkOut) {
@@ -581,6 +592,7 @@ export async function checkAvailability(
     })
 
     const data = await response.json()
+    console.log('[bookings.api] API response status:', response.status)
     console.log('[bookings.api] Availability response:', data)
 
     if (!response.ok) {
@@ -616,7 +628,8 @@ export async function checkAvailabilityForGlamps(
   console.log('[bookings.api] Checking availability (multi):', { glampIds, checkIn, checkOut })
 
   const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}/bookings/availability`
+  const bookingsPath = process.env.NEXT_PUBLIC_BOOKINGS_PUBLIC_PATH || '/bookings'
+  const url = `${baseUrl}${bookingsPath}/availability`
   console.log('[bookings.api] AVAIL URL (multi):', url)
 
   if (!glampIds?.length || !checkIn || !checkOut) {
@@ -642,6 +655,7 @@ export async function checkAvailabilityForGlamps(
     })
 
     const data = await response.json()
+    console.log('[bookings.api] API response status:', response.status)
     console.log('[bookings.api] Availability response (multi):', data)
 
     if (!response.ok) {
