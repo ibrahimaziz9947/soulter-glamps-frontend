@@ -164,8 +164,14 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-green mb-1">Phone</h3>
-                      <p className="text-text-light mb-1">Bookings: +92 300 1234567</p>
-                      <p className="text-text-light">Inquiries: +92 300 7654321</p>
+                      <a
+                        href="https://wa.me/923395069280"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-text-light hover:underline cursor-pointer"
+                      >
+                        +92 339 5069280
+                      </a>
                     </div>
                   </div>
 
@@ -191,8 +197,22 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-green mb-1">Location</h3>
-                      <p className="text-text-light">Soulter Glamps</p>
-                      <p className="text-text-light">Hill Station Area, Pakistan</p>
+                      <a
+                        href="https://www.google.com/maps/place/Soulters+Guest+House/@34.0601968,73.3646594,17z/data=!3m1!4b1!4m20!1m10!3m9!1s0x38dfd32211b3482d:0x1e4cd76e31f18c54!2sSoulters+Guest+House!5m2!4m1!1i2!8m2!3d34.0601924!4d73.3672343!16s%2Fg%2F11q2kdxlt_!3m8!1s0x38dfd32211b3482d:0x1e4cd76e31f18c54!5m2!4m1!1i2!8m2!3d34.0601924!4d73.3672343!16s%2Fg%2F11q2kdxlt_?entry=ttu&g_ep=EgoyMDI2MDIwMS4wIKXMDSoKLDEwMDc5MjA2N0gBUAM%3D"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-text-light hover:underline cursor-pointer"
+                      >
+                        Soulter Glamps
+                      </a>
+                      <a
+                        href="https://www.google.com/maps/place/Soulters+Guest+House/@34.0601968,73.3646594,17z/data=!3m1!4b1!4m20!1m10!3m9!1s0x38dfd32211b3482d:0x1e4cd76e31f18c54!2sSoulters+Guest+House!5m2!4m1!1i2!8m2!3d34.0601924!4d73.3672343!16s%2Fg%2F11q2kdxlt_!3m8!1s0x38dfd32211b3482d:0x1e4cd76e31f18c54!5m2!4m1!1i2!8m2!3d34.0601924!4d73.3672343!16s%2Fg%2F11q2kdxlt_?entry=ttu&g_ep=EgoyMDI2MDIwMS4wIKXMDSoKLDEwMDc5MjA2N0gBUAM%3D"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-text-light hover:underline cursor-pointer"
+                      >
+                        Hill Station Area, Pakistan
+                      </a>
                     </div>
                   </div>
 

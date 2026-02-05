@@ -460,7 +460,6 @@ export async function createBooking(
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify(body),
     })
 
@@ -520,7 +519,6 @@ export async function getBookingById(
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
     })
 
     const data = await response.json()
@@ -593,7 +591,6 @@ export async function checkAvailability(
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
     })
 
     const data = await response.json()
@@ -658,7 +655,6 @@ export async function checkAvailabilityForGlamps(
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
     })
 
     const data = await response.json()
