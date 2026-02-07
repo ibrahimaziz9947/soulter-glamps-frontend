@@ -19,8 +19,6 @@ function BookingPageContent() {
 
   // Step management
   const [currentStep, setCurrentStep] = useState(1)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -110,10 +108,7 @@ function BookingPageContent() {
     setError(null)
   }
 
-  const handleAdvancePayment = () => {
-    setShowPaymentModal(true)
-    setError(null)
-  }
+  // Removed advance payment modal logic
 
   // ==================================================
   // 🔧 STEP 2 — FIX CREATE BOOKING PAYLOAD (MANUAL)
@@ -158,49 +153,7 @@ function BookingPageContent() {
   // ==================================================
   // 🔧 STEP 2 — FIX CREATE BOOKING PAYLOAD (EASYPAISA)
   // ==================================================
-  const handleEasyPaisaPayment = async () => {
-    setIsSubmitting(true)
-    setError(null)
-
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setPaymentSuccess(true)
-
-    if (!selectedGlampIds.length) {
-      setError('Invalid glamp selection. Please try again.')
-      setIsSubmitting(false)
-      return
-    }
-
-    const basePayload = {
-      glampIds: selectedGlampIds,
-      numberOfGlamps: selectedGlampIds.length,
-      checkInDate: formData.checkIn,
-      checkOutDate: formData.checkOut,
-      guests: Number(formData.guests),
-      customerName: `${formData.firstName} ${formData.lastName}`.trim(),
-      customerPhone: formData.phone,
-    }
-    const payload: BookingPayload =
-      formData.email && formData.email.trim()
-        ? { ...basePayload, customerEmail: formData.email.trim() }
-        : basePayload
-
-    console.log('[BookingPage] selected glampIds', selectedGlampIds)
-    console.log('[BookingPage] submit payload', payload)
-
-    const response = await createBooking(payload)
-
-    if (response.success) {
-      setTimeout(() => {
-        router.push(`/booking/confirmation/${response.booking.id}`)
-      }, 2000)
-    } else {
-      setPaymentSuccess(false)
-      setShowPaymentModal(false)
-      setError(response.error)
-      setIsSubmitting(false)
-    }
-  }
+  // Removed EasyPaisa demo handler
 
   return (
     <div className="min-h-screen bg-cream">
@@ -1373,67 +1326,56 @@ function BookingPageContent() {
                 </form>
               )}
 
-              {/* Step 3: Payment Options */}
+              {/* Step 3: Booking Confirmation & Payment Instructions */}
               {currentStep === 3 && (
                 <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-                  <h2 className="font-serif text-2xl font-bold text-green mb-6">Choose Payment Method</h2>
+                  <h2 className="font-serif text-2xl font-bold text-green mb-6">Booking Confirmation & Payment Instructions</h2>
 
-                  <div className="space-y-4">
-                    <button
-                      onClick={handleAdvancePayment}
-                      disabled={isSubmitting}
-                      className="w-full p-6 border-2 border-green rounded-lg hover:bg-cream transition-smooth text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-green rounded-full flex items-center justify-center flex-shrink-0">
-                          <svg className="w-6 h-6 text-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-serif text-xl font-bold text-green mb-2">Pay 50% Advance (Recommended)</h3>
-                          <p className="text-text-light text-sm mb-3">
-                            Secure your booking with a 50% advance payment via EasyPaisa. Pay the remaining amount upon arrival.
-                          </p>
-                          <div className="bg-yellow/10 border border-yellow rounded-lg p-3">
-                            <p className="text-green font-bold">
-                              Pay Now: PKR {Math.round(totalPrice * 0.5).toLocaleString()}
-                            </p>
-                            <p className="text-sm text-text-light">
-                              Remaining: PKR {Math.round(totalPrice * 0.5).toLocaleString()} (at check-in)
-                            </p>
-                          </div>
-                        </div>
+                  <div className="space-y-6">
+                    <div className="bg-cream rounded-lg p-4">
+                      <p className="text-text-dark">
+                        For confirmed 🌟 booking kindly send 50% advance payment.
+                      </p>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-green mb-2">Company Account</h3>
+                      <div className="space-y-1 text-sm text-text-dark">
+                        <p><span className="font-medium">Title:</span> MADNESS</p>
+                        <p><span className="font-medium">Bank Name:</span> Bank Islami</p>
+                        <p><span className="font-medium">Account No.:</span> 204600061300001</p>
+                        <p><span className="font-medium">IBAN:</span> PK36BKIP0204600061300001</p>
                       </div>
-                    </button>
+                    </div>
 
-                    <button
+                    <div className="text-center text-text-light">OR</div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-green mb-2">EasyPaisa</h3>
+                      <div className="space-y-1 text-sm text-text-dark">
+                        <p><span className="font-medium">Number:</span> 03235521558</p>
+                        <p><span className="font-medium">Name:</span> Salahuddin Aziz</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-100 border border-gray-300 rounded-lg p-3">
+                      <p className="text-text-dark font-semibold">
+                        Total Amount: PKR {totalPrice.toLocaleString()}
+                      </p>
+                      <p className="text-sm text-text-light">
+                        You’ll receive confirmation and payment instructions via WhatsApp/SMS from our team.
+                      </p>
+                    </div>
+
+                    <Button
                       onClick={handleManualBooking}
                       disabled={isSubmitting}
-                      className="w-full p-6 border-2 border-gray-300 rounded-lg hover:bg-cream transition-smooth text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="primary"
+                      size="large"
+                      className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-serif text-xl font-bold text-green mb-2">Manual Booking Request</h3>
-                          <p className="text-text-light text-sm mb-3">
-                            Submit your booking request and our team will contact you to confirm. Payment can be made upon arrival.
-                          </p>
-                          <div className="bg-gray-100 border border-gray-300 rounded-lg p-3">
-                            <p className="text-text-dark font-semibold">
-                              Total Amount: PKR {totalPrice.toLocaleString()}
-                            </p>
-                            <p className="text-sm text-text-light">
-                              Payment at check-in
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
+                      Confirm Booking Request
+                    </Button>
                   </div>
 
                   <div className="mt-8">
@@ -1522,91 +1464,7 @@ function BookingPageContent() {
         </div>
       </section>
 
-      {/* EasyPaisa Payment Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-8 animate-fade-in">
-            {!paymentSuccess ? (
-              <>
-                <div className="text-center mb-6">
-                  <div className="w-20 h-20 bg-green rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-12 h-12 text-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-serif text-2xl font-bold text-green mb-2">EasyPaisa Payment</h3>
-                  <p className="text-text-light text-sm">
-                    Pay 50% advance using EasyPaisa to confirm your booking.
-                  </p>
-                </div>
-
-                <div className="bg-cream rounded-lg p-6 mb-6">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-text-light">Advance Amount (50%)</span>
-                    <span className="font-bold text-green text-xl">PKR {Math.round(totalPrice * 0.5).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-text-light">Remaining at check-in</span>
-                    <span className="text-text-dark">PKR {Math.round(totalPrice * 0.5).toLocaleString()}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <button
-                    onClick={handleEasyPaisaPayment}
-                    disabled={isSubmitting}
-                    className="w-full bg-green text-cream px-6 py-4 rounded-lg font-semibold hover:bg-green/90 transition-smooth flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Pay PKR {Math.round(totalPrice * 0.5).toLocaleString()} Now
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => setShowPaymentModal(false)}
-                    disabled={isSubmitting}
-                    className="w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancel
-                  </button>
-                </div>
-
-                <p className="text-xs text-text-light text-center mt-4">
-                  This is a demo payment interface. No actual transaction will be processed.
-                </p>
-              </>
-            ) : (
-              <div className="text-center animate-fade-in">
-                <div className="w-20 h-20 bg-green rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-12 h-12 text-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="font-serif text-2xl font-bold text-green mb-2">Payment Successful!</h3>
-                <p className="text-text-light mb-4">
-                  Your advance payment has been processed. Redirecting to confirmation...
-                </p>
-                <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green"></div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Removed EasyPaisa payment modal */}
     </div>
   )
 }

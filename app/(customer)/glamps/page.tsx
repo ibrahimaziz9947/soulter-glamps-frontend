@@ -411,10 +411,10 @@ export default function GlampsPage() {
               Contact Us
             </a>
             <a 
-              href="tel:+15551234567" 
+              href="tel:03395069280" 
               className="bg-transparent border-2 border-cream text-cream px-8 py-4 rounded-full font-semibold hover:bg-cream hover:text-green transition-smooth text-center"
             >
-              Call: (555) 123-4567
+              Call: 03395069280
             </a>
           </div>
         </div>
