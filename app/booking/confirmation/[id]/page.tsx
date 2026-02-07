@@ -12,6 +12,10 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -35,6 +39,61 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
       fetchBooking()
     }
   }, [params.id])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null)
+    const file = e.target.files?.[0] || null
+    if (!file) {
+      setSelectedFile(null)
+      return
+    }
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf']
+    const isAllowed = allowedTypes.includes(file.type)
+    const isWithinSize = file.size <= 5 * 1024 * 1024
+    if (!isAllowed) {
+      setUploadError('Only JPG, PNG or PDF files are allowed.')
+      setSelectedFile(null)
+      return
+    }
+    if (!isWithinSize) {
+      setUploadError('File must be 5MB or smaller.')
+      setSelectedFile(null)
+      return
+    }
+    setSelectedFile(file)
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile || !params.id) return
+    setUploadError(null)
+    setUploadSuccess(false)
+    setUploading(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const url = `${baseUrl}/public/bookings/${params.id}/receipt`
+      const formData = new FormData()
+      formData.append('receipt', selectedFile)
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        const message = (data && (data.error || data.message)) || `Upload failed (HTTP ${response.status})`
+        throw new Error(message)
+      }
+
+      setUploadSuccess(true)
+      setSelectedFile(null)
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to upload receipt. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -217,6 +276,63 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
             </div>
           </div>
         </div>
+
+        {/* Upload Payment Receipt */}
+        {(() => {
+          const status = booking.status?.toUpperCase?.() || ''
+          const isPendingPayment = status === 'PENDING_PAYMENT' || status === 'PENDING'
+          const alreadyNotPending = status && !isPendingPayment
+          return (
+            <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+              <h3 className="font-serif text-2xl font-bold text-green mb-2">Upload Payment Receipt</h3>
+              <p className="text-text-light mb-4">
+                Please upload a screenshot or PDF of your 50% advance payment receipt.
+              </p>
+
+              {alreadyNotPending ? (
+                <div className="bg-green/10 border border-green/30 rounded-lg p-4 text-green">
+                  Receipt already submitted or payment verified.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={handleFileChange}
+                      disabled={uploading || uploadSuccess}
+                      className="block w-full text-sm text-text-light file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-green file:text-cream hover:file:bg-green-dark rounded-lg border border-gray-200 p-2"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Allowed: JPG, PNG, PDF. Max size: 5MB.</p>
+                  </div>
+
+                  {uploadError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3">
+                      {uploadError}
+                    </div>
+                  )}
+
+                  {uploadSuccess && (
+                    <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3">
+                      Receipt uploaded successfully. Our team will verify your payment.
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    className="w-full"
+                    onClick={handleUpload}
+                    disabled={!selectedFile || uploading || uploadSuccess}
+                  >
+                    {uploading ? 'Uploading...' : 'Upload Receipt'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
