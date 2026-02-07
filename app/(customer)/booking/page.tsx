@@ -117,15 +117,23 @@ function BookingPageContent() {
     setIsSubmitting(true)
     setError(null)
 
-    if (!selectedGlampIds.length) {
-      setError('Invalid glamp selection. Please try again.')
+    const selectedCount = selectedGlampIds.length
+    const requestedCount = Number(formData.numberOfGlamps) || 0
+
+    if (!selectedCount) {
+      setError('Please select at least 1 glamp.')
+      setIsSubmitting(false)
+      return
+    }
+    if (selectedCount !== requestedCount) {
+      setError(`Please select exactly ${requestedCount} glamp(s). Currently selected: ${selectedCount}.`)
       setIsSubmitting(false)
       return
     }
 
     const basePayload = {
       glampIds: selectedGlampIds,
-      numberOfGlamps: selectedGlampIds.length,
+      numberOfGlamps: selectedCount,
       checkInDate: formData.checkIn,
       checkOutDate: formData.checkOut,
       guests: Number(formData.guests),
@@ -137,8 +145,7 @@ function BookingPageContent() {
         ? { ...basePayload, customerEmail: formData.email.trim() }
         : basePayload
 
-    console.log('[BookingPage] selected glampIds', selectedGlampIds)
-    console.log('[BookingPage] submit payload', payload)
+    console.log('[BookingPage] FINAL submit payload', payload)
 
     const response = await createBooking(payload)
 
@@ -1369,7 +1376,11 @@ function BookingPageContent() {
 
                     <Button
                       onClick={handleManualBooking}
-                      disabled={isSubmitting}
+                      disabled={
+                        isSubmitting ||
+                        selectedGlampIds.length === 0 ||
+                        selectedGlampIds.length !== Number(formData.numberOfGlamps || 0)
+                      }
                       variant="primary"
                       size="large"
                       className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
