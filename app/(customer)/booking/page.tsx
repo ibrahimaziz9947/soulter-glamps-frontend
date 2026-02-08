@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Button from '../../components/Button'
-import { glamps } from '../../data/glamps'
+// import { glamps } from '../../data/glamps' // Removed static import
 import { createBooking, type BookingPayload } from '@/src/services/bookings.api'
+import { getGlamps, type Glamp } from '@/src/services/glamps.api'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +23,31 @@ function BookingPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null)
-  const [isLoadingGlamps, setIsLoadingGlamps] = useState(false)
+  const [isLoadingGlamps, setIsLoadingGlamps] = useState(true)
+  const [glamps, setGlamps] = useState<Glamp[]>([])
+
+  // Fetch glamps from API
+  useEffect(() => {
+    const fetchGlamps = async () => {
+      try {
+        setIsLoadingGlamps(true)
+        const response = await getGlamps()
+        if (response.success && Array.isArray(response.data)) {
+          setGlamps(response.data)
+          console.log('[BookingPage] Loaded glamps from API:', response.data)
+        } else {
+          console.error('[BookingPage] Failed to load glamps:', response)
+          setError('Failed to load accommodation options.')
+        }
+      } catch (err) {
+        console.error('[BookingPage] Error fetching glamps:', err)
+        setError('Failed to load accommodation options.')
+      } finally {
+        setIsLoadingGlamps(false)
+      }
+    }
+    fetchGlamps()
+  }, [])
 
   const [formData, setFormData] = useState({
     checkIn: searchParams.get('checkIn') || '',
@@ -62,15 +87,24 @@ function BookingPageContent() {
   }, [formData.checkIn, formData.checkOut])
 
   useEffect(() => {
-    const perNight = 25000
-    const count = selectedGlampIds.length
     if (nights > 0) {
-      const price = perNight * count * nights
-      setTotalPrice(price)
+      const perGlampTotals = selectedGlampIds.map((id) => {
+        const g = glamps.find((x) => String(x.id || x._id) === String(id))
+        const pricePerNight = (g && (g.pricePerNight || g.price || 25000)) as number
+        const numericPrice =
+          typeof pricePerNight === 'string'
+            ? 25000
+            : (pricePerNight as number)
+        return (numericPrice || 25000)
+      })
+      const sumPerNight = perGlampTotals.reduce((acc, n) => acc + n, 0)
+      const total = sumPerNight * nights
+      setTotalPrice(total)
+      console.log('[BookingPage] Price calculated (multi):', { nights, perNightSum: sumPerNight, total })
     } else {
       setTotalPrice(0)
     }
-  }, [selectedGlampIds, nights])
+  }, [selectedGlampIds, nights, glamps])
 
   const maxGuests = (Number(formData.numberOfGlamps) || 1) * 4
   const isGuestLimitExceeded = Number(formData.guests) > maxGuests
@@ -167,6 +201,11 @@ function BookingPageContent() {
 
     console.log('[BookingPage] FINAL submit payload', payload)
 
+    // Validate payload glampIds
+    if (!payload.glampIds.every(id => typeof id === 'string' && id.length > 5 && !['1', '2', '3', '4', '5'].includes(id))) {
+      console.warn('[BookingPage] WARNING: glampIds contain suspicious values (likely static IDs):', payload.glampIds)
+    }
+
     const response = await createBooking(payload)
 
     if (response.success) {
@@ -179,8 +218,8 @@ function BookingPageContent() {
         response.details.length > 0
       ) {
         const firstSelectedId = selectedGlampIds[0]
-        const selectedGlamp = glamps.find(g => g.id === firstSelectedId)
-        const glampName = selectedGlamp?.name || 'Selected glamp'
+      const selectedGlamp = glamps.find(g => g.id === firstSelectedId || g._id === firstSelectedId)
+      const glampName = selectedGlamp?.name || 'Selected glamp'
         const range = formatDateRangeShort(formData.checkIn, formData.checkOut)
         
         const msg = `${glampName} is already booked for ${range}. Please choose different dates.`
@@ -383,11 +422,13 @@ function BookingPageContent() {
                         <div className="space-y-2">
                           {isLoadingGlamps && <p className="text-sm text-text-light">Loading accommodations...</p>}
                           {!isLoadingGlamps && glamps.map((glamp) => {
-                            const checked = selectedGlampIds.includes(String(glamp.id))
+                            // Use glamp.id (or glamp._id) which should be the UUID
+                            const glampId = glamp.id || glamp._id
+                            const checked = selectedGlampIds.includes(String(glampId))
                             const disableNewSelection =
                               !checked && (selectedCount >= numberOfGlamps || selectedCount >= 4)
                             return (
-                              <label key={glamp.id} className="flex items-center gap-2">
+                              <label key={glampId} className="flex items-center gap-2">
                                 <input
                                   type="checkbox"
                                   checked={checked}
@@ -406,9 +447,9 @@ function BookingPageContent() {
                                           setError(`You can select ${numberOfGlamps} glamp(s) for this booking.`)
                                           return prev
                                         }
-                                        return [...prev, String(glamp.id)]
+                                        return [...prev, String(glampId)]
                                       } else {
-                                        return prev.filter((id) => String(id) !== String(glamp.id))
+                                        return prev.filter((id) => String(id) !== String(glampId))
                                       }
                                     })
                                   }}
