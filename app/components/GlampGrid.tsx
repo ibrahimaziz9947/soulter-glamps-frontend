@@ -84,6 +84,9 @@ interface Glamp {
   capacity: number
   price: string | number
   features: string[]
+  discountEnabled?: boolean
+  discountPercent?: number
+  finalPrice?: number
 }
 
 interface GlampGridProps {

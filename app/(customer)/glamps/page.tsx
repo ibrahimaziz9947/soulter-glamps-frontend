@@ -170,6 +170,9 @@ export default function GlampsPage() {
               price: glamp.pricePerNight,
               features: glamp.features || [],
               amenities: glamp.amenities || [],
+              discountEnabled: glamp.discountEnabled,
+              discountPercent: glamp.discountPercent,
+              finalPrice: glamp.finalPrice,
             }
             
             // CRITICAL: Final validation
