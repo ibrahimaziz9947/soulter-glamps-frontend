@@ -313,8 +313,27 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                   )}
 
                   {uploadSuccess && (
-                    <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3">
-                      Receipt uploaded successfully. Our team will verify your payment.
+                    <div className="space-y-4">
+                      <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3">
+                        Receipt uploaded successfully. Our team will verify your payment.
+                      </div>
+                      
+                      <a 
+                        href={`https://wa.me/923395069280?text=${encodeURIComponent("Hello, I have successfully uploaded my payment receipt for my booking. Please confirm. Thank you.")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full"
+                      >
+                        <button
+                          type="button"
+                          className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#20bd5a] transition-smooth shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        >
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.913.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-2.846-.848-.919-.386-1.526-1.297-1.576-1.371-.045-.075-1.252-1.663-1.252-3.171 0-1.509.782-2.252 1.062-2.556.28-.303.608-.377.81-.377.202 0 .405.006.578.045.18.04.425.109.667.702.253.621.868 2.136.945 2.292.076.156.126.339.025.54-.101.201-.152.327-.298.502-.146.175-.308.392-.439.527-.146.151-.299.314-.131.603.167.288.742 1.22 1.589 1.975 1.096.975 2.016 1.282 2.302 1.428.288.146.454.126.622-.065.168-.191.722-.843.914-1.132.193-.289.387-.241.652-.145.265.096 1.685.795 1.975.939.29.144.484.216.552.334.067.119.067.691-.077 1.096z" />
+                          </svg>
+                          Contact Us on WhatsApp
+                        </button>
+                      </a>
                     </div>
                   )}
 
