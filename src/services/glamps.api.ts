@@ -83,8 +83,9 @@ export async function updateGlamp(
   console.log('[Glamps API] Updating glamp:', id)
 
   try {
-    const response = await apiClient<GlampResponse>(`/admin/glamps/${id}`, {
-      method: 'PATCH',
+    // Backend uses PUT /glamps/:id for updates
+    const response = await apiClient<GlampResponse>(`/glamps/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(payload),
     })
 
