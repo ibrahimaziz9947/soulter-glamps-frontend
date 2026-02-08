@@ -182,11 +182,11 @@ export default function GlampsManagementPage() {
                     <p className="font-semibold text-green">
                         {glamp.discountEnabled ? (
                             <>
-                                <span className="line-through text-gray-400 text-xs mr-2">${price}</span>
-                                <span>${(Number(price) * (1 - (Number(glamp.discountPercent) || 0) / 100)).toFixed(0)}</span>
+                                <span className="line-through text-gray-400 text-xs mr-2">PKR {price}</span>
+                                <span>PKR {(Number(price) * (1 - (Number(glamp.discountPercent) || 0) / 100)).toFixed(0)}</span>
                             </>
                         ) : (
-                            `$${price}`
+                            `PKR ${price}`
                         )}
                     </p>
                   </div>
@@ -200,7 +200,7 @@ export default function GlampsManagementPage() {
                   </div>
                   <div>
                     <p className="text-sm text-text-light mb-1">Revenue</p>
-                    <p className="font-semibold text-green">${Number(price) * bookings}</p>
+                    <p className="font-semibold text-green">PKR {Number(price) * bookings}</p>
                   </div>
                 </div>
 

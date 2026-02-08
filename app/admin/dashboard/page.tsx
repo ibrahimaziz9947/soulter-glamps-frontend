@@ -269,6 +269,9 @@ function DashboardContent() {
               <Link href="/admin/bookings/add" className="block bg-cream p-3 rounded-lg">
                 + New Booking
               </Link>
+              <Link href="/admin/glamps" className="block bg-cream p-3 rounded-lg">
+                Manage Glamps
+              </Link>
               <Link href="/admin/glamps/add" className="block bg-cream p-3 rounded-lg">
                 + Add Glamp
               </Link>
