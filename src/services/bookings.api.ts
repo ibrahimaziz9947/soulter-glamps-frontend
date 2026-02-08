@@ -373,7 +373,7 @@ export interface Booking {
 // Discriminated union for strict type safety
 export type BookingResponse =
   | { success: true; message?: string; booking: Booking }
-  | { success: false; error: string }
+  | { success: false; error: string; details?: any[] }
 
 // ⚠️ DO NOT throw at module level (breaks Next.js build)
 /*const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
@@ -479,6 +479,7 @@ export async function createBooking(
       return {
         success: false,
         error: data?.error || data?.message || `HTTP ${response.status}`,
+        details: data?.details,
       }
     }
 
@@ -486,6 +487,7 @@ export async function createBooking(
       return {
         success: false,
         error: data?.error || data?.message || 'Booking creation failed',
+        details: data?.details,
       }
     }
 

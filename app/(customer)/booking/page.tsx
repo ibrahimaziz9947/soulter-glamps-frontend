@@ -108,6 +108,7 @@ function BookingPageContent() {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     setError(null)
+    setToast(null)
   }
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'error') => {
@@ -171,13 +172,23 @@ function BookingPageContent() {
     if (response.success) {
       router.push(`/booking/confirmation/${response.booking.id}`)
     } else {
-      const firstSelectedId = selectedGlampIds[0]
-      const selectedGlamp = glamps.find(g => g.id === firstSelectedId)
-      const glampName = selectedGlamp?.name || 'Selected glamp'
-      const range = formatDateRangeShort(formData.checkIn, formData.checkOut)
-      
-      const msg = `${glampName} is already booked for ${range}. Please choose different dates.`
-      showToast(msg, 'error')
+      // STRICT CHECK: Only show availability toast if backend explicitly reports it
+      if (
+        response.error === 'One or more selected glamps not available' &&
+        Array.isArray(response.details) &&
+        response.details.length > 0
+      ) {
+        const firstSelectedId = selectedGlampIds[0]
+        const selectedGlamp = glamps.find(g => g.id === firstSelectedId)
+        const glampName = selectedGlamp?.name || 'Selected glamp'
+        const range = formatDateRangeShort(formData.checkIn, formData.checkOut)
+        
+        const msg = `${glampName} is already booked for ${range}. Please choose different dates.`
+        showToast(msg, 'error')
+      } else {
+        // Fallback for other errors
+        setError(response.error || 'Failed to create booking. Please try again.')
+      }
       setIsSubmitting(false)
     }
   }
@@ -384,6 +395,7 @@ function BookingPageContent() {
                                   onChange={(e) => {
                                     const isChecked = e.target.checked
                                     setError(null)
+                                    setToast(null)
                                     setSelectedGlampIds((prev) => {
                                       if (isChecked) {
                                         if (prev.length >= 4) {
