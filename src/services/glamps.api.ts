@@ -44,7 +44,7 @@ export interface CreateGlampPayload {
   discountPercent?: number
 }
 
-export interface UpdateGlampPayload extends Partial<CreateGlampPayload> {}
+export type UpdateGlampPayload = Partial<CreateGlampPayload>
 
 export interface GlampsResponse {
   success: boolean

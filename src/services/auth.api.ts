@@ -68,7 +68,7 @@ export async function getCurrentUser(): Promise<User | null> {
       return response.user
     }
     return null
-  } catch (error: any) {
+  } catch (_error: any) {
     return null
   }
 }

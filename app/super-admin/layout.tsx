@@ -53,7 +53,7 @@ export default function SuperAdminLayout({
       active = false
     }
     // 🚫 DO NOT add router or pathname here
-  }, []) // ✅ RUN ONCE ONLY
+  }, [isLoginPage, router]) // ✅ RUN ONCE ONLY
 
   // ✅ Login page
   if (isLoginPage) {

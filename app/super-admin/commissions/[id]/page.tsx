@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { 
   getSuperAdminCommissionById,
@@ -31,7 +31,7 @@ export default function CommissionDetailPage() {
   }, [toast])
   
   // Load commission details
-  const loadCommission = async () => {
+  const loadCommission = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -42,13 +42,13 @@ export default function CommissionDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [commissionId])
   
   useEffect(() => {
     if (commissionId) {
       loadCommission()
     }
-  }, [commissionId])
+  }, [commissionId, loadCommission])
   
   // Handle mark paid
   const handleMarkPaid = async () => {
