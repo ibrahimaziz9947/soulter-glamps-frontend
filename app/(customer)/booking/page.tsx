@@ -90,7 +90,9 @@ function BookingPageContent() {
     if (nights > 0) {
       const perGlampTotals = selectedGlampIds.map((id) => {
         const g = glamps.find((x) => String(x.id || x._id) === String(id))
-        const pricePerNight = (g && (g.pricePerNight || g.price || 25000)) as number
+        // pricePerNight is the standard field on Glamp type.
+        // Fallback to 25000 if not present.
+        const pricePerNight = (g && (g.pricePerNight || 25000)) as number
         const numericPrice =
           typeof pricePerNight === 'string'
             ? 25000
