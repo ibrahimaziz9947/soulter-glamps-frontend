@@ -1,26 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getGlampById, updateGlamp, type Glamp } from '@/src/services/glamps.api'
 
 export default function EditGlampPage() {
   const params = useParams()
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data - in real app, fetch based on params.id
   const [formData, setFormData] = useState({
-    name: 'Luxury Safari Tent',
-    category: 'tent',
-    description: 'Experience the ultimate safari-style luxury in our spacious canvas tent. Featuring a king-size bed, private ensuite bathroom, and a private deck overlooking pristine wilderness.',
-    price: '250',
-    capacity: 4,
+    name: '',
+    category: '',
+    description: '',
+    price: '',
+    capacity: 1,
     bedrooms: 1,
     bathrooms: 1,
-    area: '400',
-    amenities: ['King-size bed', 'Private bathroom', 'Hot shower', 'Air conditioning', 'Heating', 'Wi-Fi', 'Mini fridge', 'Coffee maker', 'Terrace', 'Fire pit'],
+    area: '',
+    amenities: [] as string[],
     images: [] as string[],
     status: 'available',
+    discountEnabled: false,
+    discountPercent: 0,
   })
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -34,9 +38,55 @@ export default function EditGlampPage() {
     'Towels & linens', 'Toiletries', 'Hair dryer', 'Safe box',
   ]
 
+  useEffect(() => {
+    const fetchGlamp = async () => {
+      try {
+        setIsLoading(true)
+        const id = Array.isArray(params.id) ? params.id[0] : params.id
+        const response = await getGlampById(id)
+        // Handle both 'data' (standard) and 'glamp' (legacy/potential backend variance)
+        const glampData = response.data || (response as any).glamp
+        if (response.success && glampData) {
+          const g = glampData
+          setFormData({
+            name: g.name,
+            category: g.category || '',
+            description: g.description,
+            price: String(g.pricePerNight || 0),
+            capacity: g.capacity,
+            bedrooms: g.bedrooms || 1,
+            bathrooms: g.bathrooms || 1,
+            area: g.area || '',
+            amenities: g.amenities || [],
+            images: g.images || [],
+            status: g.status || 'available',
+            discountEnabled: g.discountEnabled || false,
+            discountPercent: g.discountPercent || 0,
+          })
+        } else {
+          setError('Failed to load glamp details')
+        }
+      } catch (err) {
+        console.error('Error fetching glamp:', err)
+        setError('An error occurred while fetching glamp details')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchGlamp()
+    }
+  }, [params.id])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    if (type === 'checkbox') {
+        const checked = (e.target as HTMLInputElement).checked
+        setFormData(prev => ({ ...prev, [name]: checked }))
+    } else {
+        setFormData(prev => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleAmenityToggle = (amenity: string) => {
@@ -48,15 +98,47 @@ export default function EditGlampPage() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert('Glamp updated successfully!')
-    router.push('/admin/glamps')
+    setError(null)
+    
+    try {
+        const id = Array.isArray(params.id) ? params.id[0] : params.id
+        const payload = {
+            ...formData,
+            price: Number(formData.price),
+            capacity: Number(formData.capacity),
+            bedrooms: Number(formData.bedrooms),
+            bathrooms: Number(formData.bathrooms),
+            discountPercent: Number(formData.discountPercent),
+            status: formData.status as 'available' | 'unavailable' | 'maintenance'
+        }
+        
+        const response = await updateGlamp(id, payload)
+        if (response.success) {
+            alert('Glamp updated successfully!')
+            router.push('/admin/glamps')
+        } else {
+            setError(response.message || 'Failed to update glamp')
+        }
+    } catch (err) {
+        console.error('Update failed:', err)
+        setError('An error occurred while updating')
+    }
   }
 
   const handleDelete = () => {
-    alert('Glamp deleted successfully!')
-    router.push('/admin/glamps')
+    // Delete not implemented yet in this phase
+    alert('Delete functionality coming soon')
+    setShowDeleteDialog(false)
+  }
+
+  if (isLoading) {
+      return <div className="p-8 text-center">Loading...</div>
+  }
+
+  if (error) {
+      return <div className="p-8 text-center text-red-500">{error}</div>
   }
 
   return (
@@ -264,6 +346,7 @@ export default function EditGlampPage() {
             <h2 className="font-serif text-2xl font-bold text-green mb-6">Images</h2>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              {/* Image preview logic simplified for now */}
               {[1, 2, 3, 4].map((img) => (
                 <div key={img} className="relative aspect-square bg-cream rounded-lg overflow-hidden group">
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -271,58 +354,61 @@ export default function EditGlampPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <button className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-smooth">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
                 </div>
               ))}
             </div>
 
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow transition-smooth">
-              <svg className="w-10 h-10 text-text-light mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
               <p className="text-text-dark font-medium mb-1">Add more images</p>
-              <p className="text-sm text-text-light">PNG, JPG or WEBP (max. 5MB)</p>
             </div>
-          </div>
-
-          {/* Booking History */}
-          <div className="bg-white rounded-lg shadow-lg p-6 animate-fade-in" style={{animationDelay: '0.4s'}}>
-            <h2 className="font-serif text-2xl font-bold text-green mb-6">Recent Bookings</h2>
-            
-            <div className="space-y-3">
-              {[
-                { id: 'BK-001', guest: 'Sarah Johnson', dates: 'Dec 15-18, 2025', amount: '$750' },
-                { id: 'BK-007', guest: 'Patricia Lee', dates: 'Jan 2-5, 2026', amount: '$750' },
-              ].map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between p-4 bg-cream rounded-lg">
-                  <div>
-                    <p className="font-medium text-text-dark">{booking.guest}</p>
-                    <p className="text-sm text-text-light">{booking.dates}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-green">{booking.amount}</p>
-                    <p className="text-sm text-text-light">{booking.id}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Link 
-              href="/admin/bookings"
-              className="block text-center text-yellow hover:text-yellow-light font-medium mt-4 transition-smooth"
-            >
-              View All Bookings →
-            </Link>
           </div>
         </div>
 
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-lg p-6 sticky top-6 space-y-6 animate-fade-in" style={{animationDelay: '0.5s'}}>
+            
+            {/* Discount Settings - NEW SECTION */}
+            <div className="border-b border-gray-200 pb-6">
+                <h2 className="font-serif text-xl font-bold text-green mb-4">Discount Settings</h2>
+                <div className="space-y-4">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                name="discountEnabled"
+                                checked={formData.discountEnabled}
+                                onChange={handleChange}
+                                className="sr-only peer" 
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green"></div>
+                        </div>
+                        <span className="font-medium text-text-dark">Enable Discount</span>
+                    </label>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-text-dark mb-2">
+                            Discount Percentage (%)
+                        </label>
+                        <input
+                            type="number"
+                            name="discountPercent"
+                            value={formData.discountPercent}
+                            onChange={handleChange}
+                            disabled={!formData.discountEnabled}
+                            min="0"
+                            max="100"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                        />
+                        {formData.discountEnabled && (
+                            <p className="text-xs text-green mt-1">
+                                Final Price: ${(Number(formData.price) * (1 - Number(formData.discountPercent) / 100)).toFixed(2)}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             {/* Status */}
             <div>
               <h2 className="font-serif text-xl font-bold text-green mb-4">Availability Status</h2>
@@ -350,29 +436,6 @@ export default function EditGlampPage() {
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="pt-6 border-t border-gray-200">
-              <h3 className="font-semibold text-text-dark mb-4">Performance Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-text-light">Total Bookings</span>
-                  <span className="font-semibold text-text-dark">12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-light">Total Revenue</span>
-                  <span className="font-semibold text-green">$3,000</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-light">Occupancy Rate</span>
-                  <span className="font-semibold text-yellow">65%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-light">Avg. Rating</span>
-                  <span className="font-semibold text-text-dark">4.8/5.0</span>
-                </div>
-              </div>
-            </div>
-
             {/* Actions */}
             <div className="pt-6 border-t border-gray-200 space-y-3">
               <button
@@ -380,12 +443,6 @@ export default function EditGlampPage() {
                 className="w-full bg-yellow text-green px-6 py-3 rounded-lg font-semibold hover:bg-yellow-light transition-smooth"
               >
                 Update Glamp
-              </button>
-              <button
-                type="button"
-                className="w-full border-2 border-green text-green px-6 py-3 rounded-lg font-semibold hover:bg-cream transition-smooth"
-              >
-                Save as Draft
               </button>
               <Link
                 href="/admin/glamps"
@@ -404,7 +461,7 @@ export default function EditGlampPage() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full animate-slide-up">
             <h3 className="font-serif text-2xl font-bold text-green mb-4">Delete Glamp?</h3>
             <p className="text-text-dark mb-6">
-              Are you sure you want to delete <strong>{formData.name}</strong>? This action cannot be undone and will remove all associated bookings and data.
+              Are you sure you want to delete <strong>{formData.name}</strong>? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

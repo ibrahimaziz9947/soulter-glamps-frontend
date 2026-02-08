@@ -1,20 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { getGlamps, type Glamp } from '@/src/services/glamps.api'
 
 export default function GlampsManagementPage() {
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [glamps, setGlamps] = useState<Glamp[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const glamps = [
-    { id: 1, name: 'Luxury Safari Tent', category: 'tent', price: 250, capacity: 4, status: 'available', image: '/images/safari-tent.jpg', bookings: 12 },
-    { id: 2, name: 'Geodesic Dome', category: 'dome', price: 300, capacity: 2, status: 'available', image: '/images/dome.jpg', bookings: 8 },
-    { id: 3, name: 'Treehouse Suite', category: 'treehouse', price: 350, capacity: 4, status: 'booked', image: '/images/treehouse.jpg', bookings: 15 },
-    { id: 4, name: 'Woodland Cabin', category: 'cabin', price: 200, capacity: 3, status: 'available', image: '/images/cabin.jpg', bookings: 10 },
-    { id: 5, name: 'Riverside Yurt', category: 'yurt', price: 180, capacity: 3, status: 'maintenance', image: '/images/yurt.jpg', bookings: 6 },
-    { id: 6, name: 'Mountain View Pod', category: 'pod', price: 220, capacity: 2, status: 'available', image: '/images/pod.jpg', bookings: 9 },
-  ]
+  useEffect(() => {
+    const fetchGlamps = async () => {
+      try {
+        setIsLoading(true)
+        const response = await getGlamps()
+        if (response.success && Array.isArray(response.data)) {
+          setGlamps(response.data)
+        } else {
+          console.error('Failed to load glamps:', response)
+          setError('Failed to load accommodations.')
+        }
+      } catch (err) {
+        console.error('Error fetching glamps:', err)
+        setError('Failed to load accommodations.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchGlamps()
+  }, [])
 
   const filteredGlamps = glamps.filter(glamp => {
     if (filter !== 'all' && glamp.status !== filter) return false
@@ -28,6 +44,9 @@ export default function GlampsManagementPage() {
     booked: glamps.filter(g => g.status === 'booked').length,
     maintenance: glamps.filter(g => g.status === 'maintenance').length,
   }
+
+  if (isLoading) return <div className="p-8 text-center">Loading accommodations...</div>
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>
 
   return (
     <div className="space-y-6">
@@ -113,9 +132,15 @@ export default function GlampsManagementPage() {
             No glamps found
           </div>
         ) : (
-          filteredGlamps.map((glamp, index) => (
+          filteredGlamps.map((glamp, index) => {
+            const glampId = glamp._id || glamp.id
+            const price = glamp.pricePerNight || 0
+            // Mock booking stats if missing
+            const bookings = (glamp as any).bookings || 0
+            
+            return (
             <div 
-              key={glamp.id} 
+              key={glampId} 
               className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-smooth animate-fade-in"
               style={{animationDelay: `${index * 0.1}s`}}
             >
@@ -126,7 +151,7 @@ export default function GlampsManagementPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                     glamp.status === 'available' 
                       ? 'bg-green/90 text-cream' 
@@ -136,6 +161,11 @@ export default function GlampsManagementPage() {
                   }`}>
                     {glamp.status}
                   </span>
+                  {glamp.discountEnabled && (
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-red-500 text-white">
+                      -{glamp.discountPercent}% OFF
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -149,7 +179,16 @@ export default function GlampsManagementPage() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-text-light mb-1">Price per Night</p>
-                    <p className="font-semibold text-green">${glamp.price}</p>
+                    <p className="font-semibold text-green">
+                        {glamp.discountEnabled ? (
+                            <>
+                                <span className="line-through text-gray-400 text-xs mr-2">${price}</span>
+                                <span>${(Number(price) * (1 - (Number(glamp.discountPercent) || 0) / 100)).toFixed(0)}</span>
+                            </>
+                        ) : (
+                            `$${price}`
+                        )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-text-light mb-1">Capacity</p>
@@ -157,18 +196,18 @@ export default function GlampsManagementPage() {
                   </div>
                   <div>
                     <p className="text-sm text-text-light mb-1">Total Bookings</p>
-                    <p className="font-semibold text-text-dark">{glamp.bookings}</p>
+                    <p className="font-semibold text-text-dark">{bookings}</p>
                   </div>
                   <div>
                     <p className="text-sm text-text-light mb-1">Revenue</p>
-                    <p className="font-semibold text-green">${glamp.price * glamp.bookings}</p>
+                    <p className="font-semibold text-green">${Number(price) * bookings}</p>
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-4 border-t border-gray-200">
                   <Link 
-                    href={`/admin/glamps/edit/${glamp.id}`}
+                    href={`/admin/glamps/edit/${glampId}`}
                     className="flex-1 flex items-center justify-center gap-2 bg-yellow text-green px-4 py-2 rounded-lg font-semibold hover:bg-yellow-light transition-smooth"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +230,7 @@ export default function GlampsManagementPage() {
                 </div>
               </div>
             </div>
-          ))
+          )})
         )}
       </div>
     </div>

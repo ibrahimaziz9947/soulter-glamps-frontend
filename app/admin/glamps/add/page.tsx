@@ -22,6 +22,8 @@ export default function AddGlampPage() {
     amenities: [] as string[],
     images: [] as string[],
     status: 'available',
+    discountEnabled: false,
+    discountPercent: 0,
   })
 
   const categories = ['tent', 'dome', 'treehouse', 'cabin', 'yurt', 'pod']
@@ -42,8 +44,12 @@ export default function AddGlampPage() {
   }, [toast])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    if (type === 'checkbox' && name === 'discountEnabled') {
+        setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }))
+    } else {
+        setFormData(prev => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleAmenityToggle = (amenity: string) => {
@@ -85,6 +91,8 @@ export default function AddGlampPage() {
         amenities: formData.amenities,
         images: formData.images.length > 0 ? formData.images : undefined,
         status: formData.status as 'available' | 'unavailable' | 'maintenance',
+        discountEnabled: formData.discountEnabled,
+        discountPercent: Number(formData.discountPercent),
       }
 
       console.log('[Add Glamp] Submitting:', payload)
@@ -357,6 +365,47 @@ export default function AddGlampPage() {
             <h2 className="font-serif text-2xl font-bold text-green mb-6">Status & Actions</h2>
             
             <div className="space-y-6">
+              {/* Discount Settings */}
+              <div className="border-b border-gray-200 pb-6">
+                  <h2 className="font-serif text-xl font-bold text-green mb-4">Discount Settings</h2>
+                  <div className="space-y-4">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                          <div className="relative">
+                              <input 
+                                  type="checkbox" 
+                                  name="discountEnabled"
+                                  checked={formData.discountEnabled}
+                                  onChange={handleChange}
+                                  className="sr-only peer" 
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green"></div>
+                          </div>
+                          <span className="font-medium text-text-dark">Enable Discount</span>
+                      </label>
+
+                      <div>
+                          <label className="block text-sm font-semibold text-text-dark mb-2">
+                              Discount Percentage (%)
+                          </label>
+                          <input
+                              type="number"
+                              name="discountPercent"
+                              value={formData.discountPercent}
+                              onChange={handleChange}
+                              disabled={!formData.discountEnabled}
+                              min="0"
+                              max="100"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                          />
+                          {formData.discountEnabled && formData.price && (
+                              <p className="text-xs text-green mt-1">
+                                  Final Price: ${(Number(formData.price) * (1 - Number(formData.discountPercent) / 100)).toFixed(2)}
+                              </p>
+                          )}
+                      </div>
+                  </div>
+              </div>
+
               {/* Status */}
               <div>
                 <label className="block text-sm font-semibold text-text-dark mb-3">
