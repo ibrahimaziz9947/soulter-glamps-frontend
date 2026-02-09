@@ -246,8 +246,8 @@ export default function GlampDetailPage({ params }: { params: { id: string } }) 
                   </Link>
                   <div className="mt-4 pt-4 border-t border-cream/20">
                     <p className="text-cream/90 text-sm mb-2">Call us directly:</p>
-                    <a href="tel:+15551234567" className="text-yellow font-semibold hover:text-yellow-light transition-smooth">
-                      (555) 123-4567
+                    <a href="tel:03395069280" className="text-yellow font-semibold hover:text-yellow-light transition-smooth">
+                      0339 506 9280
                     </a>
                   </div>
                 </div>

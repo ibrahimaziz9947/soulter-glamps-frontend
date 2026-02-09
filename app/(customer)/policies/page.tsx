@@ -210,7 +210,7 @@ export default function PoliciesPage() {
                 </p>
                 <ul className="list-disc list-inside text-text-light space-y-1 ml-4">
                   <li>Email: bookings@soulterglamps.com</li>
-                  <li>Phone: +92 300 1234567</li>
+                  <li>Phone: +92 339 5069280</li>
                   <li>Through your booking confirmation link</li>
                 </ul>
                 <p className="text-text-light mt-2">
@@ -340,7 +340,7 @@ export default function PoliciesPage() {
               <div>
                 <h3 className="font-semibold text-green text-lg mb-2">Emergency Contact</h3>
                 <p className="text-text-light">
-                  In case of emergency, contact our 24/7 support line: <strong>+92 300 1234567</strong>
+                  In case of emergency, contact our 24/7 support line: <strong>+92 339 5069280</strong>
                 </p>
                 <p className="text-text-light mt-2">
                   First aid kits are available at reception. The nearest medical facility is 20 minutes away.

@@ -199,13 +199,20 @@ export default function GalleryPage() {
           <div className="flex items-center justify-center gap-3 mt-8">
             <span className="text-2xl font-bold text-green">#SoulterGlamps</span>
             <span className="text-xl text-text-light">|</span>
-            <a href="#" className="text-2xl font-bold text-yellow hover:text-yellow-light transition-smooth">
+            <a 
+              href="https://www.instagram.com/soultersglamps?igsh=MWw2bjh5eTYwbWZsbg==" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-2xl font-bold text-yellow hover:text-yellow-light transition-smooth"
+            >
               @SoulterGlamps
             </a>
           </div>
           <div className="mt-8">
             <a 
-              href="#" 
+              href="https://www.instagram.com/soultersglamps?igsh=MWw2bjh5eTYwbWZsbg==" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-green text-cream px-8 py-4 rounded-full font-semibold hover:bg-green-light transition-smooth"
             >
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
