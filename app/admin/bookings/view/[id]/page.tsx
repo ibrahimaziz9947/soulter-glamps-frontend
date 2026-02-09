@@ -634,12 +634,20 @@ interface Booking {
   glampName: string
 } */
 
+interface Receipt {
+  fileUrl: string
+  fileName: string
+  uploadedAt: string
+}
+
 export default function ViewBookingPage() {
   const params = useParams()
   const router = useRouter()
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [booking, setBooking] = useState<Booking | null>(null)
+  const [receipt, setReceipt] = useState<Receipt | null>(null)
+  const [receiptLoading, setReceiptLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -650,41 +658,6 @@ export default function ViewBookingPage() {
         const data = await api.get(`/admin/bookings/${params.id}`)
         setBooking(data.data)
         console.log('API RESPONSE:', data)
-
-        //const data = await api.get(`/admin/bookings/${params.id}`)
-
-        // 🔁 Map backend → UI format
-        /*const mappedBooking = {
-          id: data.id,
-          customerName: data.customerName,
-          guests: data.guests,
-          status: data.status,
-          createdAt: data.createdAt,
-
-          // map dates
-          checkIn: data.checkInDate,
-          checkOut: data.checkOutDate,
-
-          // derived values
-          nights: Math.max(
-            1,
-            Math.ceil(
-              (new Date(data.checkOutDate).getTime() -
-                new Date(data.checkInDate).getTime()) /
-              (1000 * 60 * 60 * 24)
-            )
-          ),
-
-          totalPrice: data.totalAmount,
-          amountPaid: data.amountPaid ?? 0,
-          remainingAmount:
-            (data.totalAmount ?? 0) - (data.amountPaid ?? 0),
-
-          glampName: data.glamp?.name ?? '—',
-        }
-
-        setBooking(mappedBooking) */
-
       } catch (err: any) {
         setError(err.message || 'Failed to load booking')
       } finally {
@@ -692,7 +665,30 @@ export default function ViewBookingPage() {
       }
     }
 
-    if (params.id) fetchBooking()
+    const fetchReceipt = async () => {
+      try {
+        const data = await api.get(`/admin/bookings/${params.id}/receipt`)
+        // Handle response where receipt might be in data.receipt or just data
+        const receiptData = data.receipt || data.data || data
+        
+        // Check if we have valid receipt data
+        if (receiptData && receiptData.fileUrl) {
+          setReceipt(receiptData)
+        } else {
+          setReceipt(null)
+        }
+      } catch (err) {
+        console.error('Failed to fetch receipt:', err)
+        setReceipt(null)
+      } finally {
+        setReceiptLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchBooking()
+      fetchReceipt()
+    }
   }, [params.id])
 
   const handleCancelBooking = () => {
@@ -808,6 +804,53 @@ export default function ViewBookingPage() {
             <p>Total: PKR {booking.totalAmount}</p>
             <p>Paid: PKR {booking.amountPaid}</p>
             <p>Remaining: PKR {booking.remainingAmount}</p>
+          </div>
+
+          {/* Payment Receipt */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="font-serif text-xl font-bold text-green mb-4">
+              Payment Receipt
+            </h2>
+
+            {receiptLoading ? (
+              <p className="text-text-light text-sm">Loading receipt...</p>
+            ) : receipt ? (
+              <div className="space-y-3">
+                <a
+                  href={receipt.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block relative group overflow-hidden rounded-lg border border-gray-200"
+                >
+                  <img
+                    src={receipt.fileUrl}
+                    alt="Payment Receipt"
+                    className="w-full object-cover max-h-[200px] hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1 rounded text-xs font-medium shadow-sm transition-opacity">
+                      View Full Image
+                    </span>
+                  </div>
+                </a>
+
+                <div className="text-sm">
+                  <p
+                    className="font-medium text-text-dark truncate"
+                    title={receipt.fileName}
+                  >
+                    {receipt.fileName}
+                  </p>
+                  <p className="text-text-light text-xs">
+                    Uploaded: {new Date(receipt.uploadedAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-text-light text-sm italic">
+                Customer has not uploaded a payment receipt yet.
+              </p>
+            )}
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6">
