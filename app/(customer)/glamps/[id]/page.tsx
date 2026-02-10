@@ -253,7 +253,11 @@ export default function GlampDetailPage({ params }: { params: { id: string } }) 
                       </div>
                     )}
                   </div>
-                  <BookingWidget glampId={glamp.id || glamp._id} glampName={glamp.name} />
+                  <BookingWidget 
+                    glampId={glamp.id || glamp._id} 
+                    glampName={glamp.name} 
+                    maxGuests={glamp.capacity || 4} 
+                  />
                 </div>
 
                 <div className="bg-green text-cream rounded-lg p-6 shadow-lg">

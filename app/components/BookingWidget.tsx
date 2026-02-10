@@ -331,9 +331,10 @@ import Button from './Button'
 interface BookingWidgetProps {
   glampId: string
   glampName?: string
+  maxGuests?: number
 }
 
-export default function BookingWidget({ glampId, glampName }: BookingWidgetProps) {
+export default function BookingWidget({ glampId, glampName, maxGuests = 4 }: BookingWidgetProps) {
   const router = useRouter()
 
   const [formData, setFormData] = useState({
@@ -369,6 +370,10 @@ export default function BookingWidget({ glampId, glampName }: BookingWidgetProps
       if (checkIn < today) {
         newErrors.checkInDate = 'Check-in date cannot be in the past'
       }
+    }
+    
+    if (formData.guests > maxGuests) {
+        newErrors.guests = `Maximum allowed guests is ${maxGuests}`
     }
 
     setErrors(newErrors)
@@ -463,12 +468,18 @@ export default function BookingWidget({ glampId, glampName }: BookingWidgetProps
             }
             className={inputClassName('guests')}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+            {Array.from({ length: maxGuests }, (_, i) => i + 1).map((num) => (
               <option key={num} value={num}>
                 {num} {num === 1 ? 'Guest' : 'Guests'}
               </option>
             ))}
           </select>
+          <p className="text-xs text-text-light mt-1">
+            Up to {maxGuests} guests allowed
+          </p>
+          {errors.guests && (
+            <p className="text-red-500 text-xs mt-1">{errors.guests}</p>
+          )}
         </div>
 
         <Button type="submit" variant="primary" size="large" className="w-full">

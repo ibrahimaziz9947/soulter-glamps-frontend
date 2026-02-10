@@ -68,6 +68,8 @@ function BookingPageContent() {
   const [selectedGlampIds, setSelectedGlampIds] = useState<string[]>([])
   const [nights, setNights] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
+  const [originalPrice, setOriginalPrice] = useState(0)
+  const [discountAmount, setDiscountAmount] = useState(0)
 
   // Initialize selected glamps from URL params
   useEffect(() => {
@@ -100,23 +102,31 @@ function BookingPageContent() {
 
   useEffect(() => {
     if (nights > 0) {
-      const perGlampTotals = selectedGlampIds.map((id) => {
+      let originalTotal = 0
+      let discountedTotal = 0
+
+      selectedGlampIds.forEach((id) => {
         const g = glamps.find((x) => String(x.id || x._id) === String(id))
-        // pricePerNight is the standard field on Glamp type.
-        // Fallback to 25000 if not present.
         const pricePerNight = (g && (g.pricePerNight || 25000)) as number
-        const numericPrice =
-          typeof pricePerNight === 'string'
-            ? 25000
-            : (pricePerNight as number)
-        return (numericPrice || 25000)
+        const numericPrice = typeof pricePerNight === 'string' ? 25000 : (pricePerNight as number) || 25000
+        
+        // Calculate with discount
+        const discountPercent = (g && g.discountEnabled) ? (g.discountPercent || 0) : 0
+        const discountedPrice = numericPrice * (1 - discountPercent / 100)
+
+        originalTotal += numericPrice * nights
+        discountedTotal += discountedPrice * nights
       })
-      const sumPerNight = perGlampTotals.reduce((acc, n) => acc + n, 0)
-      const total = sumPerNight * nights
-      setTotalPrice(total)
-      console.log('[BookingPage] Price calculated (multi):', { nights, perNightSum: sumPerNight, total })
+
+      setOriginalPrice(originalTotal)
+      setTotalPrice(discountedTotal)
+      setDiscountAmount(originalTotal - discountedTotal)
+
+      console.log('[BookingPage] Price calculated:', { nights, originalTotal, discountedTotal, discountAmount: originalTotal - discountedTotal })
     } else {
       setTotalPrice(0)
+      setOriginalPrice(0)
+      setDiscountAmount(0)
     }
   }, [selectedGlampIds, nights, glamps])
 
@@ -651,10 +661,23 @@ function BookingPageContent() {
                     </div>
 
                     <div className="bg-gray-100 border border-gray-300 rounded-lg p-3">
-                      <p className="text-text-dark font-semibold">
-                        Total Amount: PKR {totalPrice.toLocaleString()}
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm mb-2 text-text-light">
+                          <span>Subtotal (before discount):</span>
+                          <span className="line-through">PKR {originalPrice.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm mb-2 text-green font-medium">
+                          <span>Discount Applied:</span>
+                          <span>-PKR {discountAmount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <p className="text-text-dark font-semibold text-lg flex justify-between border-t border-gray-300 pt-2 mt-2">
+                        <span>Total Payable:</span>
+                        <span>PKR {totalPrice.toLocaleString()}</span>
                       </p>
-                      <p className="text-sm text-text-light">
+                      <p className="text-sm text-text-light mt-2">
                         You’ll receive confirmation and payment instructions via WhatsApp/SMS from our team.
                       </p>
                     </div>
@@ -724,19 +747,28 @@ function BookingPageContent() {
                     <div className="space-y-3 mb-6">
                       <div className="flex justify-between text-sm">
                         <span className="text-text-light">
-                          {selectedGlampIds.length} glamp{selectedGlampIds.length > 1 ? 's' : ''} x PKR {25000 .toLocaleString()} per night
+                          {selectedGlampIds.length} glamp{selectedGlampIds.length > 1 ? 's' : ''} x {nights} night{nights > 1 ? 's' : ''}
                         </span>
-                        <span className="text-text-dark">
-                          PKR {(selectedGlampIds.length * 25000).toLocaleString()}/night
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-text-light">Nights</span>
-                        <span className="text-text-dark">{nights}</span>
+                        <div className="text-right">
+                           {discountAmount > 0 && (
+                            <div className="text-text-light line-through text-xs">
+                              PKR {originalPrice.toLocaleString()}
+                            </div>
+                           )}
+                           <span className="text-text-dark">
+                             PKR {totalPrice.toLocaleString()}
+                           </span>
+                        </div>
                       </div>
                     </div>
 
                     <div className="pt-6 border-t border-gray-200 mb-6">
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between items-center mb-2 text-sm">
+                          <span className="text-text-light">Discount</span>
+                          <span className="text-green font-medium">-PKR {discountAmount.toLocaleString()}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <span className="font-serif text-xl font-bold text-green">Total</span>
                         <span className="font-serif text-3xl font-bold text-green">PKR {totalPrice.toLocaleString()}</span>
