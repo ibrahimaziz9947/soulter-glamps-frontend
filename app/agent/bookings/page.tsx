@@ -641,7 +641,7 @@ export default function AgentBookingsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Bookings" value={stats.total} />
         <StatCard label="Confirmed" value={stats.confirmed} />
         <StatCard label="Pending" value={stats.pending} />
@@ -649,7 +649,7 @@ export default function AgentBookingsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 bg-white p-4 rounded-xl shadow">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow">
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -673,54 +673,55 @@ export default function AgentBookingsPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left">
-            <tr>
-              <th className="p-4">Booking ID</th>
-              <th className="p-4">Customer</th>
-              <th className="p-4">Glamp</th>
-              <th className="p-4">Dates</th>
-              <th className="p-4">Status</th>
-              <th className="p-4 text-right">Amount</th>
-              <th className="p-4 text-right">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredBookings.map(b => (
-              <tr key={b.id} className="border-t">
-                <td className="p-4 font-mono text-green-800">{b.id}</td>
-                <td className="p-4">{b.customerName}</td>
-                <td className="p-4">{b.glamp?.name || 'Unknown'}</td>
-
-                <td className="p-4">
-                  {new Date(b.checkInDate).toLocaleDateString()} →{' '}
-                  {new Date(b.checkOutDate).toLocaleDateString()}
-                </td>
-
-                <td className="p-4">
-                  <StatusBadge status={b.status} />
-                </td>
-
-                <td className="p-4 text-right font-semibold text-yellow-700">
-                  PKR {b.totalAmount.toLocaleString()}
-                </td>
-
-                {/* ✅ ACTION */}
-                <td className="p-4 text-right">
-                  <button
-                    onClick={() =>
-                      router.push(`/agent/bookings/view/${b.id}`)
-                    }
-                    className="text-green-700 font-semibold hover:underline"
-                  >
-                    View
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 text-left">
+              <tr>
+                <th className="p-4">Booking ID</th>
+                <th className="p-4">Customer</th>
+                <th className="p-4">Glamp</th>
+                <th className="p-4">Dates</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-right">Amount</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {filteredBookings.map(b => (
+                <tr key={b.id} className="border-t">
+                  <td className="p-4 font-mono text-green-800">{b.id}</td>
+                  <td className="p-4">{b.customerName}</td>
+                  <td className="p-4">{b.glamp?.name || 'Unknown'}</td>
+
+                  <td className="p-4">
+                    {new Date(b.checkInDate).toLocaleDateString()} →{' '}
+                    {new Date(b.checkOutDate).toLocaleDateString()}
+                  </td>
+
+                  <td className="p-4">
+                    <StatusBadge status={b.status} />
+                  </td>
+
+                  <td className="p-4 text-right font-semibold text-yellow-700">
+                    PKR {b.totalAmount.toLocaleString()}
+                  </td>
+
+                  {/* ✅ ACTION */}
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() =>
+                        router.push(`/agent/bookings/view/${b.id}`)
+                      }
+                      className="text-green-700 font-semibold hover:underline">
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

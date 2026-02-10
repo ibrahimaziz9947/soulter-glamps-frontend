@@ -218,7 +218,7 @@ function DashboardContent({
           <p className="text-sm text-gray-500">No bookings yet.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full whitespace-nowrap">
               <thead>
                 <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-3 px-4 text-sm font-semibold">Booking ID</th>

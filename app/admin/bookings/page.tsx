@@ -236,63 +236,65 @@ export default function BookingsPage() {
         ) : error ? (
           <p className="p-6 text-red-500">{error}</p>
         ) : (
-          <table className="w-full">
-            <thead className="bg-cream">
-              <tr>
-                <th className="py-4 px-6 text-left">Booking ID</th>
-                <th className="py-4 px-6 text-left">Guest</th>
-                <th className="py-4 px-6 text-left">Accommodation</th>
-                <th className="py-4 px-6 text-left">Guests</th>
-                <th className="py-4 px-6 text-left">Date</th>
-                <th className="py-4 px-6 text-left">Status</th>
-                <th className="py-4 px-6 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBookings.map((booking) => (
-                <tr key={booking.id} className="border-b hover:bg-cream/50">
-                  <td className="py-4 px-6 text-yellow font-medium">
-                    {booking.id.slice(0, 8)}
-                  </td>
-                  <td className="py-4 px-6">{booking.customerName}</td>
-                  <td className="py-4 px-6">{booking.glamp?.name ?? booking.glampName ?? 'Unknown'}</td>
-                  <td className="py-4 px-6">{booking.guests}</td>
-                  <td className="py-4 px-6 text-sm text-text-light">
-                    {new Date(booking.createdAt).toLocaleDateString()}
-                  </td>
-
-                  {/* STATUS DROPDOWN */}
-                  <td className="py-4 px-6">
-                    <select
-                      value={booking.status}
-                      onChange={(e) =>
-                        updateStatus(booking.id, e.target.value)
-                      }
-                      className="border rounded px-2 py-1 text-sm"
-                      disabled={
-                        booking.status === 'CANCELLED' ||
-                        booking.status === 'COMPLETED'
-                      }
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="CONFIRMED">CONFIRMED</option>
-                      <option value="CANCELLED">CANCELLED</option>
-                      <option value="COMPLETED">COMPLETED</option>
-                    </select>
-                  </td>
-
-                  <td className="py-4 px-6">
-                    <Link
-                      href={`/admin/bookings/view/${booking.id}`}
-                      className="text-green hover:underline"
-                    >
-                      View
-                    </Link>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full whitespace-nowrap">
+              <thead className="bg-cream">
+                <tr>
+                  <th className="py-4 px-6 text-left">Booking ID</th>
+                  <th className="py-4 px-6 text-left">Guest</th>
+                  <th className="py-4 px-6 text-left">Accommodation</th>
+                  <th className="py-4 px-6 text-left">Guests</th>
+                  <th className="py-4 px-6 text-left">Date</th>
+                  <th className="py-4 px-6 text-left">Status</th>
+                  <th className="py-4 px-6 text-left">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredBookings.map((booking) => (
+                  <tr key={booking.id} className="border-b hover:bg-cream/50">
+                    <td className="py-4 px-6 text-yellow font-medium">
+                      {booking.id.slice(0, 8)}
+                    </td>
+                    <td className="py-4 px-6">{booking.customerName}</td>
+                    <td className="py-4 px-6">{booking.glamp?.name ?? booking.glampName ?? 'Unknown'}</td>
+                    <td className="py-4 px-6">{booking.guests}</td>
+                    <td className="py-4 px-6 text-sm text-text-light">
+                      {new Date(booking.createdAt).toLocaleDateString()}
+                    </td>
+
+                    {/* STATUS DROPDOWN */}
+                    <td className="py-4 px-6">
+                      <select
+                        value={booking.status}
+                        onChange={(e) =>
+                          updateStatus(booking.id, e.target.value)
+                        }
+                        className="border rounded px-2 py-1 text-sm bg-white"
+                        disabled={
+                          booking.status === 'CANCELLED' ||
+                          booking.status === 'COMPLETED'
+                        }
+                      >
+                        <option value="PENDING">PENDING</option>
+                        <option value="CONFIRMED">CONFIRMED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                      </select>
+                    </td>
+
+                    <td className="py-4 px-6">
+                      <Link
+                        href={`/admin/bookings/view/${booking.id}`}
+                        className="text-green hover:underline"
+                      >
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

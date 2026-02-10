@@ -160,8 +160,8 @@ export default function AddGlampPage() {
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information */}
-          <div className="bg-white rounded-lg shadow-lg p-6 animate-fade-in">
-            <h2 className="font-serif text-2xl font-bold text-green mb-6">Basic Information</h2>
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 animate-fade-in">
+            <h2 className="font-serif text-xl md:text-2xl font-bold text-green mb-6">Basic Information</h2>
             
             <div className="space-y-6">
               <div>
@@ -253,8 +253,8 @@ export default function AddGlampPage() {
           </div>
 
           {/* Capacity & Features */}
-          <div className="bg-white rounded-lg shadow-lg p-6 animate-fade-in" style={{animationDelay: '0.1s'}}>
-            <h2 className="font-serif text-2xl font-bold text-green mb-6">Capacity & Features</h2>
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 animate-fade-in" style={{animationDelay: '0.1s'}}>
+            <h2 className="font-serif text-xl md:text-2xl font-bold text-green mb-6">Capacity & Features</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -309,8 +309,8 @@ export default function AddGlampPage() {
           </div>
 
           {/* Amenities */}
-          <div className="bg-white rounded-lg shadow-lg p-6 animate-fade-in" style={{animationDelay: '0.2s'}}>
-            <h2 className="font-serif text-2xl font-bold text-green mb-6">Amenities</h2>
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 animate-fade-in" style={{animationDelay: '0.2s'}}>
+            <h2 className="font-serif text-xl md:text-2xl font-bold text-green mb-6">Amenities</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {amenitiesOptions.map(amenity => (
@@ -336,8 +336,8 @@ export default function AddGlampPage() {
           </div>
 
           {/* Images */}
-          <div className="bg-white rounded-lg shadow-lg p-6 animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <h2 className="font-serif text-2xl font-bold text-green mb-6">Images</h2>
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 animate-fade-in" style={{animationDelay: '0.3s'}}>
+            <h2 className="font-serif text-xl md:text-2xl font-bold text-green mb-6">Images</h2>
             
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-yellow transition-smooth">
               <svg className="w-12 h-12 text-text-light mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -361,8 +361,8 @@ export default function AddGlampPage() {
 
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-lg p-6 sticky top-6 animate-fade-in" style={{animationDelay: '0.4s'}}>
-            <h2 className="font-serif text-2xl font-bold text-green mb-6">Status & Actions</h2>
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 sticky top-6 animate-fade-in" style={{animationDelay: '0.4s'}}>
+            <h2 className="font-serif text-xl md:text-2xl font-bold text-green mb-6">Status & Actions</h2>
             
             <div className="space-y-6">
               {/* Discount Settings */}

@@ -410,8 +410,9 @@ export default function AgentLayout({
 
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import AgentSidebar from '@/app/components/AgentSidebar'
+import { useState, useEffect } from 'react'
 
 export default function AgentLayout({
   children,
@@ -419,6 +420,12 @@ export default function AgentLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Close sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname])
 
   // 🚫 Login page should NOT show sidebar
   if (pathname === '/agent/login') {
@@ -428,12 +435,27 @@ export default function AgentLayout({
   return (
     <div className="flex min-h-screen bg-cream">
       {/* LEFT SIDEBAR */}
-      <AgentSidebar />
+      <AgentSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* RIGHT CONTENT */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+          <span className="font-serif font-bold text-green-900">Agent Portal</span>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
