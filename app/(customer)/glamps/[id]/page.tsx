@@ -224,12 +224,34 @@ export default function GlampDetailPage({ params }: { params: { id: string } }) 
               <div className="sticky top-24">
                 <div className="bg-white rounded-lg p-6 shadow-lg mb-6">
                   <div className="mb-6">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-serif text-4xl font-bold text-green">
-                        PKR {glamp.pricePerNight?.toLocaleString() || 'N/A'}
-                      </span>
-                      <span className="text-text-light">/night</span>
-                    </div>
+                    {glamp.discountEnabled && (glamp.discountPercent ?? 0) > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-baseline gap-2 text-text-light/80 line-through">
+                          <span className="font-serif text-lg font-bold">
+                            PKR {glamp.pricePerNight?.toLocaleString() || 'N/A'}
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-serif text-4xl font-bold text-green">
+                            PKR {(
+                              (glamp.pricePerNight || 0) * 
+                              (1 - (glamp.discountPercent ?? 0) / 100)
+                            ).toLocaleString()}
+                          </span>
+                          <span className="text-text-light">/night</span>
+                          <span className="bg-yellow/20 text-yellow-700 text-xs px-2 py-1 rounded font-bold ml-2">
+                            {glamp.discountPercent}% OFF
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-serif text-4xl font-bold text-green">
+                          PKR {glamp.pricePerNight?.toLocaleString() || 'N/A'}
+                        </span>
+                        <span className="text-text-light">/night</span>
+                      </div>
+                    )}
                   </div>
                   <BookingWidget glampId={glamp.id || glamp._id} glampName={glamp.name} />
                 </div>

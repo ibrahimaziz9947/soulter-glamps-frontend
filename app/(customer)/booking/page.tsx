@@ -69,6 +69,18 @@ function BookingPageContent() {
   const [nights, setNights] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
 
+  // Initialize selected glamps from URL params
+  useEffect(() => {
+    const glampId = searchParams.get('glampId')
+    if (glampId) {
+      console.log('[BookingPage] Found glampId in URL:', glampId)
+      // Only set if we haven't selected anything yet
+      if (selectedGlampIds.length === 0) {
+        setSelectedGlampIds([glampId])
+      }
+    }
+  }, [searchParams])
+
   // ===============================
   // 🔧 STEP 1 — STORE REAL GLAMP ID
   // ===============================//

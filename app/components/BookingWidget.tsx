@@ -386,7 +386,15 @@ export default function BookingWidget({ glampId, glampName }: BookingWidgetProps
      * BookingWidget DOES NOT create bookings.
      * It only redirects to the real booking page.
      */
-    router.push(`/booking?glampId=${glampId}`)
+    const queryParams = new URLSearchParams({
+      glampId,
+      checkIn: formData.checkInDate,
+      checkOut: formData.checkOutDate,
+      guests: formData.guests.toString(),
+      numberOfGlamps: '1', // Default to 1 when booking from details page
+    }).toString()
+
+    router.push(`/booking?${queryParams}`)
   }
 
   const inputClassName = (fieldName: string) =>
