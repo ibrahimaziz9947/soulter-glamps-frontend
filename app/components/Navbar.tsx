@@ -15,7 +15,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center space-x-3">
             <div className="relative w-12 h-12">
               <Image 
-                src="/images/logo.png" 
+                src="/images/logo15.png" 
                 alt="Soulter Glamps Logo" 
                 fill 
                 className="object-contain"
